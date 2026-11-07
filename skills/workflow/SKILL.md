@@ -9,6 +9,7 @@ Small changes go straight through; only what deserves it gets paperwork, and tha
 
 - `sdd/specs/<area>.md`: how the system behaves **today**, one rule per `## `, no history. Write rules with `spec_write`.
 - `sdd/changes/<date>-<slug>.md`: proposal, tasks and log of a large change. Read and write it with the seckert MCP tools: `change_get`, `change_create`, `change_update` (What, questions, tasks, Log, diagram, hashes after a rebase), `change_transition`, `task_complete` and `verify_record`. If a tool can't do something, edit the file directly; only the status and `- [x]` always go through `change_transition` and `task_complete`.
+- Issues on GitHub (repo of `origin`): what a client asked for, before it becomes work. Read and write them with `issue_create` (always draft), `issue_get`, `issue_list` and `issue_transition` (approve with the user's exact words, or discard); never edit their `seckert:*` labels by hand. Rules in `sdd/specs/issues.md`.
 - Design lives in the Claude artifact; the change only links it in `design:`.
 - To create or tidy `AGENTS.md`, follow [agents-template.md](agents-template.md) with what you find in the repo and show it before writing it.
 
