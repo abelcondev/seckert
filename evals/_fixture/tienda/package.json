@@ -1,0 +1,5 @@
+{
+  "name": "tienda",
+  "private": true,
+  "scripts": { "test": "bun test" }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "seckert",
+  "owner": {
+    "name": "abelcondev"
+  },
+  "metadata": {
+    "description": "Plugin seckert para Claude Code"
+  },
+  "plugins": [
+    {
+      "name": "seckert",
+      "source": "./",
+      "description": "SDD ligero con diseño desde artifacts de Claude",
+      "version": "1.0.0"
+    }
+  ]
+}

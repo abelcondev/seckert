@@ -1,0 +1,17 @@
+{
+  "name": "seckert",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:mcp": "bun build mcp/server.ts --target node --format esm --minify --outfile mcp/dist/server.mjs",
+    "test:mcp": "bun run build:mcp && tsc -p mcp && bun test mcp/",
+    "test": "bun run test:mcp && claude plugin test . && sh tests/find-chrome.sh && sh tests/guard-branch.sh"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "@types/bun": "^1.4.4",
+    "@types/node": "^26.6.6",
+    "typescript": "^7.0.2",
+    "zod": "4.6.7"
+  }
+}

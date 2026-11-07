@@ -1,0 +1,42 @@
+#!/bin/sh
+# Contexto de inicio de sesión: recuerda el flujo de seckert y lista los changes abiertos.
+
+# Desde la raíz del repo, aunque la sesión arranque en una subcarpeta.
+root=$(git rev-parse --show-toplevel 2>/dev/null) && cd "$root"
+
+cat <<'TXT'
+Project with the seckert plugin: the user speaks naturally, without commands. Reply in the user's language.
+- Small work (bug, style, copy, refactor, a screen without new logic) is done directly: no announcing the route, no documents, no branch switch. Changing the value of an existing rule (a threshold, a price) too, updating its spec in sdd/specs.
+- Large or sensitive work (schema, new money or permissions logic, AI, unclear approach) goes through a proposal (seckert:change) and waits for the "sí". With a change in proposed, "sí"/"dale" approves it (seckert:next).
+- Write sdd/changes with change_update and sdd/specs with spec_write (seckert MCP); edit the file directly only if a tool can't do it.
+- Logic bug, even a small one: first a test that reproduces it and see it fail; then the fix.
+- When proposing the next step, phrase it as something the user can answer ("¿lo verifico?", "si está bien, lo cierro y abro el PR"); never ask them to type a command like /seckert:done.
+- When in doubt, one question. Push, PR, merge and releases only when the user asks.
+- Short answers: for a small change, what changed and how it was checked in 2-3 lines, without repeating the request.
+- Writing (chat and documents): sentences of about 20 words at most, one idea each, active voice, one term per thing, no filler.
+- Tests: only the affected file while iterating; the suite once before committing, showing only failures. Huge files: Grep, not Read.
+TXT
+
+if git rev-parse --git-dir >/dev/null 2>&1; then
+  . "$(dirname "$0")/detect-flow.sh"
+  case "$SECKERT_FLOW" in
+    gitflow-staging)
+      echo "Branch flow (detected): gitflow with staging. Work branches from $SECKERT_DEVELOP with PR to $SECKERT_DEVELOP; releases $SECKERT_DEVELOP → $SECKERT_STAGING (QA) → $SECKERT_MAIN; hotfix from $SECKERT_MAIN and back to $SECKERT_MAIN, $SECKERT_STAGING and $SECKERT_DEVELOP." ;;
+    gitflow)
+      echo "Branch flow (detected): gitflow. Work branches from $SECKERT_DEVELOP with PR to $SECKERT_DEVELOP; releases $SECKERT_DEVELOP → $SECKERT_MAIN; hotfix from $SECKERT_MAIN and back to $SECKERT_MAIN and $SECKERT_DEVELOP." ;;
+    prs)
+      echo "Branch flow (detected): PRs only. Work branches from $SECKERT_MAIN with PR to $SECKERT_MAIN; a release is a version bump by PR plus a tag; a hotfix is a normal fix with priority." ;;
+  esac
+  echo "Protected branches (no direct commit or push): $SECKERT_PROTECTED. If the user asks to commit and you are on one, create fix/<slug> from the base (feature/<slug> is for an approved change). If they don't ask, don't switch branches or commit."
+fi
+
+# La preferencia vive en .claude/settings.local.json (env.SECKERT_QA). Se lee también del archivo
+# por si el env de los settings no llegó al hook.
+if [ "$SECKERT_QA" = "sin-navegador" ] || grep -Eqs '"SECKERT_QA"[[:space:]]*:[[:space:]]*"sin-navegador"' .claude/settings.local.json; then
+  echo "QA: SECKERT_QA=sin-navegador (this user's local preference). Don't offer to install Chrome DevTools or a browser; what's only visible in the app is NO VERIFICABLE (sin navegador)."
+fi
+
+# Los changes abiertos, con el mismo lector que el servidor MCP del plugin.
+[ -d sdd/changes ] || exit 0
+command -v node >/dev/null 2>&1 && node "$(dirname "$0")/../mcp/dist/server.mjs" --context 2>/dev/null
+exit 0

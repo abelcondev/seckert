@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="400" viewBox="0 0 1200 400" role="img" aria-label="Las tres rutas: FIX, SPEC y CHANGE">
+  <style>
+    .t{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif}
+    .h{font-size:34px;font-weight:800;letter-spacing:1px;fill:#fff}
+    .s{font-size:19px;fill:#f3eefe}
+    .m{font-size:17px;fill:#ffffff;fill-opacity:.85}
+    .p{font-size:16px;font-weight:700;fill:#1b1033}
+  </style>
+  <rect width="1200" height="400" rx="28" fill="#1b1033"/>
+  <text x="600" y="58" text-anchor="middle" class="t" font-size="22" fill="#cfc2f5">Le pides algo en palabras → seckert elige cuánto proceso hace falta</text>
+
+  <!-- FIX -->
+  <rect x="40" y="90" width="355" height="270" rx="22" fill="#14806b"/>
+  <text x="72" y="145" class="t h">FIX</text>
+  <text x="72" y="190" class="t s">Bug, texto, estilo,</text>
+  <text x="72" y="216" class="t s">pantalla sin lógica nueva</text>
+  <text x="72" y="262" class="t m">Lo hace directo.</text>
+  <text x="72" y="286" class="t m">Bug de lógica: test que falla primero.</text>
+  <rect x="72" y="312" width="150" height="30" rx="15" fill="#b8f5e4"/>
+  <text x="147" y="333" text-anchor="middle" class="t p">sin papeles</text>
+
+  <!-- SPEC -->
+  <rect x="422" y="90" width="355" height="270" rx="22" fill="#2f5fd0"/>
+  <text x="454" y="145" class="t h">SPEC</text>
+  <text x="454" y="190" class="t s">Cambiar el valor de una regla:</text>
+  <text x="454" y="216" class="t s">un umbral, un precio</text>
+  <text x="454" y="262" class="t m">Cambia el código y deja</text>
+  <text x="454" y="286" class="t m">la regla escrita al día.</text>
+  <rect x="454" y="312" width="140" height="30" rx="15" fill="#c9d8ff"/>
+  <text x="524" y="333" text-anchor="middle" class="t p">sdd/specs</text>
+
+  <!-- CHANGE -->
+  <rect x="804" y="90" width="355" height="270" rx="22" fill="#b0306f"/>
+  <text x="836" y="145" class="t h">CHANGE</text>
+  <text x="836" y="190" class="t s">Schema, dinero, permisos, IA</text>
+  <text x="836" y="216" class="t s">o trabajo grande</text>
+  <text x="836" y="262" class="t m">Propuesta primero; código</text>
+  <text x="836" y="286" class="t m">solo después de tu «dale».</text>
+  <rect x="836" y="312" width="200" height="30" rx="15" fill="#ffd0e6"/>
+  <text x="936" y="333" text-anchor="middle" class="t p">sdd/changes + tu sí</text>
+</svg>

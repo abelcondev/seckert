@@ -1,0 +1,8 @@
+# Tipos que Claude Code genera al cargar el módulo
+.claude-plugin/types/
+tsconfig.json
+
+# Resultados crudos de claude plugin eval (los números van a evals/RESULTS.md)
+evals/results/
+node_modules/
+!mcp/tsconfig.json
