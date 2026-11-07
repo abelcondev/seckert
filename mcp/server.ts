@@ -20,6 +20,8 @@ import {
 } from './repo'
 import { testsOnBase } from './base'
 import { prDraft, releaseDraft } from './pr'
+import { issueCreate, issueGet, issueList, issueTransition } from './issues'
+import { checkTransition } from '../lib/issue'
 
 const server = new McpServer({ name: 'seckert', version: '1.0.0' })
 
@@ -277,6 +279,91 @@ server.registerTool(
   async args => {
     try {
       return json(releaseDraft(projectRoot(), args))
+    } catch (error) {
+      return failure(error)
+    }
+  },
+)
+
+const STATE = z.enum(['draft', 'approved', 'in-progress', 'in-review', 'closed', 'discarded'])
+
+server.registerTool(
+  'issue_create',
+  {
+    description:
+      'Creates a seckert issue in the GitHub repo of `origin`, always as draft (label seckert:draft). The body has fixed sections: context with the client\'s literal quote, acceptance criteria, suggested route (FIX, SPEC or CHANGE) and origin. Approving it is a separate step with issue_transition and the user\'s words.',
+    inputSchema: {
+      title: z.string(),
+      context: z.string().describe('Where it comes from and why, in a few sentences'),
+      quote: z.string().optional().describe('What the client said, verbatim'),
+      criteria: z.array(z.string()).min(1).describe('Observable acceptance criteria'),
+      route: z.enum(['FIX', 'SPEC', 'CHANGE']),
+      origin: z
+        .object({ meeting: z.string().optional(), date: z.string().optional(), client: z.string().optional() })
+        .default({})
+        .describe('meeting: path of the transcript in sdd/reuniones'),
+    },
+    annotations: { destructiveHint: false },
+  },
+  async args => {
+    try {
+      return json(issueCreate(projectRoot(), args))
+    } catch (error) {
+      return failure(error)
+    }
+  },
+)
+
+server.registerTool(
+  'issue_get',
+  {
+    description:
+      'A seckert issue from GitHub, structured, with its state: draft, approved and discarded come from the seckert:* label; in-progress (linked branch), in-review (linked open PR) and closed (merged) are read from GitHub.',
+    inputSchema: { id: z.string().describe('The issue number') },
+    annotations: { readOnlyHint: true },
+  },
+  async ({ id }) => {
+    try {
+      return json(issueGet(projectRoot(), id))
+    } catch (error) {
+      return failure(error)
+    }
+  },
+)
+
+server.registerTool(
+  'issue_list',
+  {
+    description: 'Lists seckert issues (id, title, state, route, url). Open ones by default; with state, all issues in that state.',
+    inputSchema: { state: STATE.optional() },
+    annotations: { readOnlyHint: true },
+  },
+  async ({ state }) => {
+    try {
+      return json(issueList(projectRoot(), state))
+    } catch (error) {
+      return failure(error)
+    }
+  },
+)
+
+server.registerTool(
+  'issue_transition',
+  {
+    description:
+      'Moves a seckert issue\'s triage: draft → approved (only when the user approved it: `aprobacion` is their exact words, left as a comment on the issue) or → discarded (closes it as not planned, with an optional reason). in-progress, in-review and closed are never set by hand: GitHub shows them.',
+    inputSchema: {
+      id: z.string(),
+      to: STATE,
+      aprobacion: z.string().optional().describe('The user\'s exact words approving it'),
+      motivo: z.string().optional().describe('Why it is discarded'),
+    },
+    annotations: { destructiveHint: false },
+  },
+  async ({ id, to, aprobacion, motivo }) => {
+    try {
+      if (to !== 'approved' && to !== 'discarded') throw new Error(checkTransition('approved', to)!)
+      return json(issueTransition(projectRoot(), { id, to, aprobacion, motivo }))
     } catch (error) {
       return failure(error)
     }
