@@ -37,12 +37,12 @@ stateDiagram-v2
 
 ## Tasks
 
-- [x] T1 [datos] `lib/issue.ts`: issue canónico, render a markdown y parseo de vuelta, estados y transiciones válidas, con tests <!-- commit: a631bb7 -->
-- [x] T2 [datos] `lib/trackers/github.ts`: adaptador sobre `gh` (crear, leer, listar por label, cambiar label), con tests sobre un `gh` simulado <!-- commit: 54e169c -->
-- [x] T3 MCP: `issue_create`, `issue_get`, `issue_list`, `issue_transition`, con tests en `mcp/` <!-- commit: e1131e2 -->
-- [x] T4 Descubrir el repo de GitHub desde `origin`, con tests <!-- commit: e1131e2 -->
-- [x] T5 Spec `sdd/specs/issues.md` y skill `status` que muestre los issues por estado <!-- commit: 176368f -->
-- [x] T6 [datos] Labels propias solo para el triage; `in-progress`, `in-review` y `closed` se leen de GitHub (rama enlazada, PR enlazado, issue cerrado). Ajusta `lib/issue.ts` y `lib/trackers/github.ts`, con tests <!-- commit: e26438b -->
+- [x] T1 [datos] `lib/issue.ts`: issue canónico, render a markdown y parseo de vuelta, estados y transiciones válidas, con tests <!-- commit: f7f9a17 -->
+- [x] T2 [datos] `lib/trackers/github.ts`: adaptador sobre `gh` (crear, leer, listar por label, cambiar label), con tests sobre un `gh` simulado <!-- commit: f7f9a17 -->
+- [x] T3 MCP: `issue_create`, `issue_get`, `issue_list`, `issue_transition`, con tests en `mcp/` <!-- commit: f7f9a17 -->
+- [x] T4 Descubrir el repo de GitHub desde `origin`, con tests <!-- commit: f7f9a17 -->
+- [x] T5 Spec `sdd/specs/issues.md` y skill `status` que muestre los issues por estado <!-- commit: f7f9a17 -->
+- [x] T6 [datos] Labels propias solo para el triage; `in-progress`, `in-review` y `closed` se leen de GitHub (rama enlazada, PR enlazado, issue cerrado). Ajusta `lib/issue.ts` y `lib/trackers/github.ts`, con tests <!-- commit: f7f9a17 -->
 
 ## Testing
 
@@ -67,3 +67,4 @@ stateDiagram-v2
 - **L5** 2026-11-07: prueba en GitHub real (abelcondev/seckert, "dale, probalo en github real"): issue #3 creado en draft con el cuerpo de seckert; aprobar sin palabras falló y con palabras dejó seckert:approved y el comentario; rama enlazada con gh issue develop → in-progress; PR borrador #4 con Fixes #3 → in-review; descartar → CLOSED/NOT_PLANNED, discarded. Sin probar en real: closed por merge (no se mergeó a main). Limpieza: PR #4 cerrado, rama borrada, issue #3 borrado; quedan las 3 labels seckert:*.
 - 2026-11-07 verify: PASA "Un issue canónico: título, contexto (de dónde sale, con cita textual), criterios de aceptación, ruta sugerida (FIX, SPEC o CHANGE) y origen (reunión, fecha, cliente)"; PASA "Estados del issue: `draft` → `approved` → `in-progress` → `in-review` → `closed`, o `discarded`. Solo el triage es label propia (`seckert:draft`, `seckert:approved`, `seckert:discarded`); `in-progress`, `in-review` y `closed` se leen de GitHub: rama enlazada al issue, PR enlazado abierto e issue cerrado. La transición la hace siempre la herramienta, nunca Claude a mano"; PASA "Herramientas del MCP: `issue_create`, `issue_get`, `issue_list` (por estado) e `issue_transition`, sobre GitHub Issues vía `gh`"; PASA "Los issues van al repo de GitHub del remoto `origin`; sin config"; PASA "Pasar a `approved` exige las palabras del usuario, igual que aprobar un change". Comandos: `bun run test (MCP 51, módulo 68, shell sin fallos)`.
 - 2026-11-07: cerrado ("dale, verificalo y abrí el PR").
+- 2026-11-07: historial rehecho en un repo nuevo ("Repo nuevo, 1 commit"): todas las tareas quedan en f7f9a17; los hashes anteriores del Log ya no existen.
