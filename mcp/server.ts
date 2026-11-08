@@ -22,7 +22,7 @@ import {
 import { testsOnBase } from './base'
 import { prDraft, releaseDraft } from './pr'
 import { boardList, boardSetup, boardSync, issuePlan } from './board'
-import { issueAnswer, issueClose, issueCreate, issueGet, issueList, issueTake, issueTransition } from './issues'
+import { issueAnswer, issueClose, issueLink, issueCreate, issueGet, issueList, issueTake, issueTransition } from './issues'
 import { checkTransition } from '../lib/issue'
 
 const server = new McpServer({ name: 'seckert', version: '1.0.0' })
@@ -443,6 +443,28 @@ server.registerTool(
   async args => {
     try {
       return json(boardList(projectRoot(), args))
+    } catch (error) {
+      return failure(error)
+    }
+  },
+)
+
+server.registerTool(
+  'issue_link',
+  {
+    description:
+      'Links issues that already exist: `parent` makes it a native sub-issue of another, `blockedBy` marks the issues that must close first, `removeBlockedBy` removes those marks. Returns the parent and what blocks it.',
+    inputSchema: {
+      id: z.string().describe('The issue to link'),
+      parent: z.string().optional().describe('Parent issue number'),
+      blockedBy: z.array(z.string()).optional().describe('Issue numbers that block it'),
+      removeBlockedBy: z.array(z.string()).optional().describe('Issue numbers that no longer block it'),
+    },
+    annotations: { destructiveHint: false },
+  },
+  async args => {
+    try {
+      return json(issueLink(projectRoot(), args))
     } catch (error) {
       return failure(error)
     }

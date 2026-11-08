@@ -187,3 +187,18 @@ export function issueClose(root: string, id: string) {
   gh(['issue', 'close', id, '--repo', repo, '--reason', 'completed'])
   return { id, closed: true, parts: total, url: issue.url }
 }
+
+// Relaciones entre issues que ya existen: padre (sub-issue) y bloqueos nativos.
+export function issueLink(root: string, input: { id: string; parent?: string; blockedBy?: string[]; removeBlockedBy?: string[] }) {
+  const { gh, repo, issues } = tracker(root)
+  const n = (v: string) => v.replace(/^#/, '')
+  const args = [
+    ...(input.blockedBy?.length ? ['--add-blocked-by', input.blockedBy.map(n).join(',')] : []),
+    ...(input.removeBlockedBy?.length ? ['--remove-blocked-by', input.removeBlockedBy.map(n).join(',')] : []),
+    ...(input.parent ? ['--parent', n(input.parent)] : []),
+  ]
+  if (!args.length) throw new Error('Pasá `parent`, `blockedBy` o `removeBlockedBy`.')
+  gh(['issue', 'edit', n(input.id), '--repo', repo, ...args])
+  const issue = issues.get(n(input.id))
+  return { id: issue.id, parent: issue.parent, blockedBy: issue.blockedBy, url: issue.url }
+}

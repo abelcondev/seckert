@@ -344,3 +344,14 @@ test('issue_close cierra la feature solo cuando todos sus sub-issues están cerr
   expect(db().issues[0]).toMatchObject({ state: 'CLOSED', stateReason: 'COMPLETED' })
   expect(db().issues[0]!.comments.at(-1)).toContain('2 de 2')
 })
+
+test('issue_link marca padre y bloqueos entre issues que ya existen, y los saca', async () => {
+  await call('issue_create', { ...ISSUE, title: 'Feature' })
+  await call('issue_create', { ...ISSUE, title: 'Fix del total' })
+  await call('issue_create', { ...ISSUE, title: 'Exportar' })
+  const { value, error } = await call('issue_link', { id: '3', parent: '1', blockedBy: ['2'] })
+  expect(error).toBeNull()
+  expect(value).toMatchObject({ id: '3', parent: '1', blockedBy: [{ id: '2', open: true, title: 'Fix del total' }] })
+  expect(db().calls.find(c => c[1] === 'edit' && c.includes('--add-blocked-by'))).toEqual(expect.arrayContaining(['--add-blocked-by', '2', '--parent', '1']))
+  expect((await call('issue_link', { id: '3', removeBlockedBy: ['2'] })).value.blockedBy).toEqual([])
+})
