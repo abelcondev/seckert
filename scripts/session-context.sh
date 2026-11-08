@@ -4,11 +4,21 @@
 # Desde la raíz del repo, aunque la sesión arranque en una subcarpeta.
 root=$(git rev-parse --show-toplevel 2>/dev/null) && cd "$root"
 
+# Modo issues: `seckert issues: github` en AGENTS.md o CLAUDE.md. Los pedidos van a GitHub y el change vive en su issue.
+issues=0
+grep -Eiqs '^[[:space:]]*([-*][[:space:]]*)?`?seckert issues:[[:space:]]*github`?[[:space:]]*$' AGENTS.md CLAUDE.md && issues=1
+
 cat <<'TXT'
 Project with the seckert plugin: the user speaks naturally, without commands. Reply in the user's language.
 - Small work (bug, style, copy, refactor, a screen without new logic) is done directly: no announcing the route, no documents, no branch switch. Changing the value of an existing rule (a threshold, a price) too, updating its spec in sdd/specs.
 - Large or sensitive work (schema, new money or permissions logic, AI, unclear approach) goes through a proposal (seckert:change) and waits for the "sí". With a change in proposed, "sí"/"dale" approves it (seckert:next).
-- Write sdd/changes with change_update and sdd/specs with spec_write (seckert MCP); edit the file directly only if a tool can't do it.
+TXT
+if [ "$issues" = 1 ]; then
+  echo "- Write a CHANGE's plan in its issue with change_update and sdd/specs with spec_write (seckert MCP); edit a file directly only if a tool can't do it."
+else
+  echo "- Write sdd/changes with change_update and sdd/specs with spec_write (seckert MCP); edit the file directly only if a tool can't do it."
+fi
+cat <<'TXT'
 - Logic bug, even a small one: first a test that reproduces it and see it fail; then the fix.
 - When proposing the next step, phrase it as something the user can answer ("¿lo verifico?", "si está bien, lo cierro y abro el PR"); never ask them to type a command like /seckert:done.
 - When in doubt, one question. Push, PR, merge and releases only when the user asks.
@@ -36,10 +46,7 @@ if [ "$SECKERT_QA" = "sin-navegador" ] || grep -Eqs '"SECKERT_QA"[[:space:]]*:[[
   echo "QA: SECKERT_QA=sin-navegador (this user's local preference). Don't offer to install Chrome DevTools or a browser; what's only visible in the app is NO VERIFICABLE (sin navegador)."
 fi
 
-# Modo issues: `seckert issues: github` en AGENTS.md o CLAUDE.md. Los pedidos van a GitHub y el change vive en su issue.
-issues=0
-if grep -Eiqs '^[[:space:]]*([-*][[:space:]]*)?`?seckert issues:[[:space:]]*github`?[[:space:]]*$' AGENTS.md CLAUDE.md; then
-  issues=1
+if [ "$issues" = 1 ]; then
   cat <<'TXT'
 Issues mode (`seckert issues: github`): GitHub issues are the work tracker, and a CHANGE lives in its issue (the plan is its `Plan` artifact; no sdd/changes file).
 - Every work request (a fix, a feature, a change; not a question, an explanation or an exploration) becomes an issue with issue_create, in the request's language, without the user saying "create an issue". Small work too: it gets an issue, then it is done directly.
