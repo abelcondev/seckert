@@ -44,6 +44,7 @@ if grep -Eiqs '^[[:space:]]*([-*][[:space:]]*)?`?seckert issues:[[:space:]]*gith
 Issues mode (`seckert issues: github`): GitHub issues are the work tracker, and a CHANGE lives in its issue (the plan is its `Plan` artifact; no sdd/changes file).
 - Every work request (a fix, a feature, a change; not a question, an explanation or an exploration) becomes an issue with issue_create, in the request's language, without the user saying "create an issue". Small work too: it gets an issue, then it is done directly.
 - A request from the user with no open questions: create it, approve it with their words (issue_transition) and take it (seckert:tomar). A FIX ends in a PR; a CHANGE attaches its plan and waits for the "dale". With "para después" or "anotalo", only create it.
+- Board (if the repo has a GitHub Projects board): board_plan sets priority, size and cycle; board_list answers what is in the current cycle; board_sync moves cards after a PR or a merge.
 - What isn't clear yet stays in the session, without an issue. When the discussion reaches something concrete, offer in one line to turn it into an issue, with what was decided in Decisions. Small pending doubts go to Open questions and block approval until answered (issue_answer).
 TXT
 fi

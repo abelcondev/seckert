@@ -3,6 +3,7 @@ import { execFileSync } from 'node:child_process'
 
 import { answerQuestion, branchFor, checkTransition, openQuestionsProblem, takeProblem, type Issue, type IssueState, type Kind } from '../lib/issue'
 import { ArtifactsUnavailable, githubTracker, type Gh } from '../lib/trackers/github'
+import { issuePlan, syncIssue, type Plan } from './board'
 import { baseBranch } from './repo'
 
 // owner/repo de una URL de GitHub (ssh o https), o null si no es de GitHub.
@@ -56,9 +57,9 @@ export function designOf(issues: ReturnType<typeof tracker>['issues'], issue: { 
 
 // Crea el issue en draft. Con diseño, lo adjunta como artifact link «Design»; sin
 // artifacts, lo agrega a References.
-export function issueCreate(root: string, issue: Issue & { design?: string; parent?: string; blockedBy?: string[] }) {
+export function issueCreate(root: string, issue: Issue & Plan & { design?: string; parent?: string; blockedBy?: string[] }) {
   const { issues } = tracker(root)
-  const { design, parent, blockedBy, ...rest } = issue
+  const { design, parent, blockedBy, priority, size, cycle, ...rest } = issue
   let { rawBody: _raw, ...created } = issues.create(rest, 'draft', { parent, blockedBy })
   if (design?.trim()) {
     try {
@@ -70,7 +71,15 @@ export function issueCreate(root: string, issue: Issue & { design?: string; pare
       ;({ rawBody: _raw, ...created } = issues.get(created.id))
     }
   }
-  return { ...created, design: design?.trim() || null }
+  let board = syncIssue(root, created.id)
+  if (!board && (priority || size || cycle)) {
+    try {
+      issuePlan(root, { id: created.id, priority, size, cycle })
+    } catch (error) {
+      board = `no se pudo planificar en el tablero: ${(error as Error).message}`
+    }
+  }
+  return { ...created, design: design?.trim() || null, ...(board ? { board } : {}) }
 }
 
 export function issueGet(root: string, id: string) {
@@ -98,7 +107,8 @@ export function issueTransition(root: string, input: { id: string; to: 'approved
       ? `Aprobado por el usuario: «${input.aprobacion!.trim()}»`
       : `Descartado${input.motivo?.trim() ? `: ${input.motivo.trim()}` : ''}`
   gh(['issue', 'comment', input.id, '--repo', repo, '--body', note])
-  return { id: input.id, from: current.state, to: input.to, url: current.url }
+  const board = syncIssue(root, input.id)
+  return { id: input.id, from: current.state, to: input.to, url: current.url, ...(board ? { board } : {}) }
 }
 
 function git(root: string, ...args: string[]): string {
@@ -147,7 +157,8 @@ export function issueTake(root: string, id: string, force = false) {
     how = 'creada'
   }
   const { state: _state, rawBody: _raw, ...rest } = issue
-  return { ...rest, design: designOf(issues, issue), branch, how }
+  const board = syncIssue(root, id)
+  return { ...rest, design: designOf(issues, issue), branch, how, ...(board ? { board } : {}) }
 }
 
 // Responde una pregunta abierta: la pasa a Decisions en el cuerpo y lo deja como comentario.

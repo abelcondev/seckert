@@ -21,6 +21,7 @@ import {
 } from './repo'
 import { testsOnBase } from './base'
 import { prDraft, releaseDraft } from './pr'
+import { boardList, boardSetup, boardSync, issuePlan } from './board'
 import { issueAnswer, issueClose, issueCreate, issueGet, issueList, issueTake, issueTransition } from './issues'
 import { checkTransition } from '../lib/issue'
 
@@ -318,6 +319,9 @@ server.registerTool(
       kind: z.enum(['feature', 'fix', 'task']).optional().describe('Issue type, as the label type:<kind>'),
       design: z.string().url().optional().describe('Design link (a claude.ai artifact, Figma…): attached as the link artifact «Design»'),
       parent: z.string().optional().describe('Parent issue number: the new issue is its native sub-issue (a part of a feature)'),
+      priority: z.enum(['Urgent', 'High', 'Medium', 'Low']).optional().describe('Priority on the repo board, if there is one'),
+      size: z.enum(['XS', 'S', 'M', 'L', 'XL']).optional().describe('Estimate on the repo board'),
+      cycle: z.string().optional().describe('Cycle on the repo board: current, next, none or an iteration title'),
       blockedBy: z.array(z.string()).optional().describe('Issue numbers that must close first (native blocked-by)'),
       routeWhy: z.string().optional().describe('Why that route, in a few words'),
       origin: z
@@ -363,6 +367,82 @@ server.registerTool(
   async ({ state, kind }) => {
     try {
       return json(issueList(projectRoot(), state, kind))
+    } catch (error) {
+      return failure(error)
+    }
+  },
+)
+
+server.registerTool(
+  'board_setup',
+  {
+    description:
+      'Creates or completes the GitHub Projects board of the repo: finds the Project linked to the repo or creates one named after the repo and links it, and ensures its fields: Status (Draft, Approved, In Progress, In Review, Done), Priority, Size and Cycle (2-week iterations). Needs the `project` scope in gh. Only when the user asks for a board.',
+    inputSchema: {},
+    annotations: { destructiveHint: false },
+  },
+  async () => {
+    try {
+      return json(boardSetup(projectRoot()))
+    } catch (error) {
+      return failure(error)
+    }
+  },
+)
+
+server.registerTool(
+  'board_sync',
+  {
+    description:
+      'Moves seckert issues on the repo board to the Status of their real state (draft, approved, in-progress, in-review from a linked open PR, done when closed; discarded is archived). Call it after opening a PR and after a merge. Without ids: all open seckert issues. Without a board linked to the repo it does nothing.',
+    inputSchema: { ids: z.array(z.string()).optional().describe('Issue numbers to sync, e.g. the one just merged') },
+    annotations: { destructiveHint: false },
+  },
+  async ({ ids }) => {
+    try {
+      return json(boardSync(projectRoot(), ids))
+    } catch (error) {
+      return failure(error)
+    }
+  },
+)
+
+server.registerTool(
+  'board_plan',
+  {
+    description:
+      'Sets the priority (Urgent, High, Medium, Low), size (XS–XL) and cycle (current, next, none or an iteration title) of an issue on the repo board. Only what is passed changes. Fails if the repo has no board (board_setup creates it, only if the user wants one).',
+    inputSchema: {
+      id: z.string().describe('The issue number'),
+      priority: z.enum(['Urgent', 'High', 'Medium', 'Low']).optional(),
+      size: z.enum(['XS', 'S', 'M', 'L', 'XL']).optional(),
+      cycle: z.string().optional().describe('current, next, none or an iteration title'),
+    },
+    annotations: { destructiveHint: false },
+  },
+  async args => {
+    try {
+      return json(issuePlan(projectRoot(), args))
+    } catch (error) {
+      return failure(error)
+    }
+  },
+)
+
+server.registerTool(
+  'board_list',
+  {
+    description:
+      'Lists what is on the repo board, ordered by priority: by default the current cycle. Answers "¿qué entra en este cycle?", "¿qué es lo más urgente?". cycle: current, next, all, none (without a cycle) or an iteration title; status filters by column.',
+    inputSchema: {
+      cycle: z.string().optional().describe('current (default), next, all, none or an iteration title'),
+      status: z.string().optional().describe('Draft, Approved, In Progress, In Review or Done'),
+    },
+    annotations: { readOnlyHint: true },
+  },
+  async args => {
+    try {
+      return json(boardList(projectRoot(), args))
     } catch (error) {
       return failure(error)
     }
