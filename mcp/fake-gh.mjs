@@ -66,6 +66,34 @@ if (group === 'label' && cmd === 'create') {
   const issue = find(args[2])
   issue.branches = [...(issue.branches ?? []), flag('--name')]
   if (args.includes('--checkout')) execFileSync('git', ['switch', '-q', '-c', flag('--name')])
+} else if (group === 'api') {
+  // Issue artifacts: GET/POST/PATCH sobre repos/<o>/<r>/issues/<n>/artifacts[/<m>]. Con
+  // artifactsUnavailable, la API no existe para el repo (preview no habilitada).
+  if (db.artifactsUnavailable) {
+    process.stderr.write('HTTP 404: Not Found\n')
+    save()
+    process.exit(1)
+  }
+  const method = flag('-X') ?? 'GET'
+  const path = args.find(a => a.startsWith('repos/'))
+  const m = path.match(/^repos\/[^/]+\/[^/]+\/issues\/(\d+)\/artifacts(?:\/(\d+))?(?:\?type=(\w+))?$/)
+  const issue = find(m[1])
+  issue.artifacts = issue.artifacts ?? []
+  const out = a => ({ ...a, html_url: `https://github.com/x/issues/${issue.number}#artifact-${a.number}` })
+  if (method === 'GET') {
+    process.stdout.write(JSON.stringify(issue.artifacts.filter(a => !m[3] || a.type === m[3]).map(out)))
+  } else if (method === 'POST') {
+    const input = JSON.parse(readFileSync(0, 'utf8'))
+    const artifact = { number: issue.artifacts.length + 1, type: input.type ?? 'generic', name: input.name, body: input.body, versions: [input.body] }
+    issue.artifacts.push(artifact)
+    process.stdout.write(JSON.stringify(out(artifact)))
+  } else if (method === 'PATCH') {
+    const input = JSON.parse(readFileSync(0, 'utf8'))
+    const artifact = issue.artifacts.find(a => String(a.number) === m[2])
+    artifact.body = input.body
+    artifact.versions.push(input.body)
+    process.stdout.write(JSON.stringify(out(artifact)))
+  }
 } else if (group === 'pr' && cmd === 'create') {
   // Guarda el PR y lo enlaza a los issues que nombra con Fixes #n (quedan in-review).
   const bodyFile = flag('--body-file')

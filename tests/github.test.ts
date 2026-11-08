@@ -1,7 +1,7 @@
 import { expect, test } from 'claude-code/testing'
 
 import { renderBody, type Issue } from '../lib/issue'
-import { githubTracker, type Gh } from '../lib/trackers/github'
+import { ArtifactsUnavailable, githubTracker, type Gh } from '../lib/trackers/github'
 
 const ISSUE: Issue = {
   title: 'Exportar pedidos a CSV',
@@ -125,4 +125,31 @@ test('descartar además cierra el issue como no planeado', () => {
 test('un estado que lee GitHub no se escribe', () => {
   const { gh } = fakeGh()
   expect(() => githubTracker('o/r', gh).setState('12', 'approved', 'in-progress')).toThrow()
+})
+
+const ART = { id: 9, number: 1, type: 'plan', name: 'Plan', body: 'texto', html_url: 'https://github.com/o/r/issues/12#artifact-1' }
+
+test('los artifacts se leen y escriben por la API REST con la versión de la API', () => {
+  const { gh, calls } = fakeGh({
+    'api -H X-GitHub-Api-Version: 2026-03-10 repos/o/r/issues/12/artifacts?type=plan': JSON.stringify([ART]),
+    'api -H X-GitHub-Api-Version: 2026-03-10 -X POST': JSON.stringify(ART),
+    'api -H X-GitHub-Api-Version: 2026-03-10 -X PATCH': JSON.stringify({ ...ART, body: 'nuevo' }),
+  })
+  const t = githubTracker('o/r', gh)
+  expect(t.artifacts.list('12', 'plan')).toEqual([{ number: 1, type: 'plan', name: 'Plan', body: 'texto', url: ART.html_url }])
+  t.artifacts.create('12', { type: 'plan', name: 'Plan', body: 'texto' })
+  const post = calls.find(c => c.args.includes('POST'))!
+  expect(post.args).toEqual(['api', '-H', 'X-GitHub-Api-Version: 2026-03-10', '-X', 'POST', 'repos/o/r/issues/12/artifacts', '--input', '-'])
+  expect(JSON.parse(post.input!)).toEqual({ type: 'plan', name: 'Plan', body: 'texto' })
+  expect(t.artifacts.update('12', 1, 'nuevo').body).toBe('nuevo')
+  const patch = calls.find(c => c.args.includes('PATCH'))!
+  expect(patch.args).toContain('repos/o/r/issues/12/artifacts/1')
+  expect(JSON.parse(patch.input!)).toEqual({ body: 'nuevo' })
+})
+
+test('si la API de artifacts no existe para el repo, el error lo dice', () => {
+  const gh: Gh = () => {
+    throw new Error('gh api falló: HTTP 404: Not Found')
+  }
+  expect(() => githubTracker('o/r', gh).artifacts.list('12', 'plan')).toThrow(ArtifactsUnavailable)
 })

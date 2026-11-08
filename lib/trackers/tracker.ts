@@ -4,7 +4,18 @@ import type { Issue, IssueBody, IssueState, Kind } from '../issue'
 
 export type TrackedIssue = Omit<Issue, 'kind'> & { id: string; url: string; state: IssueState | null; kind: Kind | null }
 
+export type ArtifactType = 'plan' | 'link' | 'generic'
+export type Artifact = { number: number; type: ArtifactType; name: string; body: string; url: string }
+
+// Los adjuntos de un issue (issue artifacts), con historial de versiones en el tracker.
+export interface Artifacts {
+  list(id: string, type?: ArtifactType): Artifact[]
+  create(id: string, artifact: { type: ArtifactType; name: string; body: string }): Artifact
+  update(id: string, number: number, body: string): Artifact
+}
+
 export interface Tracker {
+  artifacts: Artifacts
   create(issue: Issue, state: IssueState): TrackedIssue
   get(id: string): TrackedIssue
   // Sin estado: todos los issues de seckert abiertos.
