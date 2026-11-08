@@ -226,7 +226,7 @@ test('issue_take no toma un issue sin aprobar ni uno ya en revisión', async () 
 })
 
 test('pr_draft de un FIX tomado de un issue, sin change: el cuerpo sale del issue y lleva Fixes #n', async () => {
-  await call('issue_create', { ...ISSUE, title: 'Arreglar el total', route: 'FIX' })
+  await call('issue_create', { ...ISSUE, title: 'Arreglar el total', route: 'FIX', decisions: [{ text: 'Redondear a 2 decimales', by: 'Abel' }], outOfScope: ['Cambiar impuestos'] })
   await call('issue_transition', { id: '1', to: 'approved', aprobacion: 'dale' })
   await call('issue_take', { id: '1' })
   writeFileSync(join(repo, 'src', 'total.ts'), 'x\n')
@@ -238,8 +238,8 @@ test('pr_draft de un FIX tomado de un issue, sin change: el cuerpo sale del issu
   expect(value).toMatchObject({ base: 'main', branch: 'fix/arreglar-el-total', title: 'fix: arreglar el total', issue: '1', files: 1 })
   const body: string = value.body
   expect(body.startsWith('Fixes #1\n\n## Why')).toBe(true)
-  expect(body).toContain(`## Why\n\n${ISSUE.problem}\n\n> ${ISSUE.quote}`)
-  expect(body).toContain('## What\n\n- Hay un botón "Exportar"\n- El CSV trae fecha y total')
+  expect(body).toContain(`## Why\n\n${ISSUE.problem}\n\n> ${ISSUE.quote}\n\n${ISSUE.outcome}`)
+  expect(body).toContain('## What\n\n- Hay un botón "Exportar"\n- El CSV trae fecha y total\n\nDecisions:\n- Redondear a 2 decimales — Abel\n\nOut of scope:\n- Cambiar impuestos')
   expect(body).toContain('## How to revert\n\n<!-- seckert: completar -->')
   const order = ['## Why', '## What', '## Testing', '## Risk', '## How to revert', '## Evidence'].map(h => body.indexOf(h))
   expect([...order].sort((a, b) => a - b)).toEqual(order)
