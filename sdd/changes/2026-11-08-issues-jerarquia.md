@@ -1,5 +1,5 @@
 ---
-status: approved
+status: done
 specs: [issues]
 design: none
 branch: feature/issues-jerarquia
@@ -48,3 +48,5 @@ Parte 3 de 4: después de `issue-como-change`. En Linear, una feature completa s
 - 2026-11-08: T3 hecha (e891359). bun run test exit 0; issues.spec: issue_take del padre con dos sub-issues no crea rama ni llama a develop y devuelve las partes (#3 bloqueada por #2) con next #2; skill tomar propone la división y crea los sub-issues con parent, blockedBy y diseño
 - 2026-11-08: T4 hecha (c19cb31). bun run test exit 0; issues.spec: tomar #3 bloqueado falla nombrando #2 Modelo de pagos y no cambia de rama, con force lo toma; issue_close con partes abiertas falla nombrando #2, con todas cerradas issue_take del padre da done y next null, e issue_close lo cierra completed con el comentario 2 de 2
 - 2026-11-08: T5 hecha (42823ac). claude plugin eval: feature-en-partes 3/3 y parte-bloqueada 3/3; regresión de los 10 casos de issues con 1 corrida, todos pasan; bun run test exit 0
+- 2026-11-08 verify: PASA "Una feature es un issue padre (`type:feature`) con sub-issues nativos de GitHub. Cada sub-issue es una parte que se trabaja sola: un CHANGE o un FIX"; PASA "Al tomar una feature padre, seckert propone la división en partes y, con tu «dale», crea los sub-issues en orden, ya aprobados: el «dale» aprueba la división y queda como aprobación de cada uno"; PASA "El orden entre partes se marca con dependencias nativas (`blocked-by`). Tomar un sub-issue bloqueado avisa qué falta y pide confirmar"; PASA "Las tareas internas de un change (T1, T2…) siguen en su plan (el artifact `Plan`, o `sdd/changes` sin modo issues): no son sub-issues"; PASA "Cuando se cierran todos los sub-issues, seckert ofrece cerrar la feature padre"; PASA "El diseño de la feature es un artifact `link` del padre. Al dividirla, cada sub-issue que toca pantallas recibe su propio link al diseño". Comandos: `bun run test`, `claude plugin eval . --tag jerarquia --runs 3`, `claude plugin eval . --tag issues --runs 1`.
+- 2026-11-08: cerrado ("dale").
