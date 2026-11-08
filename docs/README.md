@@ -9,5 +9,4 @@ Empieza por el [README](../README.md). Estas páginas son para cuando quieras el
 | ✅ [Verificación y PR](verificacion.md) | Rondas, fallos preexistentes, QA en el navegador y el PR |
 | 📮 [Contrato del issue](contrato-issue.md) | El formato de issue que seckert trabaja, para quien quiera crearlos (en inglés) |
 | ⚙️ [Configuración del proyecto](configuracion.md) | Ramas, tests según riesgo, AGENTS.md, barra y ahorro de tokens |
-| 📊 [Benchmark](benchmark.md) | Con seckert vs. sin seckert, caso por caso |
 | 🛠️ [Desarrollo del plugin](desarrollo.md) | Probar, validar y testear seckert |

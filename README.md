@@ -113,18 +113,6 @@ No hace falta escribir comandos.
 
 <sub>Si prefieres comandos: `/seckert:change` `/seckert:design` `/seckert:next` `/seckert:verify` `/seckert:done` `/seckert:hotfix` `/seckert:tomar` `/seckert:release` `/seckert:status`.</sub>
 
-## 📊 ¿Sirve?
-
-17 pedidos reales, 5 corridas con seckert y 5 sin seckert, mismo modelo:
-
-| | Con seckert | Sin seckert |
-|---|:---:|:---:|
-| Sigue el flujo (propuesta, ramas, tests, PR) | **84/85** | 37/85 |
-| Lo chico sigue siendo directo | **30/30** | 30/30 |
-| Palabras por respuesta | **127** | 189 |
-
-→ [Benchmark completo](docs/benchmark.md)
-
 ## 📚 Para saber más
 
 | | |
@@ -132,5 +120,4 @@ No hace falta escribir comandos.
 | 🗺️ [Flujo de trabajo](docs/flujo.md) | Rutas, cómo se planifica una feature y qué archivos crea |
 | ✅ [Verificación y PR](docs/verificacion.md) | Rondas de verificación, QA en el navegador y qué trae el PR |
 | ⚙️ [Configuración del proyecto](docs/configuracion.md) | Ramas, nivel de tests, AGENTS.md y la barra de estado |
-| 📊 [Benchmark](docs/benchmark.md) | Con seckert vs. sin seckert, caso por caso |
 | 🛠️ [Desarrollo del plugin](docs/desarrollo.md) | Para quien modifica seckert |
