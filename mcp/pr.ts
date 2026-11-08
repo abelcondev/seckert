@@ -94,7 +94,7 @@ export function prDraft(root: string, input: { slug?: string; issue?: string }) 
     const found = issueGet(root, issueId!)
     title = `${type}: ${lower(found.title)}`
     draft = {
-      why: [found.context, ...(found.quote ? ['', `> ${found.quote}`] : [])].join('\n').trim(),
+      why: [found.problem, ...(found.quote ? ['', `> ${found.quote}`] : [])].join('\n').trim(),
       what: found.criteria.map(c => `- ${c}`).join('\n'),
       extra: [],
       testing: 'Sin change: los criterios de aceptación del issue son la prueba.',

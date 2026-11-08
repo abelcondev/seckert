@@ -5,7 +5,8 @@ import { githubTracker, type Gh } from '../lib/trackers/github'
 
 const ISSUE: Issue = {
   title: 'Exportar pedidos a CSV',
-  context: 'El cliente quiere bajar los pedidos del mes.',
+  problem: 'El cliente quiere bajar los pedidos del mes.',
+  outcome: 'Los pedidos del mes se bajan en un archivo.',
   criteria: ['Hay un botón "Exportar"'],
   route: 'CHANGE',
   origin: { client: 'Acme' },

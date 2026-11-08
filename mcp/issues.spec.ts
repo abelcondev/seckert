@@ -32,8 +32,9 @@ async function call(name: string, args: Record<string, unknown>) {
 
 const ISSUE = {
   title: 'Exportar pedidos a CSV',
-  context: 'El cliente quiere bajar los pedidos del mes.',
+  problem: 'El cliente quiere bajar los pedidos del mes.',
   quote: 'Necesito un botón que me baje todo en Excel.',
+  outcome: 'Los pedidos del mes se bajan en un archivo.',
   criteria: ['Hay un botón "Exportar"', 'El CSV trae fecha y total'],
   route: 'CHANGE',
   origin: { client: 'Acme', date: '2026-11-06' },
@@ -210,7 +211,7 @@ test('pr_draft de un FIX tomado de un issue, sin change: el cuerpo sale del issu
   expect(value).toMatchObject({ base: 'main', branch: 'fix/arreglar-el-total', title: 'fix: arreglar el total', issue: '1', files: 1 })
   const body: string = value.body
   expect(body.startsWith('Fixes #1\n\n## Why')).toBe(true)
-  expect(body).toContain(`## Why\n\n${ISSUE.context}\n\n> ${ISSUE.quote}`)
+  expect(body).toContain(`## Why\n\n${ISSUE.problem}\n\n> ${ISSUE.quote}`)
   expect(body).toContain('## What\n\n- Hay un botón "Exportar"\n- El CSV trae fecha y total')
   expect(body).toContain('## How to revert\n\n<!-- seckert: completar -->')
   const order = ['## Why', '## What', '## Testing', '## Risk', '## How to revert', '## Evidence'].map(h => body.indexOf(h))

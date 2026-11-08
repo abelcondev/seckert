@@ -298,14 +298,15 @@ server.registerTool(
       'Creates a seckert issue in the GitHub repo of `origin`, always as draft (label seckert:draft). The body has fixed sections: context with the client\'s literal quote, acceptance criteria, suggested route (FIX, SPEC or CHANGE) and origin. Approving it is a separate step with issue_transition and the user\'s words.',
     inputSchema: {
       title: z.string(),
-      context: z.string().describe('Where it comes from and why, in a few sentences'),
+      problem: z.string().describe('Who is affected, what happens today and why it matters, in a few sentences'),
       quote: z.string().optional().describe('What the client said, verbatim'),
+      outcome: z.string().describe('The expected result, in one or two sentences'),
       criteria: z.array(z.string()).min(1).describe('Observable acceptance criteria'),
       route: z.enum(['FIX', 'SPEC', 'CHANGE']),
       origin: z
-        .object({ meeting: z.string().optional(), date: z.string().optional(), client: z.string().optional() })
+        .object({ source: z.string().optional(), date: z.string().optional(), client: z.string().optional(), requestedBy: z.string().optional() })
         .default({})
-        .describe('meeting: the meeting title or link'),
+        .describe('source: the meeting, chat or document it comes from'),
     },
     annotations: { destructiveHint: false },
   },

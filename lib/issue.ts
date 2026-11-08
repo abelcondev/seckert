@@ -1,4 +1,4 @@
-// El issue canónico de seckert: lo que sale de una reunión y termina en un PR.
+// El issue canónico de seckert: un pedido que termina en un PR.
 // Vive en un tracker (GitHub Issues, Linear…); el cuerpo tiene secciones fijas
 // para poder leerlo de vuelta, y el estado va aparte (en GitHub, una label).
 
@@ -8,52 +8,80 @@ export type IssueState = (typeof STATES)[number]
 export const ROUTES = ['FIX', 'SPEC', 'CHANGE'] as const
 export type Route = (typeof ROUTES)[number]
 
-export type Origin = { meeting?: string; date?: string; client?: string }
+// El origen: de dónde sale el pedido. En v1, `Meeting` es `source`.
+export type Origin = { source?: string; date?: string; client?: string; requestedBy?: string }
+export type Decision = { text: string; by?: string; date?: string }
+export type Question = { id: string; text: string; owner?: string }
+
+// El tipo del issue va como label `type:<kind>`, no en el cuerpo.
+export const KINDS = ['feature', 'fix', 'task'] as const
+export type Kind = (typeof KINDS)[number]
 
 export type Issue = {
   title: string
-  context: string
+  kind?: Kind
+  problem: string
   quote?: string
+  outcome: string
   criteria: string[]
+  decisions?: Decision[]
+  outOfScope?: string[]
+  constraints?: string[]
+  references?: string[]
+  questions?: Question[]
   route: Route
+  routeWhy?: string
   origin: Origin
 }
 
-export type IssueBody = Omit<Issue, 'title'>
+export type IssueBody = Omit<Issue, 'title' | 'kind'>
 
 // La marca dice que el cuerpo es de seckert y qué versión del contrato sigue
 // (docs/contrato-issue.md). Sin versión es la v1 de antes de versionarla.
-export const CONTRACT_VERSION = 1
+export const CONTRACT_VERSION = 2
 const MARK = `<!-- seckert:issue v${CONTRACT_VERSION} -->`
 const MARK_RE = /<!-- seckert:issue(?: v(\d+))? -->/
 const ORIGIN_KEYS: [keyof Origin, string][] = [
-  ['meeting', 'Meeting'],
+  ['source', 'Source'],
   ['date', 'Date'],
   ['client', 'Client'],
+  ['requestedBy', 'Requested by'],
 ]
+const SEP = ' — '
 
+const clean = (items?: string[]) => (items ?? []).map(item => item.trim()).filter(Boolean)
+const section = (title: string, lines: string[]) => (lines.length ? [`## ${title}`, '', ...lines, ''] : [])
+const bullets = (items?: string[]) => clean(items).map(item => `- ${item}`)
+
+function decisionLine(d: Decision): string {
+  const who = [d.by?.trim(), d.date?.trim()].filter(Boolean).join(', ')
+  return `- ${d.text.trim()}${who ? SEP + who : ''}`
+}
+
+function questionLine(q: Question): string {
+  return `- **${q.id}** ${q.text.trim()}${q.owner?.trim() ? `${SEP}decide: ${q.owner.trim()}` : ''}`
+}
+
+// Escribe el cuerpo v2. Las secciones opcionales vacías no se escriben.
 export function renderBody(issue: IssueBody): string {
-  const context = [issue.context.trim(), ...(issue.quote?.trim() ? ['', `> ${issue.quote.trim()}`] : [])]
-  const origin = ORIGIN_KEYS.filter(([key]) => issue.origin[key]).map(([key, label]) => `- ${label}: ${issue.origin[key]}`)
+  if (!issue.problem?.trim()) throw new Error('falta Problem: qué pasa hoy y por qué importa')
+  if (!issue.outcome?.trim()) throw new Error('falta Outcome: el resultado esperado')
+  if (!clean(issue.criteria).length) throw new Error('falta al menos un criterio de aceptación')
+  const problem = [issue.problem.trim(), ...(issue.quote?.trim() ? ['', `> ${issue.quote.trim()}`] : [])]
+  const origin = ORIGIN_KEYS.filter(([key]) => issue.origin[key]?.trim()).map(([key, label]) => `- ${label}: ${issue.origin[key]!.trim()}`)
   return [
     MARK,
     '',
-    '## Context',
-    '',
-    ...context,
-    '',
-    '## Acceptance criteria',
-    '',
-    ...issue.criteria.map(c => `- [ ] ${c.trim()}`),
-    '',
-    '## Route',
-    '',
-    issue.route,
-    '',
-    '## Origin',
-    '',
-    ...(origin.length ? origin : ['-']),
-    '',
+    ...section('Problem', problem),
+    ...section('Outcome', [issue.outcome.trim()]),
+    ...section('Acceptance criteria', clean(issue.criteria).map(c => `- [ ] ${c}`)),
+    ...section('Decisions', (issue.decisions ?? []).filter(d => d.text.trim()).map(decisionLine)),
+    ...section('Out of scope', bullets(issue.outOfScope)),
+    ...section('Constraints', bullets(issue.constraints)),
+    ...section('References', bullets(issue.references)),
+    ...section('Open questions', (issue.questions ?? []).filter(q => q.text.trim()).map(questionLine)),
+    ...section('Route', [issue.routeWhy?.trim() ? `${issue.route}: ${issue.routeWhy.trim()}` : issue.route]),
+    ...section('Origin', origin.length ? origin : ['-']),
   ].join('\n')
 }
 
@@ -66,33 +94,67 @@ function sections(body: string): Map<string, string> {
   return map
 }
 
+const listOf = (text?: string) =>
+  (text ?? '')
+    .split('\n')
+    .map(line => line.match(/^- (.+)$/)?.[1]?.trim())
+    .filter((item): item is string => Boolean(item))
+
+function parseDecision(line: string): Decision {
+  const at = line.lastIndexOf(SEP)
+  if (at === -1) return { text: line }
+  const [by, date] = line.slice(at + SEP.length).split(',').map(part => part.trim())
+  return { text: line.slice(0, at).trim(), ...(by ? { by } : {}), ...(date ? { date } : {}) }
+}
+
+function parseQuestion(line: string): Question | null {
+  const match = line.match(/^\*\*(P\d+)\*\* (.+?)(?: — decide: (.+))?$/)
+  if (!match) return null
+  return { id: match[1]!, text: match[2]!.trim(), ...(match[3] ? { owner: match[3].trim() } : {}) }
+}
+
+// Lee un cuerpo v2, o uno v1 (Context en lugar de Problem, sin Outcome, Meeting en el origen).
 export function parseBody(body: string): IssueBody {
   const mark = body.match(MARK_RE)
   if (!mark) throw new Error('el issue no tiene el formato de seckert')
   const version = Number(mark[1] ?? 1)
   if (version > CONTRACT_VERSION) throw new Error(`el issue sigue el contrato v${version} y seckert conoce hasta v${CONTRACT_VERSION}: actualizá seckert`)
   const s = sections(body)
-  const contextLines = (s.get('Context') ?? '').split('\n')
-  const quoteLines = contextLines.filter(line => line.startsWith('> '))
-  const context = contextLines.filter(line => !line.startsWith('> ')).join('\n').trim()
-  const route = (s.get('Route') ?? '').trim()
-  if (!ROUTES.includes(route as Route)) throw new Error(`ruta desconocida: "${route}"`)
+  const problemLines = (s.get(version === 1 ? 'Context' : 'Problem') ?? '').split('\n')
+  const quoteLines = problemLines.filter(line => line.startsWith('> '))
+  const problem = problemLines.filter(line => !line.startsWith('> ')).join('\n').trim()
+  const routeText = (s.get('Route') ?? '').trim()
+  const routeMatch = routeText.match(/^(FIX|SPEC|CHANGE)\b(?::\s*([\s\S]+))?$/)
+  if (!routeMatch) throw new Error(`ruta desconocida: "${routeText}"`)
   const criteria = (s.get('Acceptance criteria') ?? '')
     .split('\n')
     .map(line => line.match(/^- \[[ x]\] (.+)$/)?.[1])
     .filter((c): c is string => Boolean(c))
   const origin: Origin = {}
+  const labels: [keyof Origin, string][] = version === 1 ? [['source', 'Meeting'], ...ORIGIN_KEYS.slice(1)] : ORIGIN_KEYS
   for (const line of (s.get('Origin') ?? '').split('\n')) {
-    for (const [key, label] of ORIGIN_KEYS) {
+    for (const [key, label] of labels) {
       const value = line.match(new RegExp(`^- ${label}: (.+)$`))?.[1]
       if (value) origin[key] = value.trim()
     }
   }
+  const decisions = listOf(s.get('Decisions')).map(parseDecision)
+  const outOfScope = listOf(s.get('Out of scope'))
+  const constraints = listOf(s.get('Constraints'))
+  const references = listOf(s.get('References'))
+  const questions = listOf(s.get('Open questions')).map(parseQuestion).filter((q): q is Question => q !== null)
   return {
-    context,
+    problem,
     ...(quoteLines.length ? { quote: quoteLines.map(line => line.slice(2)).join(' ').trim() } : {}),
+    outcome: (s.get('Outcome') ?? '').trim(),
     criteria,
-    route: route as Route,
+    ...(decisions.length ? { decisions } : {}),
+    ...(outOfScope.length ? { outOfScope } : {}),
+    ...(constraints.length ? { constraints } : {}),
+    ...(references.length ? { references } : {}),
+    ...(questions.length ? { questions } : {}),
+    route: routeMatch[1] as Route,
+    ...(routeMatch[2]?.trim() ? { routeWhy: routeMatch[2].trim() } : {}),
     origin,
   }
 }
