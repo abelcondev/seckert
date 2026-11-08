@@ -5,7 +5,7 @@
   "scripts": {
     "build:mcp": "bun build mcp/server.ts --target node --format esm --minify --outfile mcp/dist/server.mjs",
     "test:mcp": "bun run build:mcp && tsc -p mcp && bun test mcp/",
-    "test": "bun run test:mcp && claude plugin test . && sh tests/find-chrome.sh && sh tests/guard-branch.sh"
+    "test": "bun run test:mcp && claude plugin test . && sh tests/find-chrome.sh && sh tests/guard-branch.sh && sh tests/session-context.sh"
   },
   "devDependencies": {
     "@modelcontextprotocol/sdk": "1.32.2",

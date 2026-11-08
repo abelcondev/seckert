@@ -36,7 +36,19 @@ if [ "$SECKERT_QA" = "sin-navegador" ] || grep -Eqs '"SECKERT_QA"[[:space:]]*:[[
   echo "QA: SECKERT_QA=sin-navegador (this user's local preference). Don't offer to install Chrome DevTools or a browser; what's only visible in the app is NO VERIFICABLE (sin navegador)."
 fi
 
+# Modo issues: `seckert issues: github` en AGENTS.md o CLAUDE.md. Los pedidos van a GitHub y el change vive en su issue.
+issues=0
+if grep -Eiqs '^[[:space:]]*([-*][[:space:]]*)?`?seckert issues:[[:space:]]*github`?[[:space:]]*$' AGENTS.md CLAUDE.md; then
+  issues=1
+  cat <<'TXT'
+Issues mode (`seckert issues: github`): GitHub issues are the work tracker, and a CHANGE lives in its issue (the plan is its `Plan` artifact; no sdd/changes file).
+- Every work request (a fix, a feature, a change; not a question, an explanation or an exploration) becomes an issue with issue_create, in the request's language, without the user saying "create an issue". Small work too: it gets an issue, then it is done directly.
+- A request from the user with no open questions: create it, approve it with their words (issue_transition) and take it (seckert:tomar). A FIX ends in a PR; a CHANGE attaches its plan and waits for the "dale". With "para después" or "anotalo", only create it.
+- What isn't clear yet stays in the session, without an issue. When the discussion reaches something concrete, offer in one line to turn it into an issue, with what was decided in Decisions. Small pending doubts go to Open questions and block approval until answered (issue_answer).
+TXT
+fi
+
 # Los changes abiertos, con el mismo lector que el servidor MCP del plugin.
-[ -d sdd/changes ] || exit 0
+[ -d sdd/changes ] || [ "$issues" = 1 ] || exit 0
 command -v node >/dev/null 2>&1 && node "$(dirname "$0")/../mcp/dist/server.mjs" --context 2>/dev/null
 exit 0

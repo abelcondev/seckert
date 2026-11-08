@@ -180,3 +180,20 @@ test('un change que vive en su issue se lee de la copia en .git/seckert/changes'
   expect(line).toContain('seckert · csv-pedidos · 1/3 · sigue: T2 Filtro por fecha')
   await ui.unmount()
 })
+
+test('en modo issues, el contexto vivo dice que los pedidos nuevos van a un issue', async ($, on) => {
+  const files: Files = { '2026-10-29-csv-pedidos.md': APPROVED }
+  on('session.start', (_, e) => ({ cwd: e.cwd }))
+  on('fs.exists', (_, e) => ({ value: e.path === '/repo/sdd/changes' || e.path === '/repo/AGENTS.md' }))
+  on('fs.read', (_, e) => ({ value: e.path === '/repo/AGENTS.md' ? '# app\n\n- seckert issues: github\n' : files[e.path.split('/').pop() ?? ''] ?? '' }))
+  on('process.run', () => ({ value: { exitCode: 0, stdout: '/repo\nfeature/csv-pedidos\n', stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }))
+  on('fs.list', (_, e) => ({ value: e.path === '/repo/sdd/changes' ? entries(files, {}) : [] }))
+  on('prompt.submit', (_, e) => ({ text: e.text, context: e.context }))
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
+
+  files['2026-10-29-csv-pedidos.md'] = APPROVED.replace('- [ ] T2', '- [x] T2')
+  const sent = await $.prompt.submit({ text: 'seguí', wait: false, origin: { kind: 'composer' } })
+  const note = sent.context?.join('\n') ?? ''
+  expect(note).toContain('Los pedidos de trabajo nuevos van a un issue de GitHub')
+  expect(note).not.toContain('se hacen directo')
+})
