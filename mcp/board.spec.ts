@@ -37,6 +37,10 @@ export const BOARD = {
     { id: 'F_cycle', name: 'Cycle', type: 'ProjectV2IterationField' },
   ],
   items: [] as { id: string; url: string; values: Record<string, string>; archived: boolean }[],
+  iterations: [
+    { id: 'it1', title: 'Cycle 1', startDate: '2026-11-02', duration: 14 },
+    { id: 'it2', title: 'Cycle 2', startDate: '2026-11-16', duration: 14 },
+  ],
 }
 
 const ISSUE = { title: 'Exportar pedidos', problem: 'Se copian a mano.', outcome: 'Se bajan en un CSV.', criteria: ['Hay un botón'], route: 'FIX' }
@@ -56,7 +60,7 @@ beforeAll(async () => {
   chmodSync(join(bin, 'gh'), 0o755)
   state = join(dir, 'gh.json')
   client = new Client({ name: 'test', version: '0.0.0' })
-  const env = { ...(process.env as Record<string, string>), PATH: `${bin}:${process.env.PATH}`, FAKE_GH_STATE: state }
+  const env = { ...(process.env as Record<string, string>), PATH: `${bin}:${process.env.PATH}`, FAKE_GH_STATE: state, SECKERT_TODAY: '2026-11-09' }
   await client.connect(new StdioClientTransport({ command: 'node', args: [SERVER], env, cwd: repo }))
 })
 
@@ -129,4 +133,28 @@ test('board_setup crea o completa el tablero del repo', async () => {
   // el gh falso no implementa project create: lo que importa es que la herramienta existe y llama a gh
   expect(error ?? '').not.toContain('Unknown tool')
   expect(db().calls.some((c: string[]) => c.join(' ').includes('project create'))).toBe(true)
+})
+
+const valuesOf = (n: number) => db().board.items.find((i: { url: string }) => i.url.endsWith(`/issues/${n}`))?.values ?? {}
+
+test('issue_create e issue_plan ponen prioridad, tamaño y cycle en el tablero', async () => {
+  const { error } = await call('issue_create', { ...ISSUE, priority: 'High', size: 'M', cycle: 'current' })
+  expect(error).toBeNull()
+  // hoy (2026-11-09 según el reloj del test) cae en Cycle 1
+  expect(valuesOf(1)).toMatchObject({ F_priority: 'p1', F_size: 'z2', F_cycle: 'it1' })
+
+  const plan = await call('issue_plan', { id: '1', priority: 'Urgent', cycle: 'next' })
+  expect(plan.error).toBeNull()
+  expect(plan.value).toMatchObject({ id: '1', priority: 'Urgent', cycle: 'Cycle 2' })
+  expect(valuesOf(1)).toMatchObject({ F_priority: 'p0', F_size: 'z2', F_cycle: 'it2' })
+
+  await call('issue_plan', { id: '1', cycle: 'none' })
+  expect(valuesOf(1).F_cycle).toBeUndefined()
+})
+
+test('issue_plan sin tablero o con un valor que no existe falla diciendo por qué', async () => {
+  await call('issue_create', ISSUE)
+  expect((await call('issue_plan', { id: '1', cycle: 'Cycle 9' })).error).toContain('Cycle 9')
+  writeFileSync(state, JSON.stringify({ ...db(), board: undefined }))
+  expect((await call('issue_plan', { id: '1', priority: 'High' })).error).toContain('board_setup')
 })

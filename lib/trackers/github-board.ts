@@ -51,7 +51,30 @@ function addDays(date: string, days: number): string {
   return d.toISOString().slice(0, 10)
 }
 
-export function githubBoard(repo: string, gh: Gh, today: () => string = () => new Date().toISOString().slice(0, 10)) {
+export type Iteration = { id: string; title: string; startDate: string; duration: number }
+
+// El cycle que pide el usuario: «current» (el de hoy), «next» (el siguiente), «none» (sin cycle) o un título.
+export function resolveCycle(iterations: Iteration[], value: string, today: string): Iteration | null {
+  const v = value.trim().toLowerCase()
+  if (v === 'none') return null
+  if (v === 'current') {
+    const found = iterations.find(i => i.startDate <= today && today < addDays(i.startDate, i.duration))
+    if (!found) throw new Error(`no hay un cycle que incluya hoy (${today})`)
+    return found
+  }
+  if (v === 'next') {
+    const found = [...iterations].sort((a, b) => a.startDate.localeCompare(b.startDate)).find(i => i.startDate > today)
+    if (!found) throw new Error('no hay un cycle siguiente: agregalo en el tablero')
+    return found
+  }
+  const found = iterations.find(i => i.title.toLowerCase() === v)
+  if (!found) throw new Error(`no hay un cycle «${value}»: ${iterations.map(i => i.title).join(', ')}`)
+  return found
+}
+
+const defaultToday = () => process.env.SECKERT_TODAY || new Date().toISOString().slice(0, 10)
+
+export function githubBoard(repo: string, gh: Gh, today: () => string = defaultToday) {
   const [owner, name] = repo.split('/') as [string, string]
   const graphql = (query: string, variables: Record<string, unknown>) => JSON.parse(gh(['api', 'graphql', '--input', '-'], JSON.stringify({ query, variables })) || '{}')
 
@@ -121,6 +144,33 @@ export function githubBoard(repo: string, gh: Gh, today: () => string = () => ne
     find(): Board | null {
       const project = linked()
       return project ? { ...project, owner, fields: fieldList(project.number) } : null
+    },
+
+    iterations(board: Board): Iteration[] {
+      const query = 'query($id:ID!){node(id:$id){... on ProjectV2{field(name:"Cycle"){... on ProjectV2IterationField{configuration{iterations{id title startDate duration}}}}}}}'
+      return graphql(query, { id: board.id }).data?.node?.field?.configuration?.iterations ?? []
+    },
+
+    today,
+
+    // Prioridad, tamaño y cycle de un issue en el tablero. Un cycle null lo saca del cycle.
+    setPlan(board: Board, url: string, plan: { priority?: string; size?: string; cycle?: Iteration | null }): void {
+      const item = JSON.parse(gh(['project', 'item-add', String(board.number), '--owner', owner, '--url', url, '--format', 'json'])).id as string
+      const edit = (fieldId: string, value: string[]) => gh(['project', 'item-edit', '--id', item, '--project-id', board.id, '--field-id', fieldId, ...value])
+      for (const [name, value] of [
+        ['Priority', plan.priority],
+        ['Size', plan.size],
+      ] as const) {
+        if (value === undefined) continue
+        const f = field(board, name)
+        const option = f.options?.find(o => o.name.toLowerCase() === value.toLowerCase())
+        if (!option) throw new Error(`${name} no tiene la opción «${value}»: ${f.options?.map(o => o.name).join(', ')}`)
+        edit(f.id, ['--single-select-option-id', option.id])
+      }
+      if (plan.cycle !== undefined) {
+        const f = field(board, CYCLE)
+        edit(f.id, plan.cycle ? ['--iteration-id', plan.cycle.id] : ['--clear'])
+      }
     },
 
     items(board: Board): BoardItem[] {

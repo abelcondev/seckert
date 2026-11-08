@@ -3,7 +3,7 @@ import { execFileSync } from 'node:child_process'
 
 import { answerQuestion, branchFor, checkTransition, openQuestionsProblem, takeProblem, type Issue, type IssueState, type Kind } from '../lib/issue'
 import { ArtifactsUnavailable, githubTracker, type Gh } from '../lib/trackers/github'
-import { syncIssue } from './board'
+import { issuePlan, syncIssue, type Plan } from './board'
 import { baseBranch } from './repo'
 
 // owner/repo de una URL de GitHub (ssh o https), o null si no es de GitHub.
@@ -57,9 +57,9 @@ export function designOf(issues: ReturnType<typeof tracker>['issues'], issue: { 
 
 // Crea el issue en draft. Con diseño, lo adjunta como artifact link «Design»; sin
 // artifacts, lo agrega a References.
-export function issueCreate(root: string, issue: Issue & { design?: string; parent?: string; blockedBy?: string[] }) {
+export function issueCreate(root: string, issue: Issue & Plan & { design?: string; parent?: string; blockedBy?: string[] }) {
   const { issues } = tracker(root)
-  const { design, parent, blockedBy, ...rest } = issue
+  const { design, parent, blockedBy, priority, size, cycle, ...rest } = issue
   let { rawBody: _raw, ...created } = issues.create(rest, 'draft', { parent, blockedBy })
   if (design?.trim()) {
     try {
@@ -71,7 +71,14 @@ export function issueCreate(root: string, issue: Issue & { design?: string; pare
       ;({ rawBody: _raw, ...created } = issues.get(created.id))
     }
   }
-  const board = syncIssue(root, created.id)
+  let board = syncIssue(root, created.id)
+  if (!board && (priority || size || cycle)) {
+    try {
+      issuePlan(root, { id: created.id, priority, size, cycle })
+    } catch (error) {
+      board = `no se pudo planificar en el tablero: ${(error as Error).message}`
+    }
+  }
   return { ...created, design: design?.trim() || null, ...(board ? { board } : {}) }
 }
 

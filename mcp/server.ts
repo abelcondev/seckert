@@ -21,7 +21,7 @@ import {
 } from './repo'
 import { testsOnBase } from './base'
 import { prDraft, releaseDraft } from './pr'
-import { boardSetup, boardSync } from './board'
+import { boardSetup, boardSync, issuePlan } from './board'
 import { issueAnswer, issueClose, issueCreate, issueGet, issueList, issueTake, issueTransition } from './issues'
 import { checkTransition } from '../lib/issue'
 
@@ -319,6 +319,9 @@ server.registerTool(
       kind: z.enum(['feature', 'fix', 'task']).optional().describe('Issue type, as the label type:<kind>'),
       design: z.string().url().optional().describe('Design link (a claude.ai artifact, Figma…): attached as the link artifact «Design»'),
       parent: z.string().optional().describe('Parent issue number: the new issue is its native sub-issue (a part of a feature)'),
+      priority: z.enum(['Urgent', 'High', 'Medium', 'Low']).optional().describe('Priority on the repo board, if there is one'),
+      size: z.enum(['XS', 'S', 'M', 'L', 'XL']).optional().describe('Estimate on the repo board'),
+      cycle: z.string().optional().describe('Cycle on the repo board: current, next, none or an iteration title'),
       blockedBy: z.array(z.string()).optional().describe('Issue numbers that must close first (native blocked-by)'),
       routeWhy: z.string().optional().describe('Why that route, in a few words'),
       origin: z
@@ -398,6 +401,28 @@ server.registerTool(
   async ({ ids }) => {
     try {
       return json(boardSync(projectRoot(), ids))
+    } catch (error) {
+      return failure(error)
+    }
+  },
+)
+
+server.registerTool(
+  'issue_plan',
+  {
+    description:
+      'Sets the priority (Urgent, High, Medium, Low), size (XS–XL) and cycle (current, next, none or an iteration title) of an issue on the repo board. Only what is passed changes. Fails if the repo has no board (board_setup creates it, only if the user wants one).',
+    inputSchema: {
+      id: z.string().describe('The issue number'),
+      priority: z.enum(['Urgent', 'High', 'Medium', 'Low']).optional(),
+      size: z.enum(['XS', 'S', 'M', 'L', 'XL']).optional(),
+      cycle: z.string().optional().describe('current, next, none or an iteration title'),
+    },
+    annotations: { destructiveHint: false },
+  },
+  async args => {
+    try {
+      return json(issuePlan(projectRoot(), args))
     } catch (error) {
       return failure(error)
     }

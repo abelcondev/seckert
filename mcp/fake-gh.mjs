@@ -76,7 +76,9 @@ if (group === 'label' && cmd === 'create') {
   // Projects: el Project enlazado (db.board) y las mutaciones de campos.
   const { query, variables } = JSON.parse(readFileSync(0, 'utf8'))
   const b = db.board
-  if (query.includes('projectsV2(')) {
+  if (query.includes('ProjectV2IterationField')) {
+    process.stdout.write(JSON.stringify({ data: { node: { field: { configuration: { iterations: b?.iterations ?? [] } } } } }))
+  } else if (query.includes('projectsV2(')) {
     process.stdout.write(JSON.stringify({ data: { repository: { projectsV2: { nodes: b ? [{ id: b.id, number: b.number, title: b.title }] : [] } } } }))
   } else {
     process.stdout.write('{"data":{}}')

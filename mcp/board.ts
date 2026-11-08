@@ -1,7 +1,7 @@
 // El tablero del repo (GitHub Projects) refleja el estado de los issues de seckert.
 // Es opcional: sin un Project enlazado al repo no se hace nada, y si el tablero
 // falla la operación del issue sigue y solo avisa.
-import { githubBoard, statusFor, type Board } from '../lib/trackers/github-board'
+import { githubBoard, resolveCycle, statusFor, type Board } from '../lib/trackers/github-board'
 import { tracker } from './issues'
 
 function boardOf(root: string) {
@@ -46,5 +46,23 @@ export function syncIssue(root: string, id: string): string | null {
     return null
   } catch (error) {
     return `no se pudo actualizar el tablero: ${(error as Error).message}`
+  }
+}
+
+export type Plan = { priority?: string; size?: string; cycle?: string }
+
+// Prioridad, tamaño y cycle de un issue en el tablero del repo.
+export function issuePlan(root: string, input: Plan & { id: string }) {
+  const { issues, board } = boardOf(root)
+  const found = board.find()
+  if (!found) throw new Error('el repo no tiene tablero: si el usuario lo quiere, corré board_setup')
+  const cycle = input.cycle === undefined ? undefined : resolveCycle(board.iterations(found), input.cycle, board.today())
+  const issue = issues.get(input.id)
+  board.setPlan(found, issue.url, { priority: input.priority, size: input.size, cycle })
+  return {
+    id: input.id,
+    ...(input.priority ? { priority: input.priority } : {}),
+    ...(input.size ? { size: input.size } : {}),
+    ...(cycle !== undefined ? { cycle: cycle?.title ?? null } : {}),
   }
 }
