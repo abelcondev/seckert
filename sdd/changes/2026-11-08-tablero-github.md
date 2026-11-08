@@ -1,5 +1,5 @@
 ---
-status: approved
+status: done
 specs: [issues, tablero]
 design: none
 branch: feature/tablero-github
@@ -54,3 +54,5 @@ Parte 4 de 4: después de `issues-jerarquia`. Para reemplazar Linear hace falta 
 - 2026-11-08: T3 hecha (a2ed0ef). bun run test exit 0; board.spec: issue_create con High, M y current deja p1, z2 e it1; issue_plan Urgent y next cambia solo eso a p0 e it2; none quita el cycle; un cycle inexistente y sin tablero fallan diciendo por qué. Real: la consulta de iteraciones del Project #2 devuelve 3 cycles y resuelve current = Cycle 1, next = Cycle 2
 - 2026-11-08: T4 hecha (ad5c2ba). bun run test exit 0; board.spec: board_list por defecto da Cycle 1 con Urgente antes que Baja, next da Próximo y all los 4 por prioridad; la consulta GraphQL de items corre sin errores contra el Project real #2
 - 2026-11-08: T5 hecha (89e49e9). claude plugin eval: tablero-cycle 3/3 y tablero-planificar 3/3 tras renombrar issue_plan a board_plan (antes 0/3: Claude no la encontraba); regresión de --tag issues con 1 corrida: los demás pasan; bun run test exit 0
+- 2026-11-08 verify: PASA "Un GitHub Project del repo muestra los issues de seckert en un tablero por Status. seckert mueve la columna sola: Draft, Approved, In Progress, In Review y Done"; PASA "Cada issue tiene Priority (Urgent, High, Medium, Low) y Size (estimación) como campos del Project"; PASA "Los cycles son el campo Iteration del Project. ¿Qué entra en este cycle? lista los issues del cycle actual"; PASA "Un issue nuevo entra solo al Project"; PASA "El tablero es opcional: sin un Project enlazado al repo, seckert no hace nada con Projects. Si no se puede actualizar el tablero, la operación del issue no falla: avisa"; PASA "In Review y Done no pasan por seckert (el PR y el merge): `board_sync` reconcilia el tablero con el estado real, y las skills la llaman después de abrir el PR y del merge". Comandos: `bun run test`, `claude plugin eval . --tag tablero --runs 3`.
+- 2026-11-08: cerrado ("Dale verifica y luego cerra abri la pr y mergea").
