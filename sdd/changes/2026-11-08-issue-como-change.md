@@ -1,5 +1,5 @@
 ---
-status: approved
+status: done
 specs: [issues, pr, changes]
 design: none
 branch: feature/issue-como-change
@@ -15,7 +15,7 @@ Parte 2 de 4: después de `issue-template-v2`. Hoy un cambio se escribe dos vece
 
 - Con GitHub Issues, el issue es el change. El body dice qué y por qué (template v2) y lo escribe el usuario o Claude al crearlo.
 - El plan de un CHANGE es un issue artifact de tipo `plan`, con las tareas como casillas y su commit, el diagrama y cómo se testea. Cada cambio del plan queda como versión.
-- El diseño es un issue artifact de tipo `link` llamado «Diseño». `tomar` y la traducción del diseño lo leen de ahí, y la verificación visual lo compara.
+- El diseño es un issue artifact de tipo `link` llamado `Design`, el nombre que reserva el contrato. `tomar` y la traducción del diseño lo leen de ahí, y la verificación visual lo compara.
 - Las aprobaciones, las respuestas a preguntas y la verificación quedan como comentarios del issue.
 - Aprobar el issue decide si se hace y qué. El «dale» del plan decide cómo, y solo existe en un CHANGE.
 - Las herramientas no cambian de forma: `change_get`, `change_update`, `task_complete`, `verify_record` y `pr_draft` leen y escriben en el issue cuando el change tiene uno.
@@ -84,3 +84,6 @@ dale, ajustá las propuestas y sumalo a la página
 - 2026-11-08: T9 hecha (b0b48f7). bun run test exit 0; tests/session-context.sh 5/5: con la línea en AGENTS.md o CLAUDE.md aparecen las reglas del modo issues, sin ella no; live.test: en modo issues el contexto vivo dice que los pedidos nuevos van a un issue y no que se hacen directo
 - 2026-11-08: T8 hecha (0185e54). claude plugin eval: issue-change-diseno 3/3 (tras corregir que issue_take no devolvía el diseño) e issue-change-sin-artifacts 3/3; bun run test exit 0
 - 2026-11-08: T10 hecha (b1c64f0). claude plugin eval: pedido-natural 3/3 (crea, aprueba con las palabras del usuario, toma y hace el FIX), pregunta-sin-issue 3/3 (sin issue_create) y el control fix-texto-boton 3/3 sin la línea en AGENTS.md
+- **L4** El artifact del diseño se llama `Design` y no «Diseño»: el contrato v2 (Parte 1, ya mergeada) reserva los nombres en inglés.
+- 2026-11-08 verify: PASA "Con GitHub Issues, el issue es el change. El body dice qué y por qué (template v2) y lo escribe el usuario o Claude al crearlo"; PASA "El plan de un CHANGE es un issue artifact de tipo `plan`, con las tareas como casillas y su commit, el diagrama y cómo se testea. Cada cambio del plan queda como versión"; PASA "El diseño es un issue artifact de tipo `link` llamado `Design`, el nombre que reserva el contrato. `tomar` y la traducción del diseño lo leen de ahí, y la verificación visual lo compara"; PASA "Las aprobaciones, las respuestas a preguntas y la verificación quedan como comentarios del issue"; PASA "Aprobar el issue decide si se hace y qué. El «dale» del plan decide cómo, y solo existe en un CHANGE"; PASA "Las herramientas no cambian de forma: `change_get`, `change_update`, `task_complete`, `verify_record` y `pr_draft` leen y escriben en el issue cuando el change tiene uno"; PASA "`sdd/specs/` se actualiza en el mismo PR. No queda archivo en `sdd/changes/`: el historial son los issues y PRs cerrados"; PASA "Si los artifacts no están disponibles (son una preview), el plan va en una sección `## Plan` del body. Sin GitHub Issues, `sdd/changes/` sigue funcionando como hoy"; PASA "Un pedido de trabajo dicho en lenguaje natural va directo a GitHub, sin decir «creá un issue». Por ejemplo, «vamos a agregar un botón para descargar un CSV de la lista de pedidos» crea el issue. Las preguntas, explicaciones y exploraciones no crean issues"; PASA "Si el pedido viene del usuario y no tiene Open questions, el issue nace `approved` con sus palabras como aprobación, y Claude lo toma: un FIX se hace directo y termina en PR, un CHANGE adjunta el plan y espera el «dale». Con «para después» o «anótalo», solo se crea"; PASA "Lo que todavía no está claro se discute en la sesión, sin issue. Cuando la conversación llega a algo concreto, Claude ofrece en una línea pasarlo a issue, con lo decidido en `## Decisions`"; PASA "El modo issues se activa con la línea `seckert issues: github` en el AGENTS.md del proyecto. Sin esa línea, seckert trabaja como hoy, con `sdd/changes/`, aunque el repo esté en GitHub". Comandos: `bun run test`, `claude plugin eval . --tag issues --runs 3`, `claude plugin eval . --case fix-texto-boton --runs 3`.
+- 2026-11-08: cerrado ("dale, verificalo y abrí el PR").
