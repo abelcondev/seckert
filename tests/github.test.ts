@@ -5,7 +5,8 @@ import { githubTracker, type Gh } from '../lib/trackers/github'
 
 const ISSUE: Issue = {
   title: 'Exportar pedidos a CSV',
-  context: 'El cliente quiere bajar los pedidos del mes.',
+  problem: 'El cliente quiere bajar los pedidos del mes.',
+  outcome: 'Los pedidos del mes se bajan en un archivo.',
   criteria: ['Hay un botón "Exportar"'],
   route: 'CHANGE',
   origin: { client: 'Acme' },
@@ -42,6 +43,20 @@ test('crear asegura la label, manda el cuerpo por stdin y devuelve el issue', ()
   expect(calls[1]!.args).toEqual(['issue', 'create', '--repo', 'o/r', '--title', ISSUE.title, '--body-file', '-', '--label', 'seckert:draft'])
   expect(calls[1]!.input).toBe(renderBody(ISSUE))
   expect(created).toMatchObject({ id: '12', url: 'https://github.com/o/r/issues/12', state: 'draft', title: ISSUE.title, route: 'CHANGE' })
+})
+
+test('con tipo, crear asegura la label type:<tipo> y la agrega; leer devuelve el tipo', () => {
+  const { gh, calls } = fakeGh({ 'issue create': 'https://github.com/o/r/issues/12\n', 'issue view': view({ labels: [{ name: 'seckert:draft' }, { name: 'type:feature' }] }) })
+  const created = githubTracker('o/r', gh).create({ ...ISSUE, kind: 'feature' }, 'draft')
+  expect(calls.some(c => c.args.slice(0, 3).join(' ') === 'label create type:feature')).toBe(true)
+  const create = calls.find(c => c.args[1] === 'create' && c.args[0] === 'issue')!
+  expect(create.args.slice(-4)).toEqual(['--label', 'seckert:draft', '--label', 'type:feature'])
+  expect(created.kind).toBe('feature')
+})
+
+test('dos labels de tipo es un error, no se adivina', () => {
+  const { gh } = fakeGh({ 'issue view': view({ labels: [{ name: 'seckert:draft' }, { name: 'type:fix' }, { name: 'type:task' }] }) })
+  expect(() => githubTracker('o/r', gh).get('12')).toThrow(/tipo/)
 })
 
 test('leer devuelve el issue canónico; un aprobado sin rama sigue aprobado', () => {

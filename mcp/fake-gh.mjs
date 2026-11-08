@@ -46,12 +46,13 @@ if (group === 'label' && cmd === 'create') {
   process.stdout.write(JSON.stringify(out(find(args[2]))))
 } else if (group === 'issue' && cmd === 'list') {
   const state = flag('--state') ?? 'open'
-  const label = flag('--label')
-  const list = db.issues.filter(i => (state === 'all' || i.state === 'OPEN') && (!label || i.labels.includes(label)))
+  const labels = flags('--label')
+  const list = db.issues.filter(i => (state === 'all' || i.state === 'OPEN') && labels.every(l => i.labels.includes(l)))
   process.stdout.write(JSON.stringify(list.map(out)))
 } else if (group === 'issue' && cmd === 'edit') {
   const issue = find(args[2])
   issue.labels = issue.labels.filter(l => !flags('--remove-label').includes(l)).concat(flags('--add-label'))
+  if (flag('--body-file') === '-') issue.body = readFileSync(0, 'utf8')
 } else if (group === 'issue' && cmd === 'close') {
   const issue = find(args[2])
   issue.state = 'CLOSED'

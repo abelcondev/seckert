@@ -32,8 +32,9 @@ async function call(name: string, args: Record<string, unknown>) {
 
 const ISSUE = {
   title: 'Exportar pedidos a CSV',
-  context: 'El cliente quiere bajar los pedidos del mes.',
+  problem: 'El cliente quiere bajar los pedidos del mes.',
   quote: 'Necesito un botón que me baje todo en Excel.',
+  outcome: 'Los pedidos del mes se bajan en un archivo.',
   criteria: ['Hay un botón "Exportar"', 'El CSV trae fecha y total'],
   route: 'CHANGE',
   origin: { client: 'Acme', date: '2026-11-06' },
@@ -95,6 +96,33 @@ test('issue_create lo crea en draft en el repo de origin, con el cuerpo de secke
   expect(db().calls.find(c => c[1] === 'create')).toContain('acme/tienda')
 })
 
+test('issue_create escribe y issue_get devuelve todos los campos v2', async () => {
+  const full = {
+    ...ISSUE,
+    decisions: [{ text: 'Separador ;', by: 'Abel', date: '2026-11-09' }],
+    outOfScope: ['Excel nativo'],
+    constraints: ['No cambiar la API de pedidos'],
+    references: ['src/Pedidos.tsx'],
+    questions: [{ id: 'P1', text: '¿Incluimos los cancelados?', owner: 'Abel' }],
+    routeWhy: 'toca datos de pedidos',
+    origin: { source: 'Chat con Abel', requestedBy: 'Abel' },
+  }
+  const { error } = await call('issue_create', full)
+  expect(error).toBeNull()
+  const body: string = db().issues[0]!.body
+  expect(body.startsWith('<!-- seckert:issue v2 -->')).toBe(true)
+  for (const h of ['## Problem', '## Outcome', '## Decisions', '## Out of scope', '## Constraints', '## References', '## Open questions', '## Route', '## Origin']) expect(body).toContain(h)
+  const { value } = await call('issue_get', { id: '1' })
+  expect(value).toMatchObject({ outcome: ISSUE.outcome, decisions: full.decisions, outOfScope: full.outOfScope, questions: full.questions, routeWhy: 'toca datos de pedidos', origin: full.origin })
+})
+
+test('issue_create pide escribir el contenido en el idioma del pedido, con títulos en inglés', async () => {
+  const { tools } = await client.listTools()
+  const description = tools.find(t => t.name === 'issue_create')!.description!
+  expect(description).toMatch(/language of the request/i)
+  expect(description).toMatch(/headings.*English/i)
+})
+
 test('aprobar exige las palabras del usuario y las deja en un comentario', async () => {
   await call('issue_create', ISSUE)
   const without = await call('issue_transition', { id: '1', to: 'approved' })
@@ -105,6 +133,31 @@ test('aprobar exige las palabras del usuario y las deja en un comentario', async
   expect(value).toMatchObject({ id: '1', from: 'draft', to: 'approved' })
   expect(db().issues[0]!.labels).toEqual(['seckert:approved'])
   expect(db().issues[0]!.comments).toEqual(['Aprobado por el usuario: «1 y 3 dale»'])
+})
+
+test('un issue con preguntas abiertas no se aprueba; responderlas las pasa a Decisions', async () => {
+  await call('issue_create', { ...ISSUE, questions: [{ id: 'P1', text: '¿Separador ; o ,?', owner: 'Abel' }, { id: 'P2', text: '¿Incluimos cancelados?' }] })
+  const blocked = await call('issue_transition', { id: '1', to: 'approved', aprobacion: 'dale' })
+  expect(blocked.error).toContain('P1')
+  expect(db().issues[0]!.labels).toEqual(['seckert:draft'])
+
+  const { value, error } = await call('issue_answer', { id: '1', question: 'P1', answer: 'Con ;', decision: 'Separador ;', by: 'Abel' })
+  expect(error).toBeNull()
+  expect(value).toMatchObject({ id: '1', pending: ['P2'] })
+  const after = (await call('issue_get', { id: '1' })).value
+  expect(after.questions).toEqual([{ id: 'P2', text: '¿Incluimos cancelados?' }])
+  expect(after.decisions).toEqual([{ text: 'Separador ;', by: 'Abel', date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) }])
+  expect(db().issues[0]!.comments.at(-1)).toBe('P1 respondida por Abel: «Con ;». Pasa a Decisions: Separador ;')
+
+  await call('issue_answer', { id: '1', question: 'P2', answer: 'No' })
+  const ok = await call('issue_transition', { id: '1', to: 'approved', aprobacion: 'dale' })
+  expect(ok.error).toBeNull()
+  expect((await call('issue_get', { id: '1' })).value.decisions.at(-1)).toMatchObject({ text: '¿Incluimos cancelados? No' })
+})
+
+test('responder una pregunta que no existe falla', async () => {
+  await call('issue_create', ISSUE)
+  expect((await call('issue_answer', { id: '1', question: 'P9', answer: 'x' })).error).toContain('P9')
 })
 
 test('descartar cierra el issue como no planeado y deja el motivo', async () => {
@@ -134,10 +187,18 @@ test('issue_list resume los abiertos y filtra por estado', async () => {
   await call('issue_transition', { id: '2', to: 'approved', aprobacion: 'dale' })
   const all = (await call('issue_list', {})).value
   expect(all).toEqual([
-    { id: '1', title: ISSUE.title, state: 'draft', route: 'CHANGE', url: 'https://github.com/acme/tienda/issues/1' },
-    { id: '2', title: 'Arreglar typo', state: 'approved', route: 'FIX', url: 'https://github.com/acme/tienda/issues/2' },
+    { id: '1', title: ISSUE.title, state: 'draft', route: 'CHANGE', kind: null, url: 'https://github.com/acme/tienda/issues/1' },
+    { id: '2', title: 'Arreglar typo', state: 'approved', route: 'FIX', kind: null, url: 'https://github.com/acme/tienda/issues/2' },
   ])
   expect((await call('issue_list', { state: 'approved' })).value.map((i: { id: string }) => i.id)).toEqual(['2'])
+})
+
+test('issue_list muestra el tipo y filtra por tipo', async () => {
+  await call('issue_create', { ...ISSUE, kind: 'feature' })
+  await call('issue_create', { ...ISSUE, title: 'Arreglar typo', route: 'FIX', kind: 'fix' })
+  const all = (await call('issue_list', {})).value
+  expect(all.map((i: { kind: string }) => i.kind)).toEqual(['feature', 'fix'])
+  expect((await call('issue_list', { kind: 'fix' })).value.map((i: { id: string }) => i.id)).toEqual(['2'])
 })
 
 test('un estado que muestra GitHub no se marca a mano', async () => {
@@ -198,7 +259,7 @@ test('issue_take no toma un issue sin aprobar ni uno ya en revisión', async () 
 })
 
 test('pr_draft de un FIX tomado de un issue, sin change: el cuerpo sale del issue y lleva Fixes #n', async () => {
-  await call('issue_create', { ...ISSUE, title: 'Arreglar el total', route: 'FIX' })
+  await call('issue_create', { ...ISSUE, title: 'Arreglar el total', route: 'FIX', decisions: [{ text: 'Redondear a 2 decimales', by: 'Abel' }], outOfScope: ['Cambiar impuestos'] })
   await call('issue_transition', { id: '1', to: 'approved', aprobacion: 'dale' })
   await call('issue_take', { id: '1' })
   writeFileSync(join(repo, 'src', 'total.ts'), 'x\n')
@@ -210,8 +271,8 @@ test('pr_draft de un FIX tomado de un issue, sin change: el cuerpo sale del issu
   expect(value).toMatchObject({ base: 'main', branch: 'fix/arreglar-el-total', title: 'fix: arreglar el total', issue: '1', files: 1 })
   const body: string = value.body
   expect(body.startsWith('Fixes #1\n\n## Why')).toBe(true)
-  expect(body).toContain(`## Why\n\n${ISSUE.context}\n\n> ${ISSUE.quote}`)
-  expect(body).toContain('## What\n\n- Hay un botón "Exportar"\n- El CSV trae fecha y total')
+  expect(body).toContain(`## Why\n\n${ISSUE.problem}\n\n> ${ISSUE.quote}\n\n${ISSUE.outcome}`)
+  expect(body).toContain('## What\n\n- Hay un botón "Exportar"\n- El CSV trae fecha y total\n\nDecisions:\n- Redondear a 2 decimales — Abel\n\nOut of scope:\n- Cambiar impuestos')
   expect(body).toContain('## How to revert\n\n<!-- seckert: completar -->')
   const order = ['## Why', '## What', '## Testing', '## Risk', '## How to revert', '## Evidence'].map(h => body.indexOf(h))
   expect([...order].sort((a, b) => a - b)).toEqual(order)

@@ -20,7 +20,7 @@ import {
 } from './repo'
 import { testsOnBase } from './base'
 import { prDraft, releaseDraft } from './pr'
-import { issueCreate, issueGet, issueList, issueTake, issueTransition } from './issues'
+import { issueAnswer, issueCreate, issueGet, issueList, issueTake, issueTransition } from './issues'
 import { checkTransition } from '../lib/issue'
 
 const server = new McpServer({ name: 'seckert', version: '1.0.0' })
@@ -295,17 +295,31 @@ server.registerTool(
   'issue_create',
   {
     description:
-      'Creates a seckert issue in the GitHub repo of `origin`, always as draft (label seckert:draft). The body has fixed sections: context with the client\'s literal quote, acceptance criteria, suggested route (FIX, SPEC or CHANGE) and origin. Approving it is a separate step with issue_transition and the user\'s words.',
+      'Creates a seckert issue (contract v2, docs/contrato-issue.md) in the GitHub repo of `origin`, always as draft (label seckert:draft). Write the content in the language of the request; section headings stay in English. Only decided things go in: an open discussion stays in the session, and small pending doubts go to `questions`, which keep the issue in draft until answered. Approving it is a separate step with issue_transition and the user\'s words.',
     inputSchema: {
       title: z.string(),
-      context: z.string().describe('Where it comes from and why, in a few sentences'),
+      problem: z.string().describe('Who is affected, what happens today and why it matters, in a few sentences'),
       quote: z.string().optional().describe('What the client said, verbatim'),
-      criteria: z.array(z.string()).min(1).describe('Observable acceptance criteria'),
+      outcome: z.string().describe('The expected result, in one or two sentences'),
+      criteria: z.array(z.string()).min(1).describe('Verifiable acceptance criteria; "When…, then…" is suggested for behavior'),
+      decisions: z
+        .array(z.object({ text: z.string(), by: z.string().optional(), date: z.string().optional() }))
+        .optional()
+        .describe('What is already decided, with who and when (YYYY-MM-DD)'),
+      outOfScope: z.array(z.string()).optional().describe('What must not be done'),
+      constraints: z.array(z.string()).optional().describe('Limits, e.g. "do not change the orders API"'),
+      references: z.array(z.string()).optional().describe('Files, links or related issues'),
+      questions: z
+        .array(z.object({ id: z.string().regex(/^P\d+$/), text: z.string(), owner: z.string().optional() }))
+        .optional()
+        .describe('Small pending doubts, numbered P1, P2…, with who decides'),
       route: z.enum(['FIX', 'SPEC', 'CHANGE']),
+      kind: z.enum(['feature', 'fix', 'task']).optional().describe('Issue type, as the label type:<kind>'),
+      routeWhy: z.string().optional().describe('Why that route, in a few words'),
       origin: z
-        .object({ meeting: z.string().optional(), date: z.string().optional(), client: z.string().optional() })
+        .object({ source: z.string().optional(), date: z.string().optional(), client: z.string().optional(), requestedBy: z.string().optional() })
         .default({})
-        .describe('meeting: the meeting title or link'),
+        .describe('source: the meeting, chat or document it comes from'),
     },
     annotations: { destructiveHint: false },
   },
@@ -338,13 +352,36 @@ server.registerTool(
 server.registerTool(
   'issue_list',
   {
-    description: 'Lists seckert issues (id, title, state, route, url). Open ones by default; with state, all issues in that state.',
-    inputSchema: { state: STATE.optional() },
+    description: 'Lists seckert issues (id, title, state, route, kind, url). Open ones by default; with state, all issues in that state; with kind, only that type.',
+    inputSchema: { state: STATE.optional(), kind: z.enum(['feature', 'fix', 'task']).optional() },
     annotations: { readOnlyHint: true },
   },
-  async ({ state }) => {
+  async ({ state, kind }) => {
     try {
-      return json(issueList(projectRoot(), state))
+      return json(issueList(projectRoot(), state, kind))
+    } catch (error) {
+      return failure(error)
+    }
+  },
+)
+
+server.registerTool(
+  'issue_answer',
+  {
+    description:
+      'Answers an open question of a seckert issue: removes it from Open questions and adds it to Decisions with who and today\'s date, and leaves the answer as a comment. An issue with open questions cannot be approved. Write `decision` in the issue\'s language, as the decision itself (e.g. "Separator ;").',
+    inputSchema: {
+      id: z.string().describe('The issue number'),
+      question: z.string().regex(/^P\d+$/).describe('P1, P2…'),
+      answer: z.string().describe('The answer, in the user\'s words'),
+      decision: z.string().optional().describe('The decision as it should read in Decisions; default: the question plus the answer'),
+      by: z.string().optional().describe('Who decided'),
+    },
+    annotations: { destructiveHint: false },
+  },
+  async args => {
+    try {
+      return json(issueAnswer(projectRoot(), args))
     } catch (error) {
       return failure(error)
     }

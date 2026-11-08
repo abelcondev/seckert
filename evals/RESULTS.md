@@ -2,6 +2,20 @@
 
 Cómo se corren y qué mide cada caso: [README.md](README.md). Cada celda es **con seckert / sin seckert**: el mismo modelo, los mismos pedidos y el mismo repo de prueba, con el plugin y sin él.
 
+## 1.2.0 (sin publicar) · issue v2 · 2026-11-09
+
+Change `issue-template-v2`: contrato v2, tipo como label, idioma del pedido y Decisions. Los cuatro casos de issues, con seckert (`--ablation none`), 3 corridas cada uno. Modelo `claude-opus-5-5`. Costo: $2,21.
+
+| Caso | Con seckert | Palabras | Palabras por frase | Tokens de salida | Segundos | Costo |
+|---|---|---|---|---|---|---|
+| `crear-issue-en` | 3/3 | 97 | 9,8 | 1.290 | 16 | $0,15 |
+| `crear-issue-es` | 3/3 | 90 | 7,8 | 1.578 | 20 | $0,16 |
+| `tomar-issue-change` | 3/3 | 169 | 7,2 | 1.943 | 28 | $0,19 |
+| `tomar-issue-fix` | 3/3 | 150 | 10,6 | 2.193 | 34 | $0,23 |
+
+Notas:
+- Los fixtures de `tomar-issue-*` pasaron a issues v2.
+
 ## 1.1.0 (sin publicar) · de issue a PR · 2026-11-07
 
 Change `issue-a-pr`: `issue_take`, la skill `tomar` y `pr_draft` con `Fixes #n`. Solo los dos casos nuevos, con seckert (`--ablation none`), 3 corridas cada uno. Modelo `claude-opus-5-5`. Costo: $1,21.
