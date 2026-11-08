@@ -4,7 +4,7 @@
 // Outcome) y What (los criterios). El resto es el plan, que vive en el artifact
 // `plan` del issue: metadatos en un comentario HTML, diagrama, preguntas, tareas,
 // testing y log. Solo funciones puras.
-import { section } from './change'
+import { section, verifyRows } from './change'
 import type { IssueBody } from './issue'
 
 export const PLAN_NAME = 'Plan'
@@ -109,4 +109,23 @@ export function planInBody(body: string): string | null {
   const match = body.match(/\n## Plan\n\n([\s\S]*?)(?=\n## (?!#)|$)/)
   if (!match) return null
   return `${match[1]!.replace(/^### /gm, '## ').replace(/\s*$/, '')}\n`
+}
+
+const VERIFY_LINE = /^\d{4}-\d{2}-\d{2} verify\b/
+
+// El comentario del issue para lo nuevo del Log: una verificación se lee como tabla.
+export function logComment(lines: string[]): string {
+  return lines
+    .map(line => {
+      if (!VERIFY_LINE.test(line)) return `- ${line}`
+      const rows = verifyRows(line)
+      const date = line.slice(0, 10)
+      const extra = line
+        .replace(/^\S+ verify\b[^:]*:\s*/, '')
+        .replace(/(PASA|FALLA|VISUAL|NO VERIFICABLE) "(.+?)"(?: \((.*?)\))?(?=; (?:PASA|FALLA|VISUAL|NO VERIFICABLE) "|\.(?: |$))/g, '')
+        .replace(/^[;.\s]+/, '')
+        .trim()
+      return [`**Verificación** (${date})`, '', '| Punto | Veredicto | Detalle |', '|---|---|---|', ...rows.map(r => `| ${r.point} | ${r.verdict} | ${r.detail ?? ''} |`), ...(extra ? ['', extra] : [])].join('\n')
+    })
+    .join('\n\n')
 }

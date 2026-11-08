@@ -8,7 +8,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 
 import { parseChange, renderChange, SLUG, type NewChange } from '../lib/change'
-import { attachPlan, changeFromIssue, criteriaOf, newLogLines, PLAN_NAME, planFromChange, planInBody } from '../lib/issue-change'
+import { attachPlan, changeFromIssue, criteriaOf, logComment, newLogLines, PLAN_NAME, planFromChange, planInBody } from '../lib/issue-change'
 import { ArtifactsUnavailable } from '../lib/trackers/github'
 import type { Artifact, TrackedIssue } from '../lib/trackers/tracker'
 import { tracker } from './issues'
@@ -107,6 +107,6 @@ export function saveIssueChange(root: string, change: ChangeFile & { source: Iss
     else issues.updateRawBody(id, attachPlan(issues.get(id).rawBody, plan))
   }
   const added = newLogLines(change.source.plan, plan)
-  if (added.length) gh(['issue', 'comment', id, '--repo', repo, '--body', added.map(line => `- ${line}`).join('\n')])
+  if (added.length) gh(['issue', 'comment', id, '--repo', repo, '--body', logComment(added)])
   cache(root, change.slug, text)
 }

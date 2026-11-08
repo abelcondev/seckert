@@ -142,3 +142,29 @@ test('sin la línea en AGENTS.md, un change con issue sigue siendo un archivo', 
     rmSync(join(repo, 'sdd'), { recursive: true, force: true })
   }
 })
+
+test('verify_record deja la verificación como tabla en un comentario y reabre la tarea en el plan', async () => {
+  await takenChange()
+  await call('change_transition', { slug: 'exportar-pedidos-a-csv', to: 'approved', aprobacion: 'dale' })
+  writeFileSync(join(repo, 'csv.ts'), 'x\n')
+  git('add', '-A')
+  git('commit', '-q', '-m', 'feat: csv')
+  const hash = git('rev-parse', '--short=7', 'HEAD')
+  await call('task_complete', { slug: 'exportar-pedidos-a-csv', task: 'T1', commit: hash, evidencia: 'ok' })
+  const { value, error } = await call('verify_record', {
+    slug: 'exportar-pedidos-a-csv',
+    filas: [
+      { punto: 'Hay un botón "Exportar"', veredicto: 'PASA', evidencia: 'se ve en la lista' },
+      { punto: 'El CSV trae fecha y total', veredicto: 'FALLA', evidencia: 'falta el total', tareas: ['T1'] },
+    ],
+    comandos: ['bun test'],
+  })
+  expect(error).toBeNull()
+  expect(value.reabiertas).toEqual(['T1'])
+  expect(plan().body).toContain('- [ ] T1 Armar el CSV <!-- commit: ')
+  const comment: string = db().issues[0]!.comments.at(-1)
+  expect(comment).toContain('**Verificación**')
+  expect(comment).toContain('| Hay un botón "Exportar" | PASA |  |')
+  expect(comment).toContain('| El CSV trae fecha y total | FALLA | falta el total |')
+  expect(comment).toContain('T1 reabierta')
+})
