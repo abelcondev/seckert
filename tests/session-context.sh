@@ -20,6 +20,7 @@ printf '# app\n\n- seckert issues: github\n' > AGENTS.md
 check "con la línea en AGENTS.md aparece el modo issues" 1 "$(has 'Issues mode')"
 check "un pedido de trabajo va a un issue sin pedirlo" 1 "$(has 'without the user saying')"
 check "lo que no está claro se discute en la sesión" 1 "$(has 'stays in the session')"
+check "antes de crear, revisa los issues abiertos" 1 "$(has 'look at the open issues')"
 rm AGENTS.md
 printf '# app\n\nseckert issues: github\n' > CLAUDE.md
 check "también en CLAUDE.md" 1 "$(has 'Issues mode')"

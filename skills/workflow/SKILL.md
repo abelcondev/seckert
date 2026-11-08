@@ -17,6 +17,7 @@ Small changes go straight through; only what deserves it gets paperwork, and tha
 With the line `seckert issues: github` in `AGENTS.md` or `CLAUDE.md`, GitHub issues replace `sdd/changes/` as the place where work lives. The contract is `docs/contrato-issue.md`.
 
 - **Every work request becomes an issue**, without the user saying "create an issue": "vamos a agregar un botón para descargar un CSV" → `issue_create`, in the request's language, with its type. Questions, explanations and explorations don't.
+- **No duplicates.** Before proposing or creating work, check the open issues (`issue_list`). If one covers it, use it; `issue_create` returns `similar` when it finds look-alikes.
 - **Only decided things go in.** What isn't clear stays in the session; when the discussion reaches something concrete, offer in one line to turn it into an issue, with what was decided in Decisions. Small pending doubts go to Open questions and block approval until answered with `issue_answer`.
 - **A request from the user with no open questions** is approved with their words (`issue_transition`) and taken (`seckert:tomar`). With "para después" or "anotalo", only create it.
 - **The route still applies.** A FIX or SPEC is done directly on the linked branch and ends in a PR with `Fixes #n`. A CHANGE lives in its issue: `change_create` with `issue` and without `why`/`what` attaches the `Plan` artifact, and waits for the "dale". The other change tools work the same way.

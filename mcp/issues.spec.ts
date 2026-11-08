@@ -355,3 +355,11 @@ test('issue_link marca padre y bloqueos entre issues que ya existen, y los saca'
   expect(db().calls.find(c => c[1] === 'edit' && c.includes('--add-blocked-by'))).toEqual(expect.arrayContaining(['--add-blocked-by', '2', '--parent', '1']))
   expect((await call('issue_link', { id: '3', removeBlockedBy: ['2'] })).value.blockedBy).toEqual([])
 })
+
+test('issue_create avisa de issues abiertos parecidos', async () => {
+  await call('issue_create', { ...ISSUE, title: 'totalConDescuento devuelve el descuento en vez del total', problem: 'Con $100 y 10% da $10.' })
+  const dup = await call('issue_create', { ...ISSUE, title: 'Corregir totalConDescuento', problem: 'Devuelve el descuento y no el total.' })
+  expect(dup.value.similar).toEqual([{ id: '1', title: 'totalConDescuento devuelve el descuento en vez del total' }])
+  const other = await call('issue_create', { ...ISSUE, title: 'Botón de confirmar', problem: 'El checkout dice Enviar.' })
+  expect(other.value.similar ?? []).toEqual([])
+})

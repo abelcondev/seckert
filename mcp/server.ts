@@ -297,7 +297,7 @@ server.registerTool(
   'issue_create',
   {
     description:
-      'Creates a seckert issue (contract v2, docs/contrato-issue.md) in the GitHub repo of `origin`, always as draft (label seckert:draft). Write the content in the language of the request; section headings stay in English. Only decided things go in: an open discussion stays in the session, and small pending doubts go to `questions`, which keep the issue in draft until answered. Approving it is a separate step with issue_transition and the user\'s words.',
+      'Creates a seckert issue (contract v2, docs/contrato-issue.md) in the GitHub repo of `origin`, always as draft (label seckert:draft). Write the content in the language of the request; section headings stay in English. Only decided things go in: an open discussion stays in the session, and small pending doubts go to `questions`, which keep the issue in draft until answered. Approving it is a separate step with issue_transition and the user\'s words. Returns `similar`: open issues that look like this one, to avoid a duplicate.',
     inputSchema: {
       title: z.string(),
       problem: z.string().describe('Who is affected, what happens today and why it matters, in a few sentences'),

@@ -1,6 +1,6 @@
 import { expect, test } from 'claude-code/testing'
 
-import { branchFor, checkTransition, deriveState, labelOf, parseBody, renderBody, stateOf, type Issue } from '../lib/issue'
+import { branchFor, checkTransition, similarIssues, deriveState, labelOf, parseBody, renderBody, stateOf, type Issue } from '../lib/issue'
 
 const ISSUE: Issue = {
   title: 'Exportar pedidos a CSV',
@@ -102,4 +102,10 @@ test('aprobar exige las palabras del usuario', () => {
 
 test('la rama de un issue no termina en un conector al cortar el título', () => {
   expect(branchFor('Cambiar el texto del botón del checkout', 'FIX')).toBe('fix/cambiar-el-texto-del-boton')
+})
+
+test('dos issues son parecidos si comparten al menos dos palabras con contenido', () => {
+  const a = { title: 'totalConDescuento devuelve el descuento en vez del total', problem: 'Con $100 y 10% da $10.' }
+  expect(similarIssues({ title: 'Corregir totalConDescuento', problem: 'Devuelve el descuento.' }, [{ id: '1', ...a }]).map(i => i.id)).toEqual(['1'])
+  expect(similarIssues({ title: 'Botón de confirmar', problem: 'El checkout dice Enviar.' }, [{ id: '1', ...a }])).toEqual([])
 })

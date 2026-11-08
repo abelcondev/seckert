@@ -1,7 +1,7 @@
 // Issues de seckert en GitHub: el repo sale del remoto `origin` y `gh` corre en la raíz.
 import { execFileSync } from 'node:child_process'
 
-import { answerQuestion, branchFor, checkTransition, openQuestionsProblem, takeProblem, type Issue, type IssueState, type Kind } from '../lib/issue'
+import { similarIssues, answerQuestion, branchFor, checkTransition, openQuestionsProblem, takeProblem, type Issue, type IssueState, type Kind } from '../lib/issue'
 import { ArtifactsUnavailable, githubTracker, type Gh } from '../lib/trackers/github'
 import { issuePlan, syncIssue, type Plan } from './board'
 import { baseBranch } from './repo'
@@ -60,6 +60,7 @@ export function designOf(issues: ReturnType<typeof tracker>['issues'], issue: { 
 export function issueCreate(root: string, issue: Issue & Plan & { design?: string; parent?: string; blockedBy?: string[] }) {
   const { issues } = tracker(root)
   const { design, parent, blockedBy, priority, size, cycle, ...rest } = issue
+  const similar = similarIssues(rest, issues.list()).map(({ id, title }) => ({ id, title }))
   let { rawBody: _raw, ...created } = issues.create(rest, 'draft', { parent, blockedBy })
   if (design?.trim()) {
     try {
@@ -79,7 +80,7 @@ export function issueCreate(root: string, issue: Issue & Plan & { design?: strin
       board = `no se pudo planificar en el tablero: ${(error as Error).message}`
     }
   }
-  return { ...created, design: design?.trim() || null, ...(board ? { board } : {}) }
+  return { ...created, design: design?.trim() || null, ...(board ? { board } : {}), ...(similar.length ? { similar } : {}) }
 }
 
 export function issueGet(root: string, id: string) {
