@@ -1,76 +1,141 @@
-# 📮 Contrato del issue (v1)
+# 📮 Issue contract (v2)
 
-seckert trabaja issues de GitHub que siguen este formato. Cualquier herramienta puede crearlos: un script, una GitHub Action o `seckert-meetings`. seckert solo pide que el issue respete el contrato.
+seckert works GitHub issues that follow this contract. Any tool can create them: a script, a GitHub Action, or `seckert-meetings`. seckert only asks that the issue keeps the contract.
 
-## Dónde vive
+## Where it lives
 
-El issue va en el repo de GitHub del proyecto, el del remoto `origin`. seckert lo lee con `gh`.
+The issue lives in the project's GitHub repo, the one of the `origin` remote. seckert reads and writes it with `gh`.
 
-## Cuerpo
+## Language
 
-La primera línea es la marca con la versión del contrato. Después vienen cuatro secciones fijas, en este orden. Los títulos de sección van en inglés y el contenido en el idioma del proyecto.
+- Section headings are always in English, exactly as below.
+- The content is written in the language of the request. A request in Spanish produces an issue in Spanish.
+
+## Only decided things
+
+An issue carries decisions, not open discussions.
+
+- Research and comparisons (for example, "Stripe or Mercado Pago") happen before the issue exists. With Claude Code, they happen in the session.
+- What was decided goes to `## Decisions`, with who decided and when.
+- Small pending doubts go to `## Open questions`. An issue with open questions stays in `draft` and cannot be approved. Answering one moves it to `## Decisions`.
+
+## Body
+
+The first line is the marker with the contract version. Then come the sections, in this order.
 
 ```markdown
-<!-- seckert:issue v1 -->
+<!-- seckert:issue v2 -->
 
-## Context
+## Problem
 
-El cliente quiere bajar los pedidos del mes para su contador.
+The accountant needs the month's orders, and today they are copied by hand.
 
-> Necesito un botón que me baje todo en Excel a fin de mes.
+> I need a button that downloads everything to Excel at the end of the month.
+
+## Outcome
+
+The month's orders download as one file with one click.
 
 ## Acceptance criteria
 
-- [ ] Hay un botón "Exportar" en la lista de pedidos
-- [ ] El CSV trae fecha, cliente y total
+- [ ] There is a "Download CSV" button on the orders list
+- [ ] When I click it, then a CSV downloads with date, customer and total
+
+## Decisions
+
+- Separator ; — Abel, 2026-11-09
+
+## Out of scope
+
+- Native Excel export
+
+## Constraints
+
+- Do not change the orders API
+
+## References
+
+- src/Orders.tsx
+
+## Open questions
+
+- **P1** Do we include cancelled orders? — decide: Abel
 
 ## Route
 
-CHANGE
+FIX: one screen and an export, no money involved
 
 ## Origin
 
-- Meeting: Reunión semanal con Acme
+- Source: Weekly meeting with Acme
 - Date: 2026-11-06
 - Client: Acme
+- Requested by: Juan
 ```
 
-| Sección | Qué lleva | ¿Obligatoria? |
+| Section | What it holds | Required |
 |---|---|---|
-| `## Context` | De dónde sale el pedido, en pocas frases. La cita textual del cliente va en líneas que empiezan con `> `. | Sí, la cita es opcional |
-| `## Acceptance criteria` | Una casilla `- [ ]` por criterio observable | Sí, al menos uno |
-| `## Route` | Una sola palabra: `FIX`, `SPEC` o `CHANGE` | Sí |
-| `## Origin` | Líneas `- Meeting:`, `- Date:` y `- Client:`. Cualquiera puede faltar; sin ninguna, un `-` | Sí |
+| `## Problem` | Who is affected, what happens today and why it matters. The client's literal quote goes in lines that start with `> `. | Yes; the quote is optional |
+| `## Outcome` | The expected result, in one or two sentences | Yes |
+| `## Acceptance criteria` | One `- [ ]` checkbox per verifiable criterion. "When…, then…" is suggested for behavior. | Yes, at least one |
+| `## Decisions` | `- <decision> — <who>, <YYYY-MM-DD>` | No |
+| `## Out of scope` | What must not be done, one `- ` item each | No |
+| `## Constraints` | Limits the work must respect | No |
+| `## References` | Files, links or related issues | No |
+| `## Open questions` | `- **P1** <question> — decide: <who>` | No |
+| `## Route` | `FIX`, `SPEC` or `CHANGE`, optionally followed by `: <why>` | Yes |
+| `## Origin` | `- Source:`, `- Date:`, `- Client:` and `- Requested by:` lines. Any can be missing; with none, a single `-`. | Yes |
 
-La ruta es una sugerencia para quien trabaja el issue:
+Optional sections are left out when empty.
 
-- **FIX**: un arreglo o un cambio chico.
-- **SPEC**: cambia el valor de una regla que ya existe.
-- **CHANGE**: una feature o un cambio grande que necesita propuesta.
+The route is a suggestion for whoever works the issue:
 
-## Estado
+- **FIX**: a fix or a small change.
+- **SPEC**: changes the value of an existing rule.
+- **CHANGE**: a feature or a large or sensitive change that needs a plan.
 
-El estado se lleva con labels y con lo que muestra GitHub:
+## Labels
 
-| Estado | Cómo se ve |
+| Label | Meaning |
+|---|---|
+| `seckert:draft`, `seckert:approved`, `seckert:discarded` | Triage. Exactly one. |
+| `type:feature`, `type:fix`, `type:task` | Issue type. At most one. GitHub's native issue types exist only for organizations, so seckert uses labels. |
+
+The rest of the state comes from GitHub:
+
+| State | How it shows |
 |---|---|
 | `draft` | Label `seckert:draft` |
 | `approved` | Label `seckert:approved` |
-| `discarded` | Label `seckert:discarded` y el issue cerrado como no planeado |
-| `in-progress` | Un issue aprobado con una rama enlazada (`gh issue develop`) |
-| `in-review` | Un PR abierto que lo enlaza con `Fixes #n` |
-| `closed` | El merge de ese PR |
+| `in-progress` | An approved issue with a linked branch (`gh issue develop`) |
+| `in-review` | An open PR that links it with `Fixes #n` |
+| `closed` | The merge of that PR |
+| `discarded` | Label `seckert:discarded` and the issue closed as not planned |
 
-## Reglas para quien crea issues
+## Artifacts
 
-- **Crear siempre en `draft`.** Aprobar le corresponde a una persona, y seckert guarda sus palabras como comentario.
-- **Una sola label de estado.** Un issue con dos labels `seckert:*` es un error.
-- **No editar la marca ni los títulos de sección.** seckert ignora los issues que no puede leer.
-- **Crear la label si no existe.** Colores sugeridos: `d4c5f9` para draft, `0e8a16` para approved y `cccccc` para discarded.
+Issue artifacts are files attached to an issue, with version history. seckert reserves two names:
 
-## Versiones
+| Name | Type | Who writes it |
+|---|---|---|
+| `Design` | `link` | Whoever creates the issue: a link to the design (a claude.ai artifact, Figma…) |
+| `Plan` | `plan` | seckert only, when it takes a CHANGE. Producers must not create it. |
 
-- Un cambio que no rompe lectores existentes, como un campo opcional nuevo en `## Origin`, sigue en v1.
-- Un cambio que rompe lectores sube la versión: `v2`.
-- seckert lee cualquier versión que conoce. Una versión más nueva falla con un mensaje que pide actualizar seckert.
-- La marca sin versión (`<!-- seckert:issue -->`) es v1 y se sigue leyendo.
+The body belongs to whoever writes the issue. seckert never writes the plan in the body while artifacts are available.
+
+## Rules for producers
+
+- **Always create in `draft`.** Approving is a person's call, and seckert keeps their words as a comment.
+- **Keep the marker and the headings as they are.** seckert skips issues it cannot read.
+- **Create the labels if they are missing.** Suggested colors: `d4c5f9` draft, `0e8a16` approved, `cccccc` discarded, `a2eeef` feature, `d73a4a` fix, `ededed` task.
+
+## Versions
+
+| Version | Changes |
+|---|---|
+| v1 | `## Context`, `## Acceptance criteria`, `## Route`, `## Origin` with `Meeting`. The marker without a version is v1. |
+| v2 | `## Problem` replaces `## Context`. Adds `## Outcome`, `## Decisions`, `## Out of scope`, `## Constraints`, `## References`, `## Open questions`, the route's why, and `Source` and `Requested by` in `## Origin`. |
+
+- A change that does not break existing readers, such as a new optional field, keeps the version.
+- A change that breaks readers bumps it.
+- seckert reads every version it knows. A newer version fails with a message asking to update seckert.
