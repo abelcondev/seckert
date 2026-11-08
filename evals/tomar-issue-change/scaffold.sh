@@ -6,4 +6,5 @@ here=$(cd "$(dirname "$0")" && pwd)
 "$here/../_fixture/issue.sh" 'Exportar pedidos a CSV' CHANGE \
   'El cliente quiere bajar los pedidos del mes para su contador.' \
   'Necesito un botón que me baje todo en Excel a fin de mes.' \
-  'Hay un botón "Exportar" que baja un CSV con fecha, cliente y total de cada pedido'
+  'Hay un botón "Exportar" que baja un CSV con fecha, cliente y total de cada pedido' \
+  'Los pedidos del mes se bajan en un archivo con un clic.'

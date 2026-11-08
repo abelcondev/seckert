@@ -30,7 +30,7 @@ Parte 1 de 4: el objetivo es usar GitHub Issues en lugar de Linear. El issue de 
 - [x] T1 [datos] Modelo v2 en `lib/issue.ts`: secciones nuevas, render y parse, y lectura de v1 (tests primero) <!-- commit: fb63583 -->
 - [x] T2 `issue_create` y `issue_get` con los campos nuevos, y el contenido en el idioma del pedido <!-- commit: 5aad2cd -->
 - [x] T3 `pr_draft` desde un issue v2 <!-- commit: 6e4e095 -->
-- [ ] T5 `docs/contrato-issue.md` en inglés con el template v2, un ejemplo y la tabla de versiones <!-- commit: -->
+- [x] T5 `docs/contrato-issue.md` en inglés con el template v2, un ejemplo y la tabla de versiones <!-- commit: f2c7000 -->
 - [ ] T6 Evals: el fixture de issues pasa a v2 y un caso nuevo crea un issue en el idioma del pedido <!-- commit: -->
 - [x] T7 Labels de tipo (`type:feature`, `type:fix`, `type:task`) al crear el issue, y `issue_list` filtra por tipo <!-- commit: ece1515 -->
 - [x] T8 Aprobar exige Open questions vacías; responder una pregunta la mueve a `## Decisions` <!-- commit: 533590c -->
@@ -58,3 +58,4 @@ ademas busca en internet cual es las formas novedosas o mejor estructuradas oara
 - 2026-11-08: T3 hecha (6e4e095). bun run test exit 0; issues.spec: pr_draft con issue v2 pone Problem, cita y Outcome en Why, y criterios, Decisions y Out of scope en What
 - 2026-11-08: T7 hecha (ece1515). bun run test exit 0; github.test: crear con kind asegura y agrega type:feature y leer devuelve el tipo, dos tipos es error; issues.spec: issue_list devuelve kind y filtra por kind fix
 - 2026-11-08: T8 hecha (533590c). bun run test exit 0; issues.spec: aprobar con P1 y P2 abiertas falla nombrando P1; issue_answer mueve P1 a Decisions con autor y fecha, comenta la respuesta y deja P2 pendiente; con ambas respondidas se aprueba; una pregunta inexistente falla
+- 2026-11-08: T5 hecha (f2c7000). docs/contrato-issue.md en inglés con ejemplo v2, tabla de secciones, idioma del contenido, solo decisiones tomadas, labels de tipo, artifacts Design y Plan y tabla de versiones; el formato del ejemplo coincide con renderBody (separador —, Route con porqué)
