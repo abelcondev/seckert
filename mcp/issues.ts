@@ -108,7 +108,7 @@ function git(root: string, ...args: string[]): string {
 // Toma un issue para trabajarlo: crea su rama enlazada desde la base con
 // `gh issue develop` (GitHub lo muestra in-progress) y se para en ella. Uno en
 // curso se retoma en la rama que ya tiene.
-export function issueTake(root: string, id: string) {
+export function issueTake(root: string, id: string, force = false) {
   const { gh, repo, issues } = tracker(root)
   const issue = issues.get(id)
   const problem = takeProblem(issue.state)
@@ -121,8 +121,11 @@ export function issueTake(root: string, id: string) {
       open: sub.open,
       blockedBy: sub.open ? issues.get(sub.id).blockedBy.filter(b => b.open).map(b => b.id) : [],
     }))
-    return { id, title: issue.title, parts, next: parts.find(p => p.open && !p.blockedBy.length)?.id ?? null }
+    return { id, title: issue.title, parts, next: parts.find(p => p.open && !p.blockedBy.length)?.id ?? null, done: parts.every(p => !p.open) }
   }
+  const blockers = issue.blockedBy.filter(b => b.open)
+  if (blockers.length && !force)
+    throw new Error(`el issue #${id} está bloqueado por ${blockers.map(b => `#${b.id} ${b.title}`).join(', ')}: decile al usuario qué falta y, si quiere seguir igual, llamá de nuevo con force: true`)
   if (git(root, 'status', '--porcelain')) throw new Error('hay cambios sin commitear: commitealos o guardalos antes de tomar el issue')
 
   let branch: string
@@ -159,4 +162,17 @@ export function issueAnswer(root: string, input: { id: string; question: string;
   const who = input.by?.trim() ? ` por ${input.by.trim()}` : ''
   gh(['issue', 'comment', input.id, '--repo', repo, '--body', `${input.question} respondida${who}: «${input.answer.trim()}». Pasa a Decisions: ${decision.text}`])
   return { id: input.id, question: input.question, decision, pending: (next.questions ?? []).map(q => q.id) }
+}
+
+// Cierra una feature cuando todas sus partes (sub-issues) están cerradas.
+export function issueClose(root: string, id: string) {
+  const { gh, repo, issues } = tracker(root)
+  const issue = issues.get(id)
+  if (!issue.subIssues.length) throw new Error(`el issue #${id} no tiene sub-issues: se cierra con el merge de su PR (Fixes #${id})`)
+  const open = issue.subIssues.filter(s => s.open)
+  if (open.length) throw new Error(`el issue #${id} tiene partes abiertas: ${open.map(s => `#${s.id} ${s.title}`).join(', ')}`)
+  const total = issue.subIssues.length
+  gh(['issue', 'comment', id, '--repo', repo, '--body', `Todas las partes cerradas (${total} de ${total}).`])
+  gh(['issue', 'close', id, '--repo', repo, '--reason', 'completed'])
+  return { id, closed: true, parts: total, url: issue.url }
 }

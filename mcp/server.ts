@@ -21,7 +21,7 @@ import {
 } from './repo'
 import { testsOnBase } from './base'
 import { prDraft, releaseDraft } from './pr'
-import { issueAnswer, issueCreate, issueGet, issueList, issueTake, issueTransition } from './issues'
+import { issueAnswer, issueClose, issueCreate, issueGet, issueList, issueTake, issueTransition } from './issues'
 import { checkTransition } from '../lib/issue'
 
 const server = new McpServer({ name: 'seckert', version: '1.0.0' })
@@ -370,6 +370,23 @@ server.registerTool(
 )
 
 server.registerTool(
+  'issue_close',
+  {
+    description:
+      'Closes a feature (an issue with sub-issues) as completed when all its parts are closed, with a comment. Fails naming the open parts. An issue without sub-issues closes with the merge of its PR, not with this tool.',
+    inputSchema: { id: z.string().describe('The feature issue number') },
+    annotations: { destructiveHint: false },
+  },
+  async ({ id }) => {
+    try {
+      return json(issueClose(projectRoot(), id))
+    } catch (error) {
+      return failure(error)
+    }
+  },
+)
+
+server.registerTool(
   'issue_answer',
   {
     description:
@@ -396,13 +413,16 @@ server.registerTool(
   'issue_take',
   {
     description:
-      'Takes an approved seckert issue to work on it: creates its branch linked to the issue from the base with `gh issue develop` (feature/<slug> for CHANGE, fix/<slug> for FIX and SPEC) and switches to it, so GitHub shows it in-progress. An in-progress issue is resumed on its linked branch. Fails on a draft (approve it first) or on an issue in review, closed or discarded, and with uncommitted changes. Returns the issue with its branch.',
-    inputSchema: { id: z.string().describe('The issue number') },
+      'Takes an approved seckert issue to work on it: creates its branch linked to the issue from the base with `gh issue develop` (feature/<slug> for CHANGE, fix/<slug> for FIX and SPEC) and switches to it, so GitHub shows it in-progress. An in-progress issue is resumed on its linked branch. Fails on a draft (approve it first) or on an issue in review, closed or discarded, and with uncommitted changes. Returns the issue with its branch. A blocked issue fails naming what blocks it (retry with force only if the user confirms). A feature with sub-issues gets no branch: it returns its parts, what blocks each, the next free one and whether all are done.',
+    inputSchema: {
+      id: z.string().describe('The issue number'),
+      force: z.boolean().optional().describe('Take it even if it is blocked by open issues, only after the user confirmed'),
+    },
     annotations: { destructiveHint: false },
   },
-  async ({ id }) => {
+  async ({ id, force }) => {
     try {
-      return json(issueTake(projectRoot(), id))
+      return json(issueTake(projectRoot(), id, force))
     } catch (error) {
       return failure(error)
     }

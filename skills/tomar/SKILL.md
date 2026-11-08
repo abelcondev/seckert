@@ -8,7 +8,7 @@ Issue: $ARGUMENTS
 
 1. No number: `issue_list` with `approved` and with `in-progress`. Show them numbered (number, title, route) and ask which one. None: say so in one line.
 2. **A feature split into parts.** First `issue_get`. If the issue is `type:feature`:
-   - **It already has sub-issues:** `issue_take` returns `parts` (with what blocks each) and `next`, without creating a branch. Show the parts in a few lines and offer to take `next`; with "dale", take it as in step 3.
+   - **It already has sub-issues:** `issue_take` returns `parts` (with what blocks each), `next` and `done`, without creating a branch. Show the parts in a few lines and offer to take `next`; with "dale", take it as in step 3. If `done`, all parts are closed: offer to close the feature, and on yes `issue_close`.
    - **No sub-issues, and it bundles parts that each work and merge on their own** (a data model, a flow on top, a screen): propose the split in one message, one line per part with title, route and what blocks it. Don't create anything yet.
    - **On the user's "dale":** create each part with `issue_create` in order: `parent` = the feature, `blockedBy` = the parts that must merge first, `kind`, and `design` if it touches screens and the feature has one. Approve each with `issue_transition` and the user's words. Then offer to take the first.
    - **One part is enough:** take the feature itself as in step 3.
@@ -16,6 +16,7 @@ Issue: $ARGUMENTS
 3. `issue_take` with the number. It creates the branch linked to the issue from the base and switches to it, or resumes the one it already has. If it fails:
    - Draft: say it isn't approved and ask. With open questions, ask them by number first; record each answer with `issue_answer` (it moves to Decisions). Approve only with no open questions and the user's words (`issue_transition`, `aprobacion` = their exact words), then retry.
    - Uncommitted changes: say which files and ask whether to commit or stash them. Never discard them.
+   - Blocked: say which issues block it and that they should merge first. Take it anyway only if the user says so, with `force: true`.
    - In review, closed or discarded: say so and stop.
 4. Show the issue in a few lines: title, the client's quote, the acceptance criteria and the route. The route is a suggestion: if the work is clearly bigger or smaller, say so in one line and ask.
 5. Follow the route on the linked branch, with the `seckert:workflow` rules:
@@ -32,3 +33,4 @@ Issue: $ARGUMENTS
    - A CHANGE closes with `seckert:done` as usual; its PR already carries `Fixes #n`.
    - A FIX or SPEC: full suite green, then `pr_draft` with `issue` = the number. Fill in `How to revert` as `seckert:done` says, then `git push -u origin <branch>` and `gh pr create --base <base> --title <title> --body-file <body>`.
    - The body starts with `Fixes #n`: GitHub shows the issue in review and the merge closes it. Never move those states by hand.
+   - A part of a feature: after the merge, say which part is free next and, when it was the last one, offer to close the feature (`issue_close`).

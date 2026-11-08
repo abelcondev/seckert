@@ -311,3 +311,36 @@ test('issue_take sobre una feature con sub-issues no crea rama: devuelve las par
   expect(branch()).toBe('main')
   expect(db().calls.some(c => c[1] === 'develop' && c.includes('--name'))).toBe(false)
 })
+
+async function feature() {
+  await call('issue_create', { ...ISSUE, title: 'Cobrar con tarjeta', kind: 'feature' })
+  await call('issue_create', { ...ISSUE, title: 'Modelo de pagos', parent: '1' })
+  await call('issue_create', { ...ISSUE, title: 'Checkout con Stripe', parent: '1', blockedBy: ['2'] })
+  for (const id of ['1', '2', '3']) await call('issue_transition', { id, to: 'approved', aprobacion: 'dale' })
+}
+
+test('tomar un sub-issue bloqueado avisa qué falta; con force lo toma igual', async () => {
+  await feature()
+  const blocked = await call('issue_take', { id: '3' })
+  expect(blocked.error).toContain('#2 Modelo de pagos')
+  expect(branch()).toBe('main')
+  const forced = await call('issue_take', { id: '3', force: true })
+  expect(forced.error).toBeNull()
+  expect(branch()).toBe(forced.value.branch)
+})
+
+test('issue_close cierra la feature solo cuando todos sus sub-issues están cerrados', async () => {
+  await feature()
+  const early = await call('issue_close', { id: '1' })
+  expect(early.error).toContain('#2')
+  expect(db().issues[0]!.state).toBe('OPEN')
+
+  const data = db()
+  for (const i of data.issues.slice(1)) i.state = 'CLOSED'
+  writeFileSync(state, JSON.stringify(data))
+  expect((await call('issue_take', { id: '1' })).value).toMatchObject({ next: null, done: true })
+  const { error } = await call('issue_close', { id: '1' })
+  expect(error).toBeNull()
+  expect(db().issues[0]).toMatchObject({ state: 'CLOSED', stateReason: 'COMPLETED' })
+  expect(db().issues[0]!.comments.at(-1)).toContain('2 de 2')
+})
