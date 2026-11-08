@@ -45,6 +45,10 @@ bun evals/metrics.ts evals/results/<version>.json   # palabras, tokens, segundos
 | `pr-riesgo` | El PR de un change con lógica de dinero trae Risk, How to revert y Evidence |
 | `tomar-issue-fix` | Un issue aprobado de ruta FIX se toma con `issue_take` (rama `fix/` enlazada), se hace directo y su PR empieza con `Fixes #1` y completa How to revert |
 | `crear-issue-es` y `crear-issue-en` | Un issue se crea con el contrato v2 (títulos en inglés) y el contenido en el idioma del pedido. Lo ya decidido va a Decisions, lleva su tipo y queda en draft. |
+| `issue-change-diseno` | Modo issues: un CHANGE con diseño se planifica en su issue (artifact Plan, sin Why/What ni archivo en `sdd/changes`) y menciona el diseño |
+| `issue-change-sin-artifacts` | Modo issues sin la API de artifacts: el plan va en `## Plan` del body |
+| `pedido-natural` | Modo issues: «vamos a cambiar…» crea el issue, lo aprueba con las palabras del usuario, lo toma y hace el FIX |
+| `pregunta-sin-issue` | Modo issues: una pregunta se responde y no crea issues |
 | `tomar-issue-change` | Un issue aprobado de ruta CHANGE se toma en `feature/<slug>` y se convierte en una propuesta con `issue: #1` y el mismo slug, sin tocar código |
 
 En los casos con propuesta, `sin-comandos` chequea que el siguiente paso se ofrezca en palabras, sin `/seckert:…`.
