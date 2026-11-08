@@ -151,6 +151,18 @@ test('pr_draft en gitflow apunta a develop, y un hotfix a main', async () => {
   git('branch', '-q', '-D', 'develop', 'hotfix/banner')
 })
 
+test('pr_draft de un change que sale de un issue lleva Fixes #n', async () => {
+  git('switch', '-q', '-c', 'feature/csv', 'main')
+  put('sdd/changes/2026-11-04-csv.md', change('csv', '- [x] T1 CSV <!-- commit: ddddddd -->').replace('branch: feature/csv\n', 'branch: feature/csv\nissue: #12\n'))
+  put('src/csv.ts', 'x\n')
+  commit('feat: csv')
+  const pr = await call('pr_draft', { slug: 'csv' })
+  expect(pr.issue).toBe('12')
+  expect(pr.body.startsWith('Fixes #12\n\n## Why')).toBe(true)
+  git('switch', '-q', 'main')
+  git('branch', '-q', '-D', 'feature/csv')
+})
+
 test('release_draft propone minor si hay feat, la rama según el flujo, notas y los archivos de versión', async () => {
   git('switch', '-q', 'main')
   git('merge', '-q', '--no-ff', '-m', 'Merge feature/cupones', 'feature/cupones')

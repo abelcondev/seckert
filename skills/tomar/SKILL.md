@@ -17,4 +17,8 @@ Issue: $ARGUMENTS
    - **SPEC**: change the rule with `spec_write` and the code that follows it, in the same commit.
    - **CHANGE**: `change_create` with `slug` = the branch name without `feature/` and `issue` = the number. The `what` comes from the acceptance criteria, quoting the client; `pedido` is the issue's title and quote, verbatim. Then wait for the user's "dale", as with any proposal: approving it keeps the same branch.
    - A FIX that turns into a CHANGE stays on the linked `fix/` branch: create the change and set its `branch:` to that branch.
-5. When the work is done, offer the next step in words: "¿lo verifico?" for a CHANGE, or "si está bien, abro el PR" for a FIX or SPEC. The PR closes the issue with `Fixes #n`.
+5. When the work is done, offer the next step in words: "¿lo verifico?" for a CHANGE, or "si está bien, abro el PR" for a FIX or SPEC.
+6. The PR, only when the user asks:
+   - A CHANGE closes with `seckert:done` as usual; its PR already carries `Fixes #n`.
+   - A FIX or SPEC: full suite green, then `pr_draft` with `issue` = the number. Fill in `How to revert` as `seckert:done` says, then `git push -u origin <branch>` and `gh pr create --base <base> --title <title> --body-file <body>`.
+   - The body starts with `Fixes #n`: GitHub shows the issue in review and the merge closes it. Never move those states by hand.

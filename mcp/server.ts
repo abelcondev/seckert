@@ -256,8 +256,11 @@ server.registerTool(
   'pr_draft',
   {
     description:
-      'Draft PR for a change: base by branch flow (develop in gitflow, main in PRs only and for hotfix/*), Conventional Commits title and body with Why, What, Testing, Risk (sensitive tasks and delicate files in the diff), How to revert (for you to fill in: no commands or SQL) and Evidence (last verification). Review the title and fill in How to revert before opening it.',
-    inputSchema: { slug: z.string().optional().describe('No slug: the only approved one') },
+      'Draft PR for a change: base by branch flow (develop in gitflow, main in PRs only and for hotfix/*), Conventional Commits title and body with Why, What, Testing, Risk (sensitive tasks and delicate files in the diff), How to revert (for you to fill in: no commands or SQL) and Evidence (last verification). With an issue (`issue: #n` in the change, or `issue` for a FIX or SPEC without a change) the body starts with `Fixes #n`, so GitHub shows the issue in-review and the merge closes it. Review the title and fill in How to revert before opening it.',
+    inputSchema: {
+      slug: z.string().optional().describe('No slug: the only approved one'),
+      issue: z.string().optional().describe('Issue number, for a FIX or SPEC taken from an issue without a change (uses the current branch); if a change has that issue, its change'),
+    },
     annotations: { readOnlyHint: true },
   },
   async args => {

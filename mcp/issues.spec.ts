@@ -196,3 +196,23 @@ test('issue_take no toma un issue sin aprobar ni uno ya en revisión', async () 
   expect((await call('issue_take', { id: '1' })).error).toContain('in-review')
   expect(branch()).toBe('main')
 })
+
+test('pr_draft de un FIX tomado de un issue, sin change: el cuerpo sale del issue y lleva Fixes #n', async () => {
+  await call('issue_create', { ...ISSUE, title: 'Arreglar el total', route: 'FIX' })
+  await call('issue_transition', { id: '1', to: 'approved', aprobacion: 'dale' })
+  await call('issue_take', { id: '1' })
+  writeFileSync(join(repo, 'src', 'total.ts'), 'x\n')
+  execFileSync('git', ['add', '-A'], { cwd: repo })
+  execFileSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '-m', 'fix: total'], { cwd: repo })
+
+  const { value, error } = await call('pr_draft', { issue: '1' })
+  expect(error).toBeNull()
+  expect(value).toMatchObject({ base: 'main', branch: 'fix/arreglar-el-total', title: 'fix: arreglar el total', issue: '1', files: 1 })
+  const body: string = value.body
+  expect(body.startsWith('Fixes #1\n\n## Why')).toBe(true)
+  expect(body).toContain(`## Why\n\n${ISSUE.context}\n\n> ${ISSUE.quote}`)
+  expect(body).toContain('## What\n\n- Hay un botón "Exportar"\n- El CSV trae fecha y total')
+  expect(body).toContain('## How to revert\n\n<!-- seckert: completar -->')
+  const order = ['## Why', '## What', '## Testing', '## Risk', '## How to revert', '## Evidence'].map(h => body.indexOf(h))
+  expect([...order].sort((a, b) => a - b)).toEqual(order)
+})
