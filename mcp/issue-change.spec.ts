@@ -209,3 +209,19 @@ test('pr_draft de un change en su issue: Why y What del issue y Fixes #n; cerrar
   expect(db().issues[0]!.comments.at(-1)).toContain('cerrado ("cerralo")')
   expect(existsSync(join(repo, 'sdd/changes'))).toBe(false)
 })
+
+test('change_get da la ruta de la copia local, que es la que se le pasa al verificador', async () => {
+  await takenChange()
+  const { value } = await call('change_get', { slug: 'exportar-pedidos-a-csv' })
+  expect(value.path).toBe('.git/seckert/changes/exportar-pedidos-a-csv.md')
+  expect(readFileSync(join(repo, value.path), 'utf8')).toContain('## What\n\n- Hay un botón "Exportar"')
+})
+
+test('el contexto de inicio lee la copia local, sin llamar a gh', async () => {
+  await takenChange()
+  await call('change_get', { slug: 'exportar-pedidos-a-csv' })
+  const calls = db().calls.length
+  const out = execFileSync('node', [SERVER, '--context'], { cwd: repo, encoding: 'utf8', env: { ...process.env, PATH: `${join(dir, 'bin')}:${process.env.PATH}`, FAKE_GH_STATE: state } })
+  expect(out).toContain('issue #1 (proposed, 0/2 tasks)')
+  expect(db().calls.length).toBe(calls)
+})

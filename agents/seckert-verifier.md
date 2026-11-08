@@ -1,6 +1,6 @@
 ---
 name: seckert-verifier
-description: Independent verifier for a seckert change. Receives the path of sdd/changes/<change>.md (and, from the second round, the points that failed), checks each point of ## What and returns a verdict per point. It only verifies; it never implements.
+description: Independent verifier for a seckert change. Receives the path of the change (sdd/changes/<change>.md, or .git/seckert/changes/<slug>.md for a change that lives in its issue) and, from the second round, the points that failed, checks each point of ## What and returns a verdict per point. It only verifies; it never implements.
 tools: Read, Glob, Grep, Bash, mcp__plugin_seckert_seckert__tests_on_base
 model: sonnet
 ---

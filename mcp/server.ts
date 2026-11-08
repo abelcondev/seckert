@@ -12,6 +12,7 @@ import {
   findChange,
   projectRoot,
   readChanges,
+  readChangesOffline,
   recordVerify,
   updateChange,
   writeSpec,
@@ -44,7 +45,7 @@ server.registerTool(
   async ({ done }) => {
     try {
       const changes = readChanges(projectRoot()).filter(change => done || change.status !== 'done')
-      return json(changes.map(summary))
+      return json(changes.map(change => summary(change, projectRoot())))
     } catch (error) {
       return failure(error)
     }
@@ -61,7 +62,7 @@ server.registerTool(
   },
   async ({ slug }) => {
     try {
-      return json(detail(findChange(projectRoot(), slug)))
+      return json(detail(findChange(projectRoot(), slug), projectRoot()))
     } catch (error) {
       return failure(error)
     }
@@ -432,7 +433,7 @@ server.registerTool(
 // `node server.mjs --context`: los changes abiertos para el contexto de inicio
 // (scripts/session-context.sh), con el mismo lector que las herramientas.
 if (process.argv.includes('--context')) {
-  const open = readChanges(projectRoot()).filter(change => change.status === 'proposed' || change.status === 'approved')
+  const open = readChangesOffline(projectRoot()).filter(change => change.status === 'proposed' || change.status === 'approved')
   if (open.length) {
     const lines = open.map(change => {
       const { done, total } = summary(change)

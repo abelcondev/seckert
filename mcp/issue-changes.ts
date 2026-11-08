@@ -4,8 +4,8 @@
 // editados vuelven al body y lo nuevo del Log queda como comentario. Una copia
 // del texto queda en .git/seckert/changes para los hooks, que no llaman a gh.
 import { execFileSync } from 'node:child_process'
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { join, resolve } from 'node:path'
+import { existsSync, mkdirSync, readdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs'
+import { join, relative, resolve } from 'node:path'
 
 import { parseChange, renderChange, SLUG, type NewChange } from '../lib/change'
 import { attachPlan, changeFromIssue, criteriaOf, logComment, newLogLines, PLAN_NAME, planFromChange, planInBody } from '../lib/issue-change'
@@ -30,6 +30,29 @@ export type IssueSource = { number: string; artifact: number | null; plan: strin
 function cacheDir(root: string): string {
   const gitDir = execFileSync('git', ['rev-parse', '--git-dir'], { cwd: root, encoding: 'utf8' }).trim()
   return join(resolve(root, gitDir), 'seckert', 'changes')
+}
+
+// La ruta de la copia, relativa a la raíz: la lee el verificador.
+export function cachePath(root: string, slug: string): string {
+  return relative(root, join(cacheDir(root), `${slug}.md`))
+}
+
+// Los changes de issues según la copia local, sin llamar a gh (para el contexto de inicio).
+export function readCachedChanges(root: string): ChangeFile[] {
+  let dir: string
+  try {
+    dir = cacheDir(root)
+  } catch {
+    return []
+  }
+  if (!existsSync(dir)) return []
+  return readdirSync(dir)
+    .filter(name => name.endsWith('.md'))
+    .map(name => {
+      const text = readFileSync(join(dir, name), 'utf8')
+      const parsed = parseChange(text)
+      return { ...parsed, slug: name.slice(0, -3), file: `issue #${parsed.issue ?? '?'}`, text }
+    })
 }
 
 function cache(root: string, slug: string, text: string): void {
@@ -68,10 +91,19 @@ function fromIssue(root: string, issue: TrackedIssue, artifacts: Artifact[] | nu
 
 export function readIssueChanges(root: string): ChangeFile[] {
   const { issues } = tracker(root)
-  return issues
+  const changes = issues
     .withLabel(CHANGE_LABEL)
     .map(issue => fromIssue(root, issue, artifactsOf(issue.id, issues)))
     .filter((change): change is ChangeFile => change !== null)
+  // La copia de un issue que ya no está abierto con plan se borra.
+  const keep = new Set(changes.map(change => `${change.slug}.md`))
+  try {
+    const dir = cacheDir(root)
+    if (existsSync(dir)) for (const name of readdirSync(dir)) if (!keep.has(name)) unlinkSync(join(dir, name))
+  } catch {
+    // la copia es solo para los hooks
+  }
+  return changes
 }
 
 // Un change nuevo con issue: el plan se adjunta al issue y no se escribe archivo.

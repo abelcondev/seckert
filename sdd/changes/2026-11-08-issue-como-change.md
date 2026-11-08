@@ -51,7 +51,7 @@ flowchart LR
 - [x] T3 `change_get`, `change_update` y `task_complete` sobre el issue: tareas como casillas con su commit, y una versión del plan por cambio <!-- commit: a88d465 -->
 - [x] T4 Aprobación del plan y `verify_record` como comentarios, con la reapertura de tareas en el plan <!-- commit: 628a800 -->
 - [x] T5 Diseño como artifact `link`: al crear el issue con un link de diseño, al tomarlo y en la verificación visual <!-- commit: ea8c0ed -->
-- [ ] T6 `pr_draft` y cierre desde el issue: Why y What del body, specs en el mismo PR, sin archivo en `sdd/changes/` <!-- commit: -->
+- [x] T6 `pr_draft` y cierre desde el issue: Why y What del body, specs en el mismo PR, sin archivo en `sdd/changes/` <!-- commit: 3f4086a -->
 - [ ] T7 Skills `tomar`, `next`, `verify` y `done` sobre el issue; modo local sin cambios <!-- commit: -->
 - [ ] T8 Evals: un CHANGE con diseño de punta a punta, y el fallback sin artifacts <!-- commit: -->
 - [ ] T9 Pedidos en lenguaje natural a issue: reglas del contexto de inicio y de `seckert:workflow` con `seckert issues: github`, y la oferta de pasar a issue al cerrar una discusión <!-- commit: -->
@@ -79,3 +79,4 @@ dale, ajustá las propuestas y sumalo a la página
 - 2026-11-08: T3 hecha (a88d465). bun run test exit 0; mcp/issue-change.spec.ts 5/5: change_create con issue crea el artifact Plan y la label seckert:change sin archivo; change_get arma What desde los criterios; aprobar, task_complete y what_add escriben plan (3 versiones), casilla con commit visible, comentarios y criterios del body; fallback ## Plan; sin la línea en AGENTS.md sigue en archivo
 - 2026-11-08: T4 hecha (628a800). bun run test exit 0; issue-change.spec: la aprobación queda como comentario con «dale»; verify_record con un FALLA reabre T1 en el plan y comenta una tabla con cada punto, veredicto, detalle, comandos y T1 reabierta
 - 2026-11-08: T5 hecha (ea8c0ed). bun run test exit 0; issue-change.spec: issue_create con design crea el artifact link Design con la URL, issue_get la devuelve y change_get la expone como design; sin artifacts va a References como «Design: url» y se lee igual
+- 2026-11-08: T6 hecha (3f4086a). bun run test exit 0; issue-change.spec: pr_draft del change en su issue empieza con Fixes #1, Why con Problem y Outcome, What con los criterios y sin Tasks; change_transition done deja status: done en el plan, comenta el cierre y no crea sdd/changes. Pasó sin código nuevo: sale de T3

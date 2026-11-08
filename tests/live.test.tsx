@@ -164,3 +164,19 @@ test('fuera de la rama de un change, la barra muestra el último que se tocó au
   expect(line).toContain('seckert · marketing-site · esperando tu "sí" · +1 más')
   await ui.unmount()
 })
+
+test('un change que vive en su issue se lee de la copia en .git/seckert/changes', async ($, on) => {
+  const cache = '/repo/.git/seckert/changes'
+  on('session.start', (_, e) => ({ cwd: e.cwd }))
+  on('fs.exists', (_, e) => ({ value: e.path === cache }))
+  on('fs.read', (_, e) => ({ value: e.path === `${cache}/csv-pedidos.md` ? APPROVED.replace('branch: feature/csv-pedidos', 'branch: feature/csv-pedidos\nissue: #12') : '' }))
+  on('process.run', () => ({ value: { exitCode: 0, stdout: '/repo\nfeature/csv-pedidos\n', stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }))
+  on('fs.list', (_, e) => ({ value: e.path === cache ? entries({ 'csv-pedidos.md': '' }, {}) : [] }))
+  on('prompt.submit', (_, e) => ({ text: e.text, context: e.context }))
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
+
+  const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+  const line = (await ui.find({ type: 'Text', text: /csv-pedidos/ }))?.text ?? ''
+  expect(line).toContain('seckert · csv-pedidos · 1/3 · sigue: T2 Filtro por fecha')
+  await ui.unmount()
+})

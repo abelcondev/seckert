@@ -6,6 +6,8 @@ import type { Change, Snapshot } from '../types'
 import { compact, shouldCompact } from './compact'
 
 const CHANGES_DIR = 'sdd/changes'
+// Los changes que viven en su issue: el servidor MCP deja una copia acá (no se sube al repo).
+const ISSUE_CHANGES_DIR = '.git/seckert/changes'
 const EMPTY: Snapshot = { changes: [], branch: null }
 
 const snapshot = atom({ plugin: 'seckert', key: 'snapshot' } as const, EMPTY)
@@ -61,16 +63,17 @@ async function refresh($: EngineInterface): Promise<void> {
 
 async function load($: EngineInterface): Promise<void> {
   const { root, branch } = await repo($)
-  const dir = root ? `${root}/${CHANGES_DIR}` : CHANGES_DIR
   let changes: Change[] = []
 
-  if (await $.fs.exists(dir)) {
+  for (const name of [CHANGES_DIR, ISSUE_CHANGES_DIR]) {
+    const dir = root ? `${root}/${name}` : name
+    if (!(await $.fs.exists(dir))) continue
     const entries = await $.fs.list(dir)
     const files = entries.filter(entry => entry.kind === 'file' && entry.name.endsWith('.md'))
     const parsed = await Promise.all(
       files.map(async entry => toChange(entry.name, await $.fs.read(`${dir}/${entry.name}`), entry.mtimeMs)),
     )
-    changes = parsed.filter((change): change is Change => change !== null)
+    changes.push(...parsed.filter((change): change is Change => change !== null))
   }
 
   await update($, snapshot, () => ({ changes, branch }))
