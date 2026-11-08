@@ -452,17 +452,3 @@ export function renderChange(change: NewChange): string {
     '',
   ].join('\n')
 }
-
-// Lo que una edición a mano de un change no puede hacer: cambiar el status
-// (es de change_transition, con las palabras del usuario) ni marcar una tarea
-// (es de task_complete, con su commit). `before` es null si el archivo es nuevo.
-export function manualEditProblem(before: string | null, after: string): string | null {
-  const next = parseChange(after)
-  const prev = before === null ? null : parseChange(before)
-  if ((prev ? prev.status : 'proposed') !== next.status)
-    return 'el status de un change se cambia con la herramienta change_transition, con las palabras del usuario'
-  const doneBefore = new Set(prev?.tasks.filter(task => task.done).map(task => task.id) ?? [])
-  const marked = next.tasks.filter(task => task.done && !doneBefore.has(task.id)).map(task => task.id)
-  if (marked.length) return `${marked.join(', ')}: una tarea se marca con la herramienta task_complete, con su commit`
-  return null
-}

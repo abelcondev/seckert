@@ -1,24 +1,7 @@
-export type Change = {
-  slug: string
-  status: 'proposed' | 'approved'
-  done: number
-  total: number
-  next: string | null
-  questions: number
-  branch: string | null
-  mtimeMs: number
-}
-
-export type Snapshot = {
-  changes: Change[]
-  branch: string | null
-}
+// Tipos que el módulo del plugin (hooks/register.tsx) agrega a claude-code.
+export {}
 
 declare module 'claude-code' {
-  interface PluginState {
-    'seckert': { snapshot: Snapshot }
-  }
-
   // Las herramientas del servidor MCP del plugin (mcp/server.ts) que el módulo mira.
   interface McpToolInputs {
     'mcp__plugin_seckert_seckert__change_transition': {
