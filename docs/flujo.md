@@ -81,8 +81,9 @@ stateDiagram-v2
 | "seguí" / "siguiente" / "hacé la T3" | Implementa la siguiente tarea y la commitea |
 | "¿funciona?" / "verificá" | Verifica cada punto y lo visual contra el artifact y en el navegador |
 | "cerralo" / "está ok, abrí el PR" | Cierra el change, actualiza `sdd/specs/` y abre el PR |
+| "tomá el issue 12" | Crea la rama enlazada al issue aprobado y sigue su ruta: FIX, SPEC o CHANGE |
 | "se rompió X en producción" | Rama desde `main`, un test que reproduce el fallo y el PR a `main` |
 | "sacá la release 1.4.0" | Rama de release, versión, notas y PR según el flujo del repo |
 | "¿en qué estamos?" / "¿qué falta?" | Resumen de los cambios abiertos |
 
-Si prefieres los comandos, siguen disponibles: `/seckert:change`, `/seckert:design`, `/seckert:next`, `/seckert:verify`, `/seckert:done [pr]`, `/seckert:hotfix`, `/seckert:release` y `/seckert:status`.
+Si prefieres los comandos, siguen disponibles: `/seckert:change`, `/seckert:design`, `/seckert:next`, `/seckert:verify`, `/seckert:done [pr]`, `/seckert:hotfix`, `/seckert:tomar`, `/seckert:release` y `/seckert:status`.

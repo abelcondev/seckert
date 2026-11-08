@@ -9,7 +9,7 @@ Los títulos de sección van siempre en inglés; el contenido, en el idioma del 
 
 ## Borrador del PR
 
-El cuerpo lo arma la herramienta `pr_draft` desde el change y el diff contra la base: base según el flujo (`develop` en gitflow, `main` en solo PRs y para `hotfix/*`), título Conventional Commits, Why, What, Diagram (si el change lo tiene), Testing, Risk y Evidence. Claude solo escribe `## How to revert`, que llega vacío.
+El cuerpo lo arma la herramienta `pr_draft` desde el change y el diff contra la base: base según el flujo (`develop` en gitflow, `main` en solo PRs y para `hotfix/*`), título Conventional Commits, Why, What, Diagram (si el change lo tiene), Testing, Risk y Evidence. Claude solo escribe `## How to revert`, que llega vacío. Si el change tiene `issue: #n`, el cuerpo empieza con `Fixes #n`: GitHub muestra el issue `in-review` y el merge lo cierra. Un FIX o SPEC tomado de un issue no tiene change: `pr_draft` con `issue` arma el PR desde el issue, con el contexto y la cita en Why y los criterios en What, sobre la rama actual.
 
 ## Release
 

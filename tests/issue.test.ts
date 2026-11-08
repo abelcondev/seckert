@@ -1,6 +1,6 @@
 import { expect, test } from 'claude-code/testing'
 
-import { checkTransition, deriveState, labelOf, parseBody, renderBody, stateOf, type Issue } from '../lib/issue'
+import { branchFor, checkTransition, deriveState, labelOf, parseBody, renderBody, stateOf, type Issue } from '../lib/issue'
 
 const ISSUE: Issue = {
   title: 'Exportar pedidos a CSV',
@@ -25,6 +25,17 @@ test('sin cita ni origen el cuerpo sigue siendo válido', () => {
   const issue: Issue = { title: 'Arreglar typo', context: 'Dice "Comprra".', criteria: ['Dice "Comprar"'], route: 'FIX', origin: {} }
   const { title, ...rest } = issue
   expect(parseBody(renderBody(issue))).toEqual(rest)
+})
+
+test('la marca lleva la versión del contrato; la marca sin versión se sigue leyendo', () => {
+  const body = renderBody(ISSUE)
+  expect(body.startsWith('<!-- seckert:issue v1 -->\n')).toBe(true)
+  const { title, ...rest } = ISSUE
+  expect(parseBody(body.replace('<!-- seckert:issue v1 -->', '<!-- seckert:issue -->'))).toEqual(rest)
+})
+
+test('una versión del contrato que seckert no conoce no se parsea', () => {
+  expect(() => parseBody(renderBody(ISSUE).replace('v1', 'v2'))).toThrow(/v2/)
 })
 
 test('un cuerpo que no escribió seckert no se parsea', () => {
@@ -65,4 +76,8 @@ test('aprobar exige las palabras del usuario', () => {
   expect(checkTransition('draft', 'approved')).toContain('palabras')
   expect(checkTransition('draft', 'approved', '   ')).toContain('palabras')
   expect(checkTransition('draft', 'approved', 'dale')).toBeNull()
+})
+
+test('la rama de un issue no termina en un conector al cortar el título', () => {
+  expect(branchFor('Cambiar el texto del botón del checkout', 'FIX')).toBe('fix/cambiar-el-texto-del-boton')
 })

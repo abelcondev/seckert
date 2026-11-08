@@ -19,7 +19,7 @@ claude plugin eval . …        # evals de comportamiento: ver evals/README.md
 
 | Carpeta | Qué hay |
 |---|---|
-| `skills/` | Una skill por paso: `change`, `next`, `verify`, `done`, `design`, `hotfix`, `release`, `status` y las reglas en `workflow` |
+| `skills/` | Una skill por paso: `change`, `next`, `verify`, `done`, `design`, `hotfix`, `tomar`, `release`, `status` y las reglas en `workflow` |
 | `agents/` | El verificador independiente (`seckert-verifier`) |
 | `hooks/` | `hooks.json` y el módulo que corre dentro de Claude Code: barra, contexto vivo y salidas recortadas |
 | `scripts/` | Guardia de ramas protegidas, contexto de sesión, detección del flujo de ramas y búsqueda de Chrome |

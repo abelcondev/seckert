@@ -5,6 +5,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 import { section, verifyRows } from '../lib/change'
+import { issueGet } from './issues'
 import { findChange, flow, readChanges } from './repo'
 
 function git(root: string, ...args: string[]): string {
@@ -58,36 +59,68 @@ function evidence(lastVerify: string | null): string {
   ].join('\n')
 }
 
-export function prDraft(root: string, input: { slug?: string }) {
-  const change = findChange(root, input.slug)
-  const branch = change.branch ?? git(root, 'rev-parse', '--abbrev-ref', 'HEAD')
+type Draft = { why: string; what: string; extra: string[]; testing: string; tasks: { id: string; text: string }[]; evidence: string }
+
+// El PR de un change, o de un issue tomado sin change (un FIX o un SPEC). Con
+// issue, el cuerpo empieza con `Fixes #n`: GitHub enlaza el PR (el issue pasa a
+// in-review) y el merge lo cierra.
+export function prDraft(root: string, input: { slug?: string; issue?: string }) {
+  const issueId = input.issue?.trim().replace(/^#/, '') || null
+  const linked = issueId && !input.slug ? readChanges(root).find(c => c.issue === issueId && c.status !== 'done') : undefined
+  const change = issueId && !input.slug && !linked ? null : (linked ?? findChange(root, input.slug))
+  const issue = change ? change.issue : issueId
+  const branch = change?.branch ?? git(root, 'rev-parse', '--abbrev-ref', 'HEAD')
   const { main, develop } = flow(root)
   const hotfix = branch.startsWith('hotfix/')
   const base = hotfix ? main : (develop ?? main)
   const mergeBase = git(root, 'merge-base', 'HEAD', ref(root, base))
   const files = git(root, 'diff', '--name-only', mergeBase, 'HEAD').split('\n').filter(Boolean).sort()
-
-  const scope = change.specs[0] ?? change.slug
-  const title = change.title ?? change.slug
   const type = hotfix || branch.startsWith('fix/') ? 'fix' : 'feat'
+
+  let title: string
+  let draft: Draft
+  if (change) {
+    const diagram = section(change.text, 'Diagram').trim()
+    title = `${type}(${change.specs[0] ?? change.slug}): ${lower(change.title ?? change.slug)}`
+    draft = {
+      why: section(change.text, 'Why').trim(),
+      what: section(change.text, 'What').trim(),
+      extra: [...(change.design ? [`Diseño: ${change.design}`, ''] : []), ...(diagram ? ['## Diagram', '', diagram, ''] : [])],
+      testing: section(change.text, 'Testing').trim() || 'Sin sección de Testing en el change.',
+      tasks: change.tasks,
+      evidence: evidence(change.lastVerify),
+    }
+  } else {
+    const found = issueGet(root, issueId!)
+    title = `${type}: ${lower(found.title)}`
+    draft = {
+      why: [found.context, ...(found.quote ? ['', `> ${found.quote}`] : [])].join('\n').trim(),
+      what: found.criteria.map(c => `- ${c}`).join('\n'),
+      extra: [],
+      testing: 'Sin change: los criterios de aceptación del issue son la prueba.',
+      tasks: [],
+      evidence: 'Sin change ni verificación: revisá los criterios del issue.',
+    }
+  }
+
   const body = [
+    ...(issue ? [`Fixes #${issue}`, ''] : []),
     '## Why',
     '',
-    section(change.text, 'Why').trim(),
+    draft.why,
     '',
     '## What',
     '',
-    section(change.text, 'What').trim(),
+    draft.what,
     '',
-    ...(change.design ? [`Diseño: ${change.design}`, ''] : []),
-    ...(section(change.text, 'Diagram').trim() ? ['## Diagram', '', section(change.text, 'Diagram').trim(), ''] : []),
+    ...draft.extra,
     '## Testing',
     '',
-    section(change.text, 'Testing').trim() || 'Sin sección de Testing en el change.',
+    draft.testing,
     '',
     '## Risk',
     '',
-    risk(change.tasks, files),
+    risk(draft.tasks, files),
     '',
     '## How to revert',
     '',
@@ -95,19 +128,14 @@ export function prDraft(root: string, input: { slug?: string }) {
     '',
     '## Evidence',
     '',
-    evidence(change.lastVerify),
+    draft.evidence,
     '',
   ].join('\n')
 
-  return {
-    base,
-    branch,
-    title: `${type}(${scope}): ${title.charAt(0).toLowerCase()}${title.slice(1)}`,
-    body,
-    has_migration: files.some(file => DELICATE[0]![0].test(file)),
-    files: files.length,
-  }
+  return { base, branch, title, body, issue, has_migration: files.some(file => DELICATE[0]![0].test(file)), files: files.length }
 }
+
+const lower = (text: string) => `${text.charAt(0).toLowerCase()}${text.slice(1)}`
 
 const VERSION = /^\d+\.\d+\.\d+$/
 const CONVENTIONAL = /^(\w+)(?:\([^)]*\))?(!)?: (.+)$/

@@ -1,0 +1,6 @@
+#!/bin/sh
+# `gh` falso para las evals de issues: guarda issues y PRs en .gh.json, en la raíz del repo de prueba.
+# Se usa poniendo esta carpeta primero en el PATH al correr las evals (ver evals/README.md).
+here=$(cd "$(dirname "$0")" && pwd)
+root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+FAKE_GH_STATE="$root/.gh.json" exec node "$here/../../../mcp/fake-gh.mjs" "$@"

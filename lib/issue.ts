@@ -21,7 +21,11 @@ export type Issue = {
 
 export type IssueBody = Omit<Issue, 'title'>
 
-const MARK = '<!-- seckert:issue -->'
+// La marca dice que el cuerpo es de seckert y qué versión del contrato sigue
+// (docs/contrato-issue.md). Sin versión es la v1 de antes de versionarla.
+export const CONTRACT_VERSION = 1
+const MARK = `<!-- seckert:issue v${CONTRACT_VERSION} -->`
+const MARK_RE = /<!-- seckert:issue(?: v(\d+))? -->/
 const ORIGIN_KEYS: [keyof Origin, string][] = [
   ['meeting', 'Meeting'],
   ['date', 'Date'],
@@ -63,7 +67,10 @@ function sections(body: string): Map<string, string> {
 }
 
 export function parseBody(body: string): IssueBody {
-  if (!body.includes(MARK)) throw new Error('el issue no tiene el formato de seckert')
+  const mark = body.match(MARK_RE)
+  if (!mark) throw new Error('el issue no tiene el formato de seckert')
+  const version = Number(mark[1] ?? 1)
+  if (version > CONTRACT_VERSION) throw new Error(`el issue sigue el contrato v${version} y seckert conoce hasta v${CONTRACT_VERSION}: actualizá seckert`)
   const s = sections(body)
   const contextLines = (s.get('Context') ?? '').split('\n')
   const quoteLines = contextLines.filter(line => line.startsWith('> '))
@@ -150,4 +157,33 @@ export function checkTransition(from: IssueState, to: IssueState, approval?: str
   }
   if (to === 'approved' && !approval?.trim()) return 'aprobar un issue necesita las palabras del usuario'
   return null
+}
+
+// La rama de trabajo de un issue: feature/ para un CHANGE (la misma que tendrá su
+// change), fix/ para FIX y SPEC. El nombre sale del título, sin tildes y cortado.
+export function branchFor(title: string, route: Route): string {
+  const words = title
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean)
+  let slug = ''
+  for (const word of words) {
+    const next = slug ? `${slug}-${word}` : word
+    if (next.length > 36 && slug) break
+    slug = next.slice(0, 36)
+  }
+  // Cortado, no termina en un conector suelto: "…-del" no dice nada.
+  const cut = slug.length < words.join('-').length ? slug.replace(/(-(?:a|al|de|del|el|en|la|las|los|para|por|un|una|y|the|of|to|and|for|in))+$/, '') : slug
+  return `${route === 'CHANGE' ? 'feature' : 'fix'}/${cut || 'issue'}`
+}
+
+// null si el issue se puede tomar; si no, por qué. Se toma uno aprobado o se
+// retoma uno en curso.
+export function takeProblem(state: IssueState | null): string | null {
+  if (state === 'approved' || state === 'in-progress') return null
+  if (state === null) return 'no es un issue de seckert (no tiene label seckert:*)'
+  if (state === 'draft') return 'está en draft: hay que aprobarlo primero, con issue_transition y las palabras del usuario'
+  return `está ${state}: solo se toma un issue approved o in-progress`
 }

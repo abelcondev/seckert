@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Un `gh` falso para los tests del MCP: guarda los issues en el JSON de
 // FAKE_GH_STATE y anota cada llamada. Solo entiende lo que usa seckert.
+import { execFileSync } from 'node:child_process'
 import { readFileSync, writeFileSync } from 'node:fs'
 
 const file = process.env.FAKE_GH_STATE
@@ -57,8 +58,24 @@ if (group === 'label' && cmd === 'create') {
   issue.stateReason = flag('--reason') === 'not planned' ? 'NOT_PLANNED' : 'COMPLETED'
 } else if (group === 'issue' && cmd === 'comment') {
   find(args[2]).comments.push(flag('--body'))
-} else if (group === 'issue' && cmd === 'develop') {
+} else if (group === 'issue' && cmd === 'develop' && args[2] === '--list') {
   process.stdout.write((find(args[3]).branches ?? []).map(b => `${b}\thttps://github.com/x\n`).join(''))
+} else if (group === 'issue' && cmd === 'develop') {
+  // Crea la rama enlazada; con --checkout, también la local (gh corre en la raíz del repo).
+  const issue = find(args[2])
+  issue.branches = [...(issue.branches ?? []), flag('--name')]
+  if (args.includes('--checkout')) execFileSync('git', ['switch', '-q', '-c', flag('--name')])
+} else if (group === 'pr' && cmd === 'create') {
+  // Guarda el PR y lo enlaza a los issues que nombra con Fixes #n (quedan in-review).
+  const bodyFile = flag('--body-file')
+  const body = flag('--body') ?? (bodyFile ? readFileSync(bodyFile === '-' ? 0 : bodyFile, 'utf8') : '')
+  db.prs = [...(db.prs ?? []), { title: flag('--title'), base: flag('--base'), body }]
+  const number = db.prs.length
+  for (const [, n] of body.matchAll(/(?:Fixes|Closes|Resolves) #(\d+)/gi)) {
+    const issue = db.issues.find(i => String(i.number) === n)
+    if (issue) issue.prs = [...(issue.prs ?? []), { number }]
+  }
+  process.stdout.write(`https://github.com/eval/tienda/pull/${number}\n`)
 } else {
   process.stderr.write(`fake gh: no entiendo ${args.join(' ')}\n`)
   save()

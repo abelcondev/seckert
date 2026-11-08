@@ -14,6 +14,8 @@ export type ParsedChange = {
   specs: string[]
   design: string | null
   branch: string | null
+  // El número del issue de GitHub del que sale, sin #.
+  issue: string | null
   title: string | null
   what: string[]
   tasks: Task[]
@@ -98,6 +100,7 @@ export function parseChange(text: string): ParsedChange {
     specs: specs ? specs.replace(/^\[|\]$/g, '').split(',').map(s => s.trim()).filter(Boolean) : [],
     design: design && design !== 'none' ? design : null,
     branch: field(text, 'branch'),
+    issue: field(text, 'issue')?.replace(/^#/, '') ?? null,
     title: text.match(/^# (.+)$/m)?.[1]?.trim() ?? null,
     what: bullets(section(text, 'What')).filter(point => !isPlaceholder(point)),
     tasks: text.split('\n').map(parseTask).filter((task): task is Task => task !== null),
@@ -387,6 +390,8 @@ export type NewChange = {
   questions?: string[]
   specs?: string[]
   design?: string | null
+  // El número del issue del que sale: va al frontmatter como `issue: #n`.
+  issue?: string
   // Mermaid, con o sin las cercas ```mermaid: va a `## Diagram`, después de What.
   diagram?: string
   testing?: { runner?: string; nivel?: string; logica?: string; presentacion?: string }
@@ -412,6 +417,7 @@ export function renderChange(change: NewChange): string {
     `specs: [${(change.specs ?? []).join(', ')}]`,
     `design: ${change.design || 'none'}`,
     `branch: feature/${change.slug}`,
+    ...(change.issue?.trim() ? [`issue: #${change.issue.trim().replace(/^#/, '')}`] : []),
     '---',
     '',
     `# ${change.title}`,

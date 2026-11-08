@@ -20,6 +20,7 @@ bun evals/metrics.ts evals/results/<version>.json   # palabras, tokens, segundos
 - La comparación con Claude sin seckert (`--ablation with-without`) dobla el costo y casi no cambia entre versiones, porque no depende de nuestro código. Ya está medida en `RESULTS.md` (0.8.0: 51/51 con seckert, 21/51 sin seckert). Se repite solo en una release mayor o al agregar un caso nuevo, para saber si seckert aporta.
 - Solo hay casos para reglas que Claude no cumple sin seckert, o que seckert podría romper (`fix-texto-boton`: lo chico se hace directo). Después de 0.8.1 se quitaron los 5 que también pasaban siempre sin seckert: `hotfix-gitflow`, `iterar-propuesta`, `pantalla-nueva-fix`, `solo-lectura` y `spec-envio-gratis`. `iterar-propuesta` volvió en 0.9.0: ahora exige `change_update`, que Claude sin seckert no tiene. Antes de agregar uno, preguntarse si Claude ya lo hace solo.
 - Usamos 3 corridas y no 5 porque 5 se come casi todo el límite de uso de 5 horas. Si igual se corta, las corridas cortadas dan error de API y hay que repetir esos casos con `--case`. Para probar un ajuste alcanza con los casos afectados.
+- Los casos de issues (`--tag issues`) usan un `gh` falso que guarda issues y PRs en `.gh.json`. Hay que correrlos con `PATH="$PWD/evals/_fixture/bin:$PATH"` delante de `claude plugin eval`, para que el servidor MCP lo encuentre. El Bash de Claude no hereda ese PATH: su `gh pr create` llama al `gh` real y falla sin sesión, por eso esos graders miran el comando y no el PR creado.
 - Correrla antes de subir la versión en `plugin.json`, y anotar los números en `RESULTS.md`.
 - Un solo caso: `--case <nombre>`. Varios: `--tag <tag>` (`--case` repetido corre solo uno).
 - `--keep-temp` conserva las trazas, que son las que usa `metrics.ts`. Las copia a `evals/results/<version>-traces/`, donde se pueden leer las respuestas de cada corrida.
@@ -42,6 +43,8 @@ bun evals/metrics.ts evals/results/<version>.json   # palabras, tokens, segundos
 | `devtools-ausente` | Sin Chrome DevTools MCP, verify lo ofrece en una línea, no instala nada sin permiso y sigue verificando |
 | `qa-sin-navegador` | Con `SECKERT_QA=sin-navegador` en `.claude/settings.local.json`, no lo ofrece |
 | `pr-riesgo` | El PR de un change con lógica de dinero trae Risk, How to revert y Evidence |
+| `tomar-issue-fix` | Un issue aprobado de ruta FIX se toma con `issue_take` (rama `fix/` enlazada), se hace directo y su PR empieza con `Fixes #1` y completa How to revert |
+| `tomar-issue-change` | Un issue aprobado de ruta CHANGE se toma en `feature/<slug>` y se convierte en una propuesta con `issue: #1` y el mismo slug, sin tocar código |
 
 En los casos con propuesta, `sin-comandos` chequea que el siguiente paso se ofrezca en palabras, sin `/seckert:…`.
 

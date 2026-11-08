@@ -2,6 +2,19 @@
 
 Cómo se corren y qué mide cada caso: [README.md](README.md). Cada celda es **con seckert / sin seckert**: el mismo modelo, los mismos pedidos y el mismo repo de prueba, con el plugin y sin él.
 
+## 1.1.0 (sin publicar) · de issue a PR · 2026-11-07
+
+Change `issue-a-pr`: `issue_take`, la skill `tomar` y `pr_draft` con `Fixes #n`. Solo los dos casos nuevos, con seckert (`--ablation none`), 3 corridas cada uno. Modelo `claude-opus-5-5`. Costo: $1,21.
+
+| Caso | Con seckert | Palabras | Palabras por frase | Tokens de salida | Segundos | Costo |
+|---|---|---|---|---|---|---|
+| `tomar-issue-change` | 3/3 | 161 | 7,5 | 1.829 | 26 | $0,19 |
+| `tomar-issue-fix` | 3/3 | 154 | 10,8 | 2.107 | 34 | $0,22 |
+
+Notas:
+- La primera corrida de `tomar-issue-fix` dio 5/7. El flujo estaba bien, pero el grader buscaba el PR en el `gh` falso, y el Bash de Claude no lo ve. Los graders del PR pasaron a mirar el comando.
+- Esa corrida mostró una rama cortada en un conector (`fix/cambiar-el-texto-del-boton-del`). `branchFor` ya no deja un conector al final.
+
 ## 0.9.0 · corrida completa · 2026-11-06
 
 Changes `redaccion-y-diagramas` y `sdd-por-mcp`: redacción controlada, diagramas en la propuesta, `change_update` y `spec_write` como camino preferido para escribir `sdd/`, y arreglos del lector de changes. Primera corrida completa solo con seckert (`--ablation none`): 13 casos × 3 corridas, 39 sesiones. Modelo `claude-opus-5-5`. Costo: $8,07, con la repetición de `aprobar-con-dale`.
