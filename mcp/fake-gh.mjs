@@ -33,14 +33,20 @@ const out = issue => ({
   stateReason: issue.stateReason ?? '',
   labels: issue.labels.map(name => ({ name })),
   closedByPullRequestsReferences: issue.prs ?? [],
+  parent: issue.parent ? { number: issue.parent } : null,
+  subIssues: { nodes: db.issues.filter(i => i.parent === issue.number).map(rel), totalCount: 0 },
+  blockedBy: { nodes: (issue.blockedBy ?? []).map(n => rel(db.issues.find(i => i.number === n))), totalCount: 0 },
 })
+const rel = i => ({ number: i.number, state: i.state, title: i.title })
 
 const [group, cmd] = args
 if (group === 'label' && cmd === 'create') {
   // nada: las labels existen siempre en el falso
 } else if (group === 'issue' && cmd === 'create') {
   const number = db.issues.length + 1
-  db.issues.push({ number, title: flag('--title'), body: readFileSync(0, 'utf8'), state: 'OPEN', labels: flags('--label'), comments: [] })
+  const parent = flag('--parent') ? Number(flag('--parent')) : undefined
+  const blockedBy = flag('--blocked-by') ? flag('--blocked-by').split(',').map(Number) : undefined
+  db.issues.push({ number, title: flag('--title'), body: readFileSync(0, 'utf8'), state: 'OPEN', labels: flags('--label'), comments: [], ...(parent ? { parent } : {}), ...(blockedBy ? { blockedBy } : {}) })
   process.stdout.write(`https://github.com/${flag('--repo')}/issues/${number}\n`)
 } else if (group === 'issue' && cmd === 'view') {
   process.stdout.write(JSON.stringify(out(find(args[2]))))

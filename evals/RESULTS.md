@@ -2,6 +2,17 @@
 
 Cómo se corren y qué mide cada caso: [README.md](README.md). Cada celda es **con seckert / sin seckert**: el mismo modelo, los mismos pedidos y el mismo repo de prueba, con el plugin y sin él.
 
+## 1.4.0 (sin publicar) · features con sub-issues · 2026-11-09
+
+Change `issues-jerarquia`: features divididas en sub-issues nativos, dependencias y cierre de la feature. Los dos casos nuevos con 3 corridas ($1,16) y los 10 casos de issues con 1 corrida como regresión ($1,95), todos con seckert. Modelo `claude-opus-5-5`.
+
+| Caso | Con seckert | Palabras | Palabras por frase | Tokens de salida | Segundos | Costo |
+|---|---|---|---|---|---|---|
+| `feature-en-partes` | 3/3 | 105 | 8,8 | 3.025 | 34 | $0,25 |
+| `parte-bloqueada` | 3/3 | 44 | 10,7 | 431 | 12 | $0,14 |
+
+Regresión, 1 corrida: los 10 casos de `--tag issues` pasaron.
+
 ## 1.3.0 (sin publicar) · el issue es el change · 2026-11-09
 
 Change `issue-como-change`: con `seckert issues: github`, el change vive en su issue (artifact Plan, Design, comentarios) y los pedidos van a un issue. Los 8 casos de issues, más `fix-texto-boton` como control del modo sin issues, 3 corridas cada uno, con seckert (`--ablation none`). Modelo `claude-opus-5-5`. Costo: $4,35 + $0,36 del control + $1,23 de dos repeticiones de `issue-change-diseno`.

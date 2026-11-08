@@ -2,7 +2,19 @@
 // guarda el issue canónico de lib/issue.ts y su estado a su manera.
 import type { Issue, IssueBody, IssueState, Kind } from '../issue'
 
-export type TrackedIssue = Omit<Issue, 'kind'> & { id: string; url: string; state: IssueState | null; kind: Kind | null; rawBody: string }
+// Otro issue relacionado (sub-issue o bloqueante): número, título y si sigue abierto.
+export type Related = { id: string; open: boolean; title: string }
+
+export type TrackedIssue = Omit<Issue, 'kind'> & {
+  id: string
+  url: string
+  state: IssueState | null
+  kind: Kind | null
+  rawBody: string
+  parent: string | null
+  subIssues: Related[]
+  blockedBy: Related[]
+}
 
 export type ArtifactType = 'plan' | 'link' | 'generic'
 export type Artifact = { number: number; type: ArtifactType; name: string; body: string; url: string }
@@ -16,7 +28,8 @@ export interface Artifacts {
 
 export interface Tracker {
   artifacts: Artifacts
-  create(issue: Issue, state: IssueState): TrackedIssue
+  // Con `parent`, nace como sub-issue; con `blockedBy`, bloqueado por esos issues.
+  create(issue: Issue, state: IssueState, links?: { parent?: string; blockedBy?: string[] }): TrackedIssue
   get(id: string): TrackedIssue
   // Sin estado: todos los issues de seckert abiertos.
   list(state?: IssueState, kind?: Kind): TrackedIssue[]
