@@ -168,3 +168,26 @@ test('verify_record deja la verificación como tabla en un comentario y reabre l
   expect(comment).toContain('| El CSV trae fecha y total | FALLA | falta el total |')
   expect(comment).toContain('T1 reabierta')
 })
+
+test('issue_create con diseño lo adjunta como artifact link Design, y el change lo lee', async () => {
+  const url = 'https://claude.ai/artifact/abc123'
+  expect((await call('issue_create', { ...ISSUE, design: url })).error).toBeNull()
+  const link = db().issues[0]!.artifacts.find((a: { name: string }) => a.name === 'Design')
+  expect(link).toMatchObject({ type: 'link', body: url })
+  expect((await call('issue_get', { id: '1' })).value.design).toBe(url)
+  await call('issue_transition', { id: '1', to: 'approved', aprobacion: 'dale' })
+  await call('issue_take', { id: '1' })
+  await call('change_create', { slug: 'exportar-pedidos-a-csv', title: ISSUE.title, tasks: ['x'], pedido: 'x', issue: '1' })
+  expect((await call('change_get', { slug: 'exportar-pedidos-a-csv' })).value.design).toBe(url)
+})
+
+test('sin artifacts, el diseño va a References como «Design: <url>» y el change lo lee igual', async () => {
+  writeFileSync(state, JSON.stringify({ issues: [], calls: [], artifactsUnavailable: true }))
+  const url = 'https://claude.ai/artifact/abc123'
+  await call('issue_create', { ...ISSUE, design: url })
+  expect((await call('issue_get', { id: '1' })).value).toMatchObject({ design: url, references: [`Design: ${url}`] })
+  await call('issue_transition', { id: '1', to: 'approved', aprobacion: 'dale' })
+  await call('issue_take', { id: '1' })
+  await call('change_create', { slug: 'exportar-pedidos-a-csv', title: ISSUE.title, tasks: ['x'], pedido: 'x', issue: '1' })
+  expect((await call('change_get', { slug: 'exportar-pedidos-a-csv' })).value.design).toBe(url)
+})

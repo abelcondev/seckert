@@ -57,7 +57,7 @@ function fromIssue(root: string, issue: TrackedIssue, artifacts: Artifact[] | nu
   const planArtifact = artifacts?.find(a => a.type === 'plan' && a.name === PLAN_NAME) ?? null
   const plan = planArtifact?.body ?? planInBody(issue.rawBody)
   if (!plan) return null
-  const design = artifacts?.find(a => a.type === 'link' && a.name === DESIGN_NAME)?.body.trim() || null
+  const design = artifacts?.find(a => a.type === 'link' && a.name === DESIGN_NAME)?.body.trim() || issue.references?.map(r => r.match(/^Design: (\S+)$/)?.[1]).find(Boolean) || null
   const { rawBody: _raw, id: _id, url: _url, title, state: _state, kind: _kind, ...body } = issue
   const text = changeFromIssue({ title, body, plan, design })
   const parsed = parseChange(text)
