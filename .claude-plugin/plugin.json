@@ -1,6 +1,6 @@
 {
   "name": "seckert",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "SDD ligero: rutas FIX/SPEC/CHANGE, sdd/specs vivas, un change por cambio grande, test-first para lógica y diseño traducido desde artifacts de Claude.",
   "author": {
     "name": "abelcondev"
