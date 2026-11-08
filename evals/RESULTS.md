@@ -2,6 +2,25 @@
 
 Cómo se corren y qué mide cada caso: [README.md](README.md). Cada celda es **con seckert / sin seckert**: el mismo modelo, los mismos pedidos y el mismo repo de prueba, con el plugin y sin él.
 
+## 1.3.0 (sin publicar) · el issue es el change · 2026-11-09
+
+Change `issue-como-change`: con `seckert issues: github`, el change vive en su issue (artifact Plan, Design, comentarios) y los pedidos van a un issue. Los 8 casos de issues, más `fix-texto-boton` como control del modo sin issues, 3 corridas cada uno, con seckert (`--ablation none`). Modelo `claude-opus-5-5`. Costo: $4,35 + $0,36 del control + $1,23 de dos repeticiones de `issue-change-diseno`.
+
+| Caso | Con seckert | Palabras | Palabras por frase | Tokens de salida | Segundos | Costo |
+|---|---|---|---|---|---|---|
+| `crear-issue-en` | 3/3 | 122 | 9,7 | 1.391 | 17 | $0,16 |
+| `crear-issue-es` | 3/3 | 96 | 8,4 | 1.489 | 20 | $0,16 |
+| `issue-change-diseno` | 3/3 | 234 | 7,3 | 2.176 | 33 | $0,21 |
+| `issue-change-sin-artifacts` | 3/3 | 186 | 6,2 | 1.960 | 27 | $0,20 |
+| `pedido-natural` | 3/3 | 58 | 9,3 | 1.525 | 22 | $0,19 |
+| `pregunta-sin-issue` | 3/3 | 96 | 9,1 | 588 | 13 | $0,12 |
+| `tomar-issue-change` | 3/3 | 189 | 6,8 | 2.169 | 30 | $0,20 |
+| `tomar-issue-fix` | 3/3 | 151 | 11,4 | 2.184 | 39 | $0,22 |
+| `fix-texto-boton` (control) | 3/3 | 35 | 8,2 | 520 | 9 | $0,12 |
+
+Notas:
+- `issue-change-diseno` dio 1/3 en la corrida completa. En una corrida no mencionó el diseño; en otra no pudo abrir el artifact de claude.ai en el sandbox y frenó sin escribir el plan. La skill `tomar` pasó a decir qué hacer con el diseño, y la repetición dio 1/3 otra vez: `issue_take` no devolvía el diseño (solo `issue_get`). Con ese bug corregido, 3/3; la tabla es esa última repetición.
+
 ## 1.2.0 (sin publicar) · issue v2 · 2026-11-09
 
 Change `issue-template-v2`: contrato v2, tipo como label, idioma del pedido y Decisions. Los cuatro casos de issues, con seckert (`--ablation none`), 3 corridas cada uno. Modelo `claude-opus-5-5`. Costo: $2,21.

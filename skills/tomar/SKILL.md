@@ -15,7 +15,11 @@ Issue: $ARGUMENTS
 4. Follow the route on the linked branch, with the `seckert:workflow` rules:
    - **FIX**: do it directly. A logic bug gets a failing test first. Check each acceptance criterion and commit (`fix(scope): …`).
    - **SPEC**: change the rule with `spec_write` and the code that follows it, in the same commit.
-   - **CHANGE**: `change_create` with `slug` = the branch name without `feature/` and `issue` = the number. The `what` comes from the acceptance criteria, quoting the client; `pedido` is the issue's title and quote, verbatim. Then wait for the user's "dale", as with any proposal: approving it keeps the same branch.
+   - **CHANGE**: `change_create` with `slug` = the branch name without `feature/` and `issue` = the number; `pedido` is the issue's title and quote, verbatim.
+     - With `seckert issues: github` in AGENTS.md, the change lives in the issue: omit `why` and `what` (they come from Problem, Outcome and the criteria) and write only the plan: tasks, specs, diagram, testing. It is attached as the `Plan` artifact.
+     - Without it, the change is a file: `what` comes from the acceptance criteria, quoting the client.
+     - If the issue has a design (`design` in the `issue_take` result), say so and plan the presentation tasks against it; they are translated with `seckert:design` when implemented. If you can't open the design now, still write the plan and say in one line that the design is read when those tasks start.
+     - Then wait for the user's "dale", as with any proposal: approving it keeps the same branch.
    - A FIX that turns into a CHANGE stays on the linked `fix/` branch: create the change and set its `branch:` to that branch.
 5. When the work is done, offer the next step in words: "¿lo verifico?" for a CHANGE, or "si está bien, abro el PR" for a FIX or SPEC.
 6. The PR, only when the user asks:

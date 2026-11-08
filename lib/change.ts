@@ -384,8 +384,9 @@ export function verifyLine(date: string, record: VerifyRecord): string {
 export type NewChange = {
   slug: string
   title: string
-  why: string
-  what: string[]
+  // Opcionales solo para un change que vive en su issue: el issue da Why y What.
+  why?: string
+  what?: string[]
   tasks: string[]
   questions?: string[]
   specs?: string[]
@@ -424,11 +425,11 @@ export function renderChange(change: NewChange): string {
     '',
     '## Why',
     '',
-    change.why.trim(),
+    (change.why ?? '').trim(),
     '',
     '## What',
     '',
-    list(change.what),
+    list(change.what ?? []),
     '',
     ...(change.diagram?.trim() ? ['## Diagram', '', mermaid(change.diagram), ''] : []),
     '## Open questions',

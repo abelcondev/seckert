@@ -12,6 +12,7 @@ import {
   findChange,
   projectRoot,
   readChanges,
+  readChangesOffline,
   recordVerify,
   updateChange,
   writeSpec,
@@ -44,7 +45,7 @@ server.registerTool(
   async ({ done }) => {
     try {
       const changes = readChanges(projectRoot()).filter(change => done || change.status !== 'done')
-      return json(changes.map(summary))
+      return json(changes.map(change => summary(change, projectRoot())))
     } catch (error) {
       return failure(error)
     }
@@ -61,7 +62,7 @@ server.registerTool(
   },
   async ({ slug }) => {
     try {
-      return json(detail(findChange(projectRoot(), slug)))
+      return json(detail(findChange(projectRoot(), slug), projectRoot()))
     } catch (error) {
       return failure(error)
     }
@@ -76,8 +77,8 @@ server.registerTool(
     inputSchema: {
       slug: z.string().describe('kebab-case, no date'),
       title: z.string(),
-      why: z.string().describe('The problem, in 1–3 sentences'),
-      what: z.array(z.string()).min(1).describe('Observable behavior, one point per item, quoting the user literally'),
+      why: z.string().optional().describe('The problem, in 1–3 sentences. Omit when the change lives in its issue: the issue gives Why and What'),
+      what: z.array(z.string()).min(1).optional().describe('Observable behavior, one point per item, quoting the user literally'),
       tasks: z.array(z.string()).min(1).describe('Small tasks, without the "T1"; mark the sensitive ones (money, permissions, data)'),
       questions: z.array(z.string()).optional().describe('Decisions missing before approval'),
       specs: z.array(z.string()).optional().describe('sdd/specs areas it touches'),
@@ -315,6 +316,7 @@ server.registerTool(
         .describe('Small pending doubts, numbered P1, P2…, with who decides'),
       route: z.enum(['FIX', 'SPEC', 'CHANGE']),
       kind: z.enum(['feature', 'fix', 'task']).optional().describe('Issue type, as the label type:<kind>'),
+      design: z.string().url().optional().describe('Design link (a claude.ai artifact, Figma…): attached as the link artifact «Design»'),
       routeWhy: z.string().optional().describe('Why that route, in a few words'),
       origin: z
         .object({ source: z.string().optional(), date: z.string().optional(), client: z.string().optional(), requestedBy: z.string().optional() })
@@ -431,7 +433,7 @@ server.registerTool(
 // `node server.mjs --context`: los changes abiertos para el contexto de inicio
 // (scripts/session-context.sh), con el mismo lector que las herramientas.
 if (process.argv.includes('--context')) {
-  const open = readChanges(projectRoot()).filter(change => change.status === 'proposed' || change.status === 'approved')
+  const open = readChangesOffline(projectRoot()).filter(change => change.status === 'proposed' || change.status === 'approved')
   if (open.length) {
     const lines = open.map(change => {
       const { done, total } = summary(change)

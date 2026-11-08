@@ -11,6 +11,16 @@ Small changes go straight through; only what deserves it gets paperwork, and tha
 - `sdd/changes/<date>-<slug>.md`: proposal, tasks and log of a large change. Read and write it with the seckert MCP tools: `change_get`, `change_create`, `change_update` (What, questions, tasks, Log, diagram, hashes after a rebase), `change_transition`, `task_complete` and `verify_record`. If a tool can't do something, edit the file directly; only the status and `- [x]` always go through `change_transition` and `task_complete`.
 - Issues on GitHub (repo of `origin`): what a client asked for, before it becomes work. Read and write them with `issue_create` (always draft), `issue_get`, `issue_list` and `issue_transition` (approve with the user's exact words, or discard); never edit their `seckert:*` labels by hand. Rules in `sdd/specs/issues.md`.
 - Design lives in the Claude artifact; the change only links it in `design:`.
+
+## Issues mode
+
+With the line `seckert issues: github` in `AGENTS.md` or `CLAUDE.md`, GitHub issues replace `sdd/changes/` as the place where work lives. The contract is `docs/contrato-issue.md`.
+
+- **Every work request becomes an issue**, without the user saying "create an issue": "vamos a agregar un botón para descargar un CSV" → `issue_create`, in the request's language, with its type. Questions, explanations and explorations don't.
+- **Only decided things go in.** What isn't clear stays in the session; when the discussion reaches something concrete, offer in one line to turn it into an issue, with what was decided in Decisions. Small pending doubts go to Open questions and block approval until answered with `issue_answer`.
+- **A request from the user with no open questions** is approved with their words (`issue_transition`) and taken (`seckert:tomar`). With "para después" or "anotalo", only create it.
+- **The route still applies.** A FIX or SPEC is done directly on the linked branch and ends in a PR with `Fixes #n`. A CHANGE lives in its issue: `change_create` with `issue` and without `why`/`what` attaches the `Plan` artifact, and waits for the "dale". The other change tools work the same way.
+- The design goes in `issue_create` as `design`: it becomes the `Design` link artifact.
 - To create or tidy `AGENTS.md`, follow [agents-template.md](agents-template.md) with what you find in the repo and show it before writing it.
 
 Explaining, researching or reviewing is read-only: don't write files or create changes.

@@ -2,7 +2,7 @@
 import { execFileSync } from 'node:child_process'
 
 import { answerQuestion, branchFor, checkTransition, openQuestionsProblem, takeProblem, type Issue, type IssueState, type Kind } from '../lib/issue'
-import { githubTracker, type Gh } from '../lib/trackers/github'
+import { ArtifactsUnavailable, githubTracker, type Gh } from '../lib/trackers/github'
 import { baseBranch } from './repo'
 
 // owner/repo de una URL de GitHub (ssh o https), o null si no es de GitHub.
@@ -34,19 +34,49 @@ function ghIn(root: string): Gh {
   }
 }
 
-function tracker(root: string) {
+export function tracker(root: string) {
   const gh = ghIn(root)
   const repo = repoOf(root)
   return { gh, repo, issues: githubTracker(repo, gh) }
 }
 
 // Un issue nuevo nace siempre en draft: aprobarlo es otro paso, con las palabras del usuario.
-export function issueCreate(root: string, issue: Issue) {
-  return tracker(root).issues.create(issue, 'draft')
+const DESIGN = 'Design'
+
+// El link al diseño: el artifact link «Design», o la referencia «Design: <url>» sin artifacts.
+export function designOf(issues: ReturnType<typeof tracker>['issues'], issue: { id: string; references?: string[] }): string | null {
+  try {
+    const link = issues.artifacts.list(issue.id, 'link').find(a => a.name === DESIGN)
+    if (link) return link.body.trim()
+  } catch (error) {
+    if (!(error instanceof ArtifactsUnavailable)) throw error
+  }
+  return issue.references?.map(r => r.match(/^Design: (\S+)$/)?.[1]).find(Boolean) ?? null
+}
+
+// Crea el issue en draft. Con diseño, lo adjunta como artifact link «Design»; sin
+// artifacts, lo agrega a References.
+export function issueCreate(root: string, issue: Issue & { design?: string }) {
+  const { issues } = tracker(root)
+  const { design, ...rest } = issue
+  let { rawBody: _raw, ...created } = issues.create(rest, 'draft')
+  if (design?.trim()) {
+    try {
+      issues.artifacts.create(created.id, { type: 'link', name: DESIGN, body: design.trim() })
+    } catch (error) {
+      if (!(error instanceof ArtifactsUnavailable)) throw error
+      const { id: _id, url: _url, title: _title, state: _state, kind: _kind, ...body } = created
+      issues.updateBody(created.id, { ...body, references: [...(body.references ?? []), `Design: ${design.trim()}`] })
+      ;({ rawBody: _raw, ...created } = issues.get(created.id))
+    }
+  }
+  return { ...created, design: design?.trim() || null }
 }
 
 export function issueGet(root: string, id: string) {
-  return tracker(root).issues.get(id)
+  const { issues } = tracker(root)
+  const { rawBody: _raw, ...issue } = issues.get(id)
+  return { ...issue, design: designOf(issues, issue) }
 }
 
 export function issueList(root: string, state?: IssueState, kind?: Kind) {
@@ -103,15 +133,15 @@ export function issueTake(root: string, id: string) {
     gh(['issue', 'develop', id, '--repo', repo, '--name', branch, '--base', baseBranch(root), '--checkout'])
     how = 'creada'
   }
-  const { state: _state, ...rest } = issue
-  return { ...rest, branch, how }
+  const { state: _state, rawBody: _raw, ...rest } = issue
+  return { ...rest, design: designOf(issues, issue), branch, how }
 }
 
 // Responde una pregunta abierta: la pasa a Decisions en el cuerpo y lo deja como comentario.
 export function issueAnswer(root: string, input: { id: string; question: string; answer: string; decision?: string; by?: string }) {
   const { gh, repo, issues } = tracker(root)
   const current = issues.get(input.id)
-  const { id: _id, url: _url, title: _title, state: _state, kind: _kind, ...body } = current
+  const { id: _id, url: _url, title: _title, state: _state, kind: _kind, rawBody: _raw, ...body } = current
   const date = new Date().toLocaleDateString('sv-SE')
   const next = answerQuestion(body, { ...input, date })
   issues.updateBody(input.id, next)
