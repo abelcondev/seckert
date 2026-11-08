@@ -39,3 +39,15 @@ Con `seckert issues: github` en el AGENTS.md o CLAUDE.md, todo pedido de trabajo
 ## Features y sub-issues
 
 Una feature es un issue `type:feature` con sub-issues nativos de GitHub; cada sub-issue es una parte que se trabaja y se mergea sola (un CHANGE o un FIX). `issue_create` con `parent` crea un sub-issue y con `blockedBy` marca qué issues tienen que cerrarse antes. `issue_get` devuelve el padre, los sub-issues y los bloqueantes, cada uno con su título y si sigue abierto. Al tomar una feature sin sub-issues, Claude propone la división y, con el «dale», crea las partes en orden con sus dependencias y su diseño, y las aprueba con esas palabras. `issue_take` sobre una feature con sub-issues no crea rama: devuelve las partes, qué bloquea a cada una, la siguiente libre y si están todas cerradas. Tomar un issue bloqueado falla nombrando qué lo bloquea, salvo con `force` después de que el usuario lo confirme. `issue_close` cierra la feature como completada solo con todas sus partes cerradas. Las tareas internas de un change siguen en su plan, nunca son sub-issues.
+
+## Duplicados
+
+Antes de proponer o crear trabajo, Claude revisa los issues abiertos y usa uno que ya lo cubra en vez de crear otro o meterlo en un issue distinto. `issue_create` devuelve en `similar` los issues abiertos que comparten al menos dos palabras con contenido (sin tildes, de 4 letras o más, sin las más comunes) entre título y Problem.
+
+## Origen por defecto
+
+Un issue creado sin origen lleva `Source: chat` y la fecha de hoy en `## Origin`. Lo que el pedido trae (Source, Date, Client, Requested by) se respeta.
+
+## Relaciones entre issues existentes
+
+`issue_link` marca relaciones entre issues que ya existen: `parent` lo vuelve sub-issue de otro, `blockedBy` marca los issues que tienen que cerrarse antes y `removeBlockedBy` los saca. Devuelve el padre y lo que lo bloquea. Si al tomar un issue Claude encuentra una dependencia sin marcar, lo dice y la marca con el sí del usuario.
