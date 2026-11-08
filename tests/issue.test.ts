@@ -27,6 +27,17 @@ test('sin cita ni origen el cuerpo sigue siendo válido', () => {
   expect(parseBody(renderBody(issue))).toEqual(rest)
 })
 
+test('la marca lleva la versión del contrato; la marca sin versión se sigue leyendo', () => {
+  const body = renderBody(ISSUE)
+  expect(body.startsWith('<!-- seckert:issue v1 -->\n')).toBe(true)
+  const { title, ...rest } = ISSUE
+  expect(parseBody(body.replace('<!-- seckert:issue v1 -->', '<!-- seckert:issue -->'))).toEqual(rest)
+})
+
+test('una versión del contrato que seckert no conoce no se parsea', () => {
+  expect(() => parseBody(renderBody(ISSUE).replace('v1', 'v2'))).toThrow(/v2/)
+})
+
 test('un cuerpo que no escribió seckert no se parsea', () => {
   expect(() => parseBody('Algo escrito a mano')).toThrow()
 })

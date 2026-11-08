@@ -21,7 +21,11 @@ export type Issue = {
 
 export type IssueBody = Omit<Issue, 'title'>
 
-const MARK = '<!-- seckert:issue -->'
+// La marca dice que el cuerpo es de seckert y qué versión del contrato sigue
+// (docs/contrato-issue.md). Sin versión es la v1 de antes de versionarla.
+export const CONTRACT_VERSION = 1
+const MARK = `<!-- seckert:issue v${CONTRACT_VERSION} -->`
+const MARK_RE = /<!-- seckert:issue(?: v(\d+))? -->/
 const ORIGIN_KEYS: [keyof Origin, string][] = [
   ['meeting', 'Meeting'],
   ['date', 'Date'],
@@ -63,7 +67,10 @@ function sections(body: string): Map<string, string> {
 }
 
 export function parseBody(body: string): IssueBody {
-  if (!body.includes(MARK)) throw new Error('el issue no tiene el formato de seckert')
+  const mark = body.match(MARK_RE)
+  if (!mark) throw new Error('el issue no tiene el formato de seckert')
+  const version = Number(mark[1] ?? 1)
+  if (version > CONTRACT_VERSION) throw new Error(`el issue sigue el contrato v${version} y seckert conoce hasta v${CONTRACT_VERSION}: actualizá seckert`)
   const s = sections(body)
   const contextLines = (s.get('Context') ?? '').split('\n')
   const quoteLines = contextLines.filter(line => line.startsWith('> '))
