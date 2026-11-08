@@ -36,6 +36,14 @@ if [ "$SECKERT_QA" = "sin-navegador" ] || grep -Eqs '"SECKERT_QA"[[:space:]]*:[[
   echo "QA: SECKERT_QA=sin-navegador (this user's local preference). Don't offer to install Chrome DevTools or a browser; what's only visible in the app is NO VERIFICABLE (sin navegador)."
 fi
 
+# seckert trabaja sobre los issues del repo de GitHub de origin: sin él, solo avisa.
+case "$(git remote get-url origin 2>/dev/null)" in
+  *github.com[:/]*) ;;
+  *)
+    echo "seckert needs a GitHub repo: this repo has no origin on GitHub, so issues and changes can't be used. Tell the user in one line: add a GitHub origin (git remote add origin …) and run gh auth login."
+    exit 0 ;;
+esac
+
 cat <<'TXT'
 GitHub issues are the work tracker, and a CHANGE lives in its issue (the plan is its `Plan` artifact).
 - Every work request (a fix, a feature, a change; not a question, an explanation or an exploration) becomes an issue with issue_create, in the request's language, without the user saying "create an issue". Small work too: it gets an issue, then it is done directly.
