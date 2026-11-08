@@ -28,7 +28,7 @@ Parte 3 de 4: después de `issue-como-change`. En Linear, una feature completa s
 - [x] T2 Crear sub-issues y dependencias desde el MCP (`issue_create` con `parent` y `blocked_by`) <!-- commit: fd0424e -->
 - [x] T3 `tomar` sobre una feature padre: propuesta de partes y creación de sub-issues <!-- commit: e891359 -->
 - [x] T4 Aviso al tomar un sub-issue bloqueado y cierre del padre <!-- commit: c19cb31 -->
-- [ ] T5 Evals: feature con dos partes y un FIX <!-- commit: -->
+- [x] T5 Evals: feature con dos partes y un FIX <!-- commit: 42823ac -->
 
 ## Testing
 
@@ -47,3 +47,4 @@ Parte 3 de 4: después de `issue-como-change`. En Linear, una feature completa s
 - 2026-11-08: T2 hecha (fd0424e). bun run test exit 0; issues.spec: issue_create con parent 1 y blockedBy [2] llama a gh con --parent 1 --blocked-by 2; issue_get del #3 da parent 1 y bloqueado por #2, y el #1 lista los sub-issues 2 y 3
 - 2026-11-08: T3 hecha (e891359). bun run test exit 0; issues.spec: issue_take del padre con dos sub-issues no crea rama ni llama a develop y devuelve las partes (#3 bloqueada por #2) con next #2; skill tomar propone la división y crea los sub-issues con parent, blockedBy y diseño
 - 2026-11-08: T4 hecha (c19cb31). bun run test exit 0; issues.spec: tomar #3 bloqueado falla nombrando #2 Modelo de pagos y no cambia de rama, con force lo toma; issue_close con partes abiertas falla nombrando #2, con todas cerradas issue_take del padre da done y next null, e issue_close lo cierra completed con el comentario 2 de 2
+- 2026-11-08: T5 hecha (42823ac). claude plugin eval: feature-en-partes 3/3 y parte-bloqueada 3/3; regresión de los 10 casos de issues con 1 corrida, todos pasan; bun run test exit 0
