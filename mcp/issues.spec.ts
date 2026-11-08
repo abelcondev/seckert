@@ -46,7 +46,10 @@ beforeAll(async () => {
   mkdirSync(join(repo, 'src'), { recursive: true })
   execFileSync('git', ['init', '-q', '-b', 'main', repo])
   execFileSync('git', ['remote', 'add', 'origin', 'git@github.com:acme/tienda.git'], { cwd: repo })
-  execFileSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '--allow-empty', '-m', 'init'], { cwd: repo })
+  // src/ tiene que existir en main: el servidor corre ahí, y una rama que agrega archivos no la puede vaciar.
+  writeFileSync(join(repo, 'src', '.keep'), '')
+  execFileSync('git', ['add', '-A'], { cwd: repo })
+  execFileSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '-m', 'init'], { cwd: repo })
   const bin = join(dir, 'bin')
   mkdirSync(bin)
   writeFileSync(join(bin, 'gh'), `#!/bin/sh\nexec node "${FAKE}" "$@"\n`)
@@ -276,4 +279,15 @@ test('pr_draft de un FIX tomado de un issue, sin change: el cuerpo sale del issu
   expect(body).toContain('## How to revert\n\n<!-- seckert: completar -->')
   const order = ['## Why', '## What', '## Testing', '## Risk', '## How to revert', '## Evidence'].map(h => body.indexOf(h))
   expect([...order].sort((a, b) => a - b)).toEqual(order)
+})
+
+test('issue_create crea sub-issues y dependencias nativas', async () => {
+  await call('issue_create', { ...ISSUE, title: 'Cobrar con tarjeta', kind: 'feature' })
+  await call('issue_create', { ...ISSUE, title: 'Modelo de pagos', parent: '1' })
+  const { error } = await call('issue_create', { ...ISSUE, title: 'Checkout con Stripe', parent: '1', blockedBy: ['2'] })
+  expect(error).toBeNull()
+  const create = db().calls.filter(c => c[1] === 'create').at(-1)!
+  expect(create).toEqual(expect.arrayContaining(['--parent', '1', '--blocked-by', '2']))
+  expect((await call('issue_get', { id: '3' })).value).toMatchObject({ parent: '1', blockedBy: [{ id: '2', open: true, title: 'Modelo de pagos' }] })
+  expect((await call('issue_get', { id: '1' })).value.subIssues.map((s: { id: string }) => s.id)).toEqual(['2', '3'])
 })

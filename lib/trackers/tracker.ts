@@ -28,7 +28,8 @@ export interface Artifacts {
 
 export interface Tracker {
   artifacts: Artifacts
-  create(issue: Issue, state: IssueState): TrackedIssue
+  // Con `parent`, nace como sub-issue; con `blockedBy`, bloqueado por esos issues.
+  create(issue: Issue, state: IssueState, links?: { parent?: string; blockedBy?: string[] }): TrackedIssue
   get(id: string): TrackedIssue
   // Sin estado: todos los issues de seckert abiertos.
   list(state?: IssueState, kind?: Kind): TrackedIssue[]

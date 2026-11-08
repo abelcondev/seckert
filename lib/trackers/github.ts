@@ -97,7 +97,7 @@ export function githubTracker(repo: string, gh: Gh): Tracker {
   return {
     artifacts,
 
-    create(issue: Issue, state: IssueState) {
+    create(issue: Issue, state: IssueState, links: { parent?: string; blockedBy?: string[] } = {}) {
       if (state !== 'draft' && state !== 'approved') throw new Error(`un issue nuevo nace en draft o approved, no en ${state}`)
       ensureLabel(state)
       const labels = ['--label', labelOf(state)]
@@ -105,7 +105,11 @@ export function githubTracker(repo: string, gh: Gh): Tracker {
         gh(['label', 'create', kindLabel(issue.kind), '--repo', repo, '--force', '--color', KIND_COLORS[issue.kind]])
         labels.push('--label', kindLabel(issue.kind))
       }
-      const url = gh(['issue', 'create', '--repo', repo, '--title', issue.title, '--body-file', '-', ...labels], renderBody(issue)).trim()
+      const rel = [
+        ...(links.parent ? ['--parent', links.parent.replace(/^#/, '')] : []),
+        ...(links.blockedBy?.length ? ['--blocked-by', links.blockedBy.map(n => n.replace(/^#/, '')).join(',')] : []),
+      ]
+      const url = gh(['issue', 'create', '--repo', repo, '--title', issue.title, '--body-file', '-', ...labels, ...rel], renderBody(issue)).trim()
       const number = url.match(/\/issues\/(\d+)$/)?.[1]
       if (!number) throw new Error(`gh no devolvió la URL del issue: ${url}`)
       return get(number)

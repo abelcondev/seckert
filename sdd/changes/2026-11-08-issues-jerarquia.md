@@ -24,7 +24,7 @@ Parte 3 de 4: después de `issue-como-change`. En Linear, una feature completa s
 
 ## Tasks
 
-- [ ] T1 [datos] Lectura de padre, sub-issues y dependencias en el adaptador de GitHub <!-- commit: -->
+- [x] T1 [datos] Lectura de padre, sub-issues y dependencias en el adaptador de GitHub <!-- commit: ccc885c -->
 - [ ] T2 Crear sub-issues y dependencias desde el MCP (`issue_create` con `parent` y `blocked_by`) <!-- commit: -->
 - [ ] T3 `tomar` sobre una feature padre: propuesta de partes y creación de sub-issues <!-- commit: -->
 - [ ] T4 Aviso al tomar un sub-issue bloqueado y cierre del padre <!-- commit: -->
@@ -43,3 +43,4 @@ Parte 3 de 4: después de `issue-como-change`. En Linear, una feature completa s
 - **L2** Pasa a ser la Parte 3 de 4, después de `issue-como-change`: cada sub-issue es un change que vive en su issue, con su artifact `plan`.
 - **L3** Ajustado después de `issue-como-change`: las tareas viven en el plan del issue y los sub-issues nacen aprobados con el «dale» de la división, como muestra la página del flujo.
 - 2026-11-08: aprobado ("mergea, y segui"). Rama feature/issues-jerarquia desde main.
+- 2026-11-08: T1 hecha (ccc885c). bun run test exit 0; github.test: gh issue view pide parent,subIssues,blockedBy y el tracker devuelve parent 50, sub-issues 51 cerrado y 52 abierto, bloqueado por 49 abierto; sin relaciones, vacíos

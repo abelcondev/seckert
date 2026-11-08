@@ -56,10 +56,10 @@ export function designOf(issues: ReturnType<typeof tracker>['issues'], issue: { 
 
 // Crea el issue en draft. Con diseño, lo adjunta como artifact link «Design»; sin
 // artifacts, lo agrega a References.
-export function issueCreate(root: string, issue: Issue & { design?: string }) {
+export function issueCreate(root: string, issue: Issue & { design?: string; parent?: string; blockedBy?: string[] }) {
   const { issues } = tracker(root)
-  const { design, ...rest } = issue
-  let { rawBody: _raw, ...created } = issues.create(rest, 'draft')
+  const { design, parent, blockedBy, ...rest } = issue
+  let { rawBody: _raw, ...created } = issues.create(rest, 'draft', { parent, blockedBy })
   if (design?.trim()) {
     try {
       issues.artifacts.create(created.id, { type: 'link', name: DESIGN, body: design.trim() })

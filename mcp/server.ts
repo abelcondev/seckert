@@ -317,6 +317,8 @@ server.registerTool(
       route: z.enum(['FIX', 'SPEC', 'CHANGE']),
       kind: z.enum(['feature', 'fix', 'task']).optional().describe('Issue type, as the label type:<kind>'),
       design: z.string().url().optional().describe('Design link (a claude.ai artifact, Figma…): attached as the link artifact «Design»'),
+      parent: z.string().optional().describe('Parent issue number: the new issue is its native sub-issue (a part of a feature)'),
+      blockedBy: z.array(z.string()).optional().describe('Issue numbers that must close first (native blocked-by)'),
       routeWhy: z.string().optional().describe('Why that route, in a few words'),
       origin: z
         .object({ source: z.string().optional(), date: z.string().optional(), client: z.string().optional(), requestedBy: z.string().optional() })
