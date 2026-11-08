@@ -72,6 +72,50 @@ if (group === 'label' && cmd === 'create') {
   const issue = find(args[2])
   issue.branches = [...(issue.branches ?? []), flag('--name')]
   if (args.includes('--checkout')) execFileSync('git', ['switch', '-q', '-c', flag('--name')])
+} else if (group === 'api' && cmd === 'graphql') {
+  // Projects: el Project enlazado (db.board) y las mutaciones de campos.
+  const { query, variables } = JSON.parse(readFileSync(0, 'utf8'))
+  const b = db.board
+  if (query.includes('projectsV2(')) {
+    process.stdout.write(JSON.stringify({ data: { repository: { projectsV2: { nodes: b ? [{ id: b.id, number: b.number, title: b.title }] : [] } } } }))
+  } else {
+    process.stdout.write('{"data":{}}')
+  }
+} else if (group === 'project') {
+  const b = db.board
+  const item = url => {
+    let it = b.items.find(i => i.url === url)
+    if (!it) {
+      it = { id: `PVTI_${b.items.length + 1}`, url, values: {}, archived: false }
+      b.items.push(it)
+    }
+    return it
+  }
+  if (!b) {
+    process.stderr.write(`fake gh: no hay Project para ${cmd}\n`)
+    save()
+    process.exit(1)
+  }
+  const statusName = it => {
+    const f = b.fields.find(x => x.name === 'Status')
+    return f?.options?.find(o => o.id === it.values[f.id])?.name
+  }
+  if (cmd === 'field-list') process.stdout.write(JSON.stringify({ fields: b.fields, totalCount: b.fields.length }))
+  else if (cmd === 'item-list') process.stdout.write(JSON.stringify({ items: b.items.filter(i => !i.archived).map(i => ({ id: i.id, content: { url: i.url }, status: statusName(i) })) }))
+  else if (cmd === 'item-add') process.stdout.write(JSON.stringify({ id: item(flag('--url')).id }))
+  else if (cmd === 'item-edit') {
+    const it = b.items.find(i => i.id === flag('--id'))
+    const field = flag('--field-id')
+    if (args.includes('--clear')) delete it.values[field]
+    else it.values[field] = flag('--single-select-option-id') ?? flag('--iteration-id') ?? flag('--number') ?? flag('--text')
+    process.stdout.write('{}')
+  } else if (cmd === 'item-archive') {
+    b.items.find(i => i.id === flag('--id')).archived = true
+  } else {
+    process.stderr.write(`fake gh: no entiendo ${args.join(' ')}\n`)
+    save()
+    process.exit(1)
+  }
 } else if (group === 'api') {
   // Issue artifacts: GET/POST/PATCH sobre repos/<o>/<r>/issues/<n>/artifacts[/<m>]. Con
   // artifactsUnavailable, la API no existe para el repo (preview no habilitada).

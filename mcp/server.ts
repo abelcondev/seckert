@@ -21,6 +21,7 @@ import {
 } from './repo'
 import { testsOnBase } from './base'
 import { prDraft, releaseDraft } from './pr'
+import { boardSetup, boardSync } from './board'
 import { issueAnswer, issueClose, issueCreate, issueGet, issueList, issueTake, issueTransition } from './issues'
 import { checkTransition } from '../lib/issue'
 
@@ -363,6 +364,40 @@ server.registerTool(
   async ({ state, kind }) => {
     try {
       return json(issueList(projectRoot(), state, kind))
+    } catch (error) {
+      return failure(error)
+    }
+  },
+)
+
+server.registerTool(
+  'board_setup',
+  {
+    description:
+      'Creates or completes the GitHub Projects board of the repo: finds the Project linked to the repo or creates one named after the repo and links it, and ensures its fields: Status (Draft, Approved, In Progress, In Review, Done), Priority, Size and Cycle (2-week iterations). Needs the `project` scope in gh. Only when the user asks for a board.',
+    inputSchema: {},
+    annotations: { destructiveHint: false },
+  },
+  async () => {
+    try {
+      return json(boardSetup(projectRoot()))
+    } catch (error) {
+      return failure(error)
+    }
+  },
+)
+
+server.registerTool(
+  'board_sync',
+  {
+    description:
+      'Moves seckert issues on the repo board to the Status of their real state (draft, approved, in-progress, in-review from a linked open PR, done when closed; discarded is archived). Call it after opening a PR and after a merge. Without ids: all open seckert issues. Without a board linked to the repo it does nothing.',
+    inputSchema: { ids: z.array(z.string()).optional().describe('Issue numbers to sync, e.g. the one just merged') },
+    annotations: { destructiveHint: false },
+  },
+  async ({ ids }) => {
+    try {
+      return json(boardSync(projectRoot(), ids))
     } catch (error) {
       return failure(error)
     }

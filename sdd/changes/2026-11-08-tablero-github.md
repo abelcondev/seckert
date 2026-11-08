@@ -17,13 +17,15 @@ Parte 4 de 4: después de `issues-jerarquia`. Para reemplazar Linear hace falta 
 - Cada issue tiene Priority (Urgent, High, Medium, Low) y Size (estimación) como campos del Project.
 - Los cycles son el campo Iteration del Project. ¿Qué entra en este cycle? lista los issues del cycle actual.
 - Un issue nuevo entra solo al Project.
+- El tablero es opcional: sin un Project enlazado al repo, seckert no hace nada con Projects. Si no se puede actualizar el tablero, la operación del issue no falla: avisa.
+- In Review y Done no pasan por seckert (el PR y el merge): `board_sync` reconcilia el tablero con el estado real, y las skills la llaman después de abrir el PR y del merge.
 
 ## Open questions
 
 
 ## Tasks
 
-- [ ] T1 Encontrar el Project enlazado al repo o crearlo con el nombre del repo y enlazarlo; asegurar Status (Draft, Approved, In Progress, In Review, Done), Priority, Size e Iteration de 2 semanas <!-- commit: -->
+- [x] T1 Encontrar el Project enlazado al repo o crearlo con el nombre del repo y enlazarlo; asegurar Status (Draft, Approved, In Progress, In Review, Done), Priority, Size e Iteration de 2 semanas <!-- commit: 57e1fa5 -->
 - [ ] T2 Sincronizar Status con los estados de seckert al aprobar, tomar, abrir el PR y mergear <!-- commit: -->
 - [ ] T3 Priority, Size e Iteration desde `issue_create` y una herramienta para editarlos <!-- commit: -->
 - [ ] T4 Consultas: issues del cycle actual, por prioridad <!-- commit: -->
@@ -46,3 +48,5 @@ Parte 4 de 4: después de `issues-jerarquia`. Para reemplazar Linear hace falta 
 - 2026-11-08: pendientes al aprobar: P3.
 - **L5** P3: El login de gh de abelcondev tiene ahora el scope `project` (gh auth refresh -s project). `gh project list` responde.
 - **L6** La API GraphQL sí crea campos Iteration (`createProjectV2Field` con `ITERATION` e `iterationConfiguration`: startDate, duration, iterations) y cambia las opciones de Status (`updateProjectV2Field` con `singleSelectOptions`). No hace falta crear nada a mano.
+- 2026-11-08: T1 hecha (57e1fa5). bun run test exit 0; tests/board.test.ts: sin Project enlazado lo crea con el nombre del repo y lo enlaza, deja Status con los 5 estados conservando el id de In Progress, crea Priority, Size y Cycle desde el lunes 2026-11-09 con 14 días; con todo listo no escribe nada. Sin probar contra GitHub real
+- **L7** Prueba real de T1 sobre abelcondev/seckert: creó el Project «seckert» (#2, https://github.com/users/abelcondev/projects/2) enlazado al repo, con Status (5 estados), Priority, Size y Cycle (3 iteraciones de 14 días desde el lunes 2026-11-02). Una segunda corrida no escribió nada.

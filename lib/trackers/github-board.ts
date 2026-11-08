@@ -3,6 +3,7 @@
 // Priority, Size y Cycle (iteraciones de 2 semanas). Habla con `gh`; las
 // opciones de Status y el campo Iteration van por GraphQL porque `gh project`
 // no los maneja.
+import type { IssueState } from '../issue'
 import type { Gh } from './github'
 
 export const STATUSES = ['Draft', 'Approved', 'In Progress', 'In Review', 'Done'] as const
@@ -18,6 +19,21 @@ const STATUS_COLORS: Record<(typeof STATUSES)[number], string> = {
   'In Review': 'BLUE',
   Done: 'GRAY',
 }
+
+// La columna de cada estado de seckert; un issue descartado se archiva.
+export function statusFor(state: IssueState | null): (typeof STATUSES)[number] | null {
+  const map: Record<IssueState, (typeof STATUSES)[number] | null> = {
+    draft: 'Draft',
+    approved: 'Approved',
+    'in-progress': 'In Progress',
+    'in-review': 'In Review',
+    closed: 'Done',
+    discarded: null,
+  }
+  return state ? map[state] : null
+}
+
+export type BoardItem = { id: string; url: string; status: string | null }
 
 export type BoardField = { id: string; name: string; type: string; options?: { id: string; name: string }[] }
 export type Board = { id: string; number: number; title: string; owner: string; fields: BoardField[] }
@@ -88,11 +104,42 @@ export function githubBoard(repo: string, gh: Gh, today: () => string = () => ne
     return fields
   }
 
+  const field = (board: Board, fieldName: string) => {
+    const found = board.fields.find(f => f.name === fieldName)
+    if (!found) throw new Error(`el tablero «${board.title}» no tiene el campo ${fieldName}: corré board_setup`)
+    return found
+  }
+
   return {
     // Encuentra o crea el Project del repo y deja sus campos listos.
     ensure(): Board {
       const project = linked() ?? create()
       return { ...project, owner, fields: ensureFields(project) }
+    },
+
+    // El Project enlazado al repo, sin crear ni cambiar nada; null si no hay.
+    find(): Board | null {
+      const project = linked()
+      return project ? { ...project, owner, fields: fieldList(project.number) } : null
+    },
+
+    items(board: Board): BoardItem[] {
+      const raw = JSON.parse(gh(['project', 'item-list', String(board.number), '--owner', owner, '--format', 'json', '--limit', '500']))
+      return (raw.items ?? []).map((i: { id: string; content?: { url?: string }; status?: string; Status?: string }) => ({ id: i.id, url: i.content?.url ?? '', status: i.status ?? i.Status ?? null }))
+    },
+
+    // Agrega el issue al tablero (si ya está, devuelve el mismo item) y le pone el Status; null lo archiva.
+    setStatus(board: Board, url: string, status: (typeof STATUSES)[number] | null): string {
+      const item = JSON.parse(gh(['project', 'item-add', String(board.number), '--owner', owner, '--url', url, '--format', 'json'])).id as string
+      if (status === null) {
+        gh(['project', 'item-archive', String(board.number), '--owner', owner, '--id', item])
+        return item
+      }
+      const statusField = field(board, 'Status')
+      const option = statusField.options?.find(o => o.name === status)
+      if (!option) throw new Error(`el campo Status de «${board.title}» no tiene la opción ${status}: corré board_setup`)
+      gh(['project', 'item-edit', '--id', item, '--project-id', board.id, '--field-id', statusField.id, '--single-select-option-id', option.id])
+      return item
     },
   }
 }

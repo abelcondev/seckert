@@ -33,4 +33,5 @@ Issue: $ARGUMENTS
    - A CHANGE closes with `seckert:done` as usual; its PR already carries `Fixes #n`.
    - A FIX or SPEC: full suite green, then `pr_draft` with `issue` = the number. Fill in `How to revert` as `seckert:done` says, then `git push -u origin <branch>` and `gh pr create --base <base> --title <title> --body-file <body>`.
    - The body starts with `Fixes #n`: GitHub shows the issue in review and the merge closes it. Never move those states by hand.
+   - After opening the PR, and after a merge the user asks for, `board_sync` with the issue number: it moves the card on the repo board, if there is one.
    - A part of a feature: after the merge, say which part is free next and, when it was the last one, offer to close the feature (`issue_close`).
