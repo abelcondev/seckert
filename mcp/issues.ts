@@ -1,7 +1,7 @@
 // Issues de seckert en GitHub: el repo sale del remoto `origin` y `gh` corre en la raíz.
 import { execFileSync } from 'node:child_process'
 
-import { branchFor, checkTransition, takeProblem, type Issue, type IssueState } from '../lib/issue'
+import { branchFor, checkTransition, takeProblem, type Issue, type IssueState, type Kind } from '../lib/issue'
 import { githubTracker, type Gh } from '../lib/trackers/github'
 import { baseBranch } from './repo'
 
@@ -49,10 +49,10 @@ export function issueGet(root: string, id: string) {
   return tracker(root).issues.get(id)
 }
 
-export function issueList(root: string, state?: IssueState) {
+export function issueList(root: string, state?: IssueState, kind?: Kind) {
   return tracker(root)
-    .issues.list(state)
-    .map(({ id, title, state, route, url }) => ({ id, title, state, route, url }))
+    .issues.list(state, kind)
+    .map(({ id, title, state, route, kind, url }) => ({ id, title, state, route, kind, url }))
 }
 
 // Mueve el triage. Aprobar exige las palabras del usuario y las deja como comentario.

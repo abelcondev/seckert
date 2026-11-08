@@ -314,6 +314,7 @@ server.registerTool(
         .optional()
         .describe('Small pending doubts, numbered P1, P2…, with who decides'),
       route: z.enum(['FIX', 'SPEC', 'CHANGE']),
+      kind: z.enum(['feature', 'fix', 'task']).optional().describe('Issue type, as the label type:<kind>'),
       routeWhy: z.string().optional().describe('Why that route, in a few words'),
       origin: z
         .object({ source: z.string().optional(), date: z.string().optional(), client: z.string().optional(), requestedBy: z.string().optional() })
@@ -351,13 +352,13 @@ server.registerTool(
 server.registerTool(
   'issue_list',
   {
-    description: 'Lists seckert issues (id, title, state, route, url). Open ones by default; with state, all issues in that state.',
-    inputSchema: { state: STATE.optional() },
+    description: 'Lists seckert issues (id, title, state, route, kind, url). Open ones by default; with state, all issues in that state; with kind, only that type.',
+    inputSchema: { state: STATE.optional(), kind: z.enum(['feature', 'fix', 'task']).optional() },
     annotations: { readOnlyHint: true },
   },
-  async ({ state }) => {
+  async ({ state, kind }) => {
     try {
-      return json(issueList(projectRoot(), state))
+      return json(issueList(projectRoot(), state, kind))
     } catch (error) {
       return failure(error)
     }

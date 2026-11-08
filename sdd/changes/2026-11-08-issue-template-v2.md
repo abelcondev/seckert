@@ -29,7 +29,7 @@ Parte 1 de 4: el objetivo es usar GitHub Issues en lugar de Linear. El issue de 
 
 - [x] T1 [datos] Modelo v2 en `lib/issue.ts`: secciones nuevas, render y parse, y lectura de v1 (tests primero) <!-- commit: fb63583 -->
 - [x] T2 `issue_create` y `issue_get` con los campos nuevos, y el contenido en el idioma del pedido <!-- commit: 5aad2cd -->
-- [ ] T3 `pr_draft` desde un issue v2 <!-- commit: -->
+- [x] T3 `pr_draft` desde un issue v2 <!-- commit: 6e4e095 -->
 - [ ] T5 `docs/contrato-issue.md` en inglés con el template v2, un ejemplo y la tabla de versiones <!-- commit: -->
 - [ ] T6 Evals: el fixture de issues pasa a v2 y un caso nuevo crea un issue en el idioma del pedido <!-- commit: -->
 - [ ] T7 Labels de tipo (`type:feature`, `type:fix`, `type:task`) al crear el issue, y `issue_list` filtra por tipo <!-- commit: -->
@@ -55,3 +55,4 @@ ademas busca en internet cual es las formas novedosas o mejor estructuradas oara
 - 2026-11-08: aprobado ("dale me gusta, implementalo"). Rama feature/issue-template-v2 desde main.
 - 2026-11-08: T1 hecha (fb63583). bun run test exit 0; tests/issue.test.ts: v2 se escribe y relee igual con el orden de secciones, las opcionales vacías no se escriben, v1 y la marca sin versión se leen, v3 falla y faltar Outcome o criterios es error
 - 2026-11-08: T2 hecha (5aad2cd). bun run test exit 0; issues.spec: issue_create con todos los campos v2 escribe la marca v2 y las 9 secciones, issue_get los devuelve; la descripción pide el idioma del pedido y títulos en inglés
+- 2026-11-08: T3 hecha (6e4e095). bun run test exit 0; issues.spec: pr_draft con issue v2 pone Problem, cita y Outcome en Why, y criterios, Decisions y Out of scope en What

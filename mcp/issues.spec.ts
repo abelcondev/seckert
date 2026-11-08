@@ -162,10 +162,18 @@ test('issue_list resume los abiertos y filtra por estado', async () => {
   await call('issue_transition', { id: '2', to: 'approved', aprobacion: 'dale' })
   const all = (await call('issue_list', {})).value
   expect(all).toEqual([
-    { id: '1', title: ISSUE.title, state: 'draft', route: 'CHANGE', url: 'https://github.com/acme/tienda/issues/1' },
-    { id: '2', title: 'Arreglar typo', state: 'approved', route: 'FIX', url: 'https://github.com/acme/tienda/issues/2' },
+    { id: '1', title: ISSUE.title, state: 'draft', route: 'CHANGE', kind: null, url: 'https://github.com/acme/tienda/issues/1' },
+    { id: '2', title: 'Arreglar typo', state: 'approved', route: 'FIX', kind: null, url: 'https://github.com/acme/tienda/issues/2' },
   ])
   expect((await call('issue_list', { state: 'approved' })).value.map((i: { id: string }) => i.id)).toEqual(['2'])
+})
+
+test('issue_list muestra el tipo y filtra por tipo', async () => {
+  await call('issue_create', { ...ISSUE, kind: 'feature' })
+  await call('issue_create', { ...ISSUE, title: 'Arreglar typo', route: 'FIX', kind: 'fix' })
+  const all = (await call('issue_list', {})).value
+  expect(all.map((i: { kind: string }) => i.kind)).toEqual(['feature', 'fix'])
+  expect((await call('issue_list', { kind: 'fix' })).value.map((i: { id: string }) => i.id)).toEqual(['2'])
 })
 
 test('un estado que muestra GitHub no se marca a mano', async () => {

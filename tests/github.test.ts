@@ -45,6 +45,20 @@ test('crear asegura la label, manda el cuerpo por stdin y devuelve el issue', ()
   expect(created).toMatchObject({ id: '12', url: 'https://github.com/o/r/issues/12', state: 'draft', title: ISSUE.title, route: 'CHANGE' })
 })
 
+test('con tipo, crear asegura la label type:<tipo> y la agrega; leer devuelve el tipo', () => {
+  const { gh, calls } = fakeGh({ 'issue create': 'https://github.com/o/r/issues/12\n', 'issue view': view({ labels: [{ name: 'seckert:draft' }, { name: 'type:feature' }] }) })
+  const created = githubTracker('o/r', gh).create({ ...ISSUE, kind: 'feature' }, 'draft')
+  expect(calls.some(c => c.args.slice(0, 3).join(' ') === 'label create type:feature')).toBe(true)
+  const create = calls.find(c => c.args[1] === 'create' && c.args[0] === 'issue')!
+  expect(create.args.slice(-4)).toEqual(['--label', 'seckert:draft', '--label', 'type:feature'])
+  expect(created.kind).toBe('feature')
+})
+
+test('dos labels de tipo es un error, no se adivina', () => {
+  const { gh } = fakeGh({ 'issue view': view({ labels: [{ name: 'seckert:draft' }, { name: 'type:fix' }, { name: 'type:task' }] }) })
+  expect(() => githubTracker('o/r', gh).get('12')).toThrow(/tipo/)
+})
+
 test('leer devuelve el issue canónico; un aprobado sin rama sigue aprobado', () => {
   const { gh, calls } = fakeGh({ 'issue view': view({ labels: [{ name: 'bug' }, { name: 'seckert:approved' }] }) })
   const issue = githubTracker('o/r', gh).get('12')

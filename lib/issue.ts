@@ -178,6 +178,17 @@ export function stateOf(labels: string[]): Triage | null {
   return states[0] ?? null
 }
 
+// El tipo vive en una label `type:<tipo>`; sin ella es null, con dos es un error.
+export function kindLabel(kind: Kind): string {
+  return `type:${kind}`
+}
+
+export function kindOf(labels: string[]): Kind | null {
+  const kinds = labels.filter(l => l.startsWith('type:')).map(l => l.slice(5)).filter((k): k is Kind => KINDS.includes(k as Kind))
+  if (kinds.length > 1) throw new Error(`el issue tiene más de un tipo: ${kinds.join(', ')}`)
+  return kinds[0] ?? null
+}
+
 // La label de triage que corresponde a un estado (los que muestra GitHub vienen de un approved).
 export function triageOf(state: IssueState): Triage {
   return isTriage(state) ? state : 'approved'
