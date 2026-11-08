@@ -291,3 +291,23 @@ test('issue_create crea sub-issues y dependencias nativas', async () => {
   expect((await call('issue_get', { id: '3' })).value).toMatchObject({ parent: '1', blockedBy: [{ id: '2', open: true, title: 'Modelo de pagos' }] })
   expect((await call('issue_get', { id: '1' })).value.subIssues.map((s: { id: string }) => s.id)).toEqual(['2', '3'])
 })
+
+test('issue_take sobre una feature con sub-issues no crea rama: devuelve las partes y la siguiente libre', async () => {
+  await call('issue_create', { ...ISSUE, title: 'Cobrar con tarjeta', kind: 'feature' })
+  await call('issue_create', { ...ISSUE, title: 'Modelo de pagos', parent: '1' })
+  await call('issue_create', { ...ISSUE, title: 'Checkout con Stripe', parent: '1', blockedBy: ['2'] })
+  for (const id of ['1', '2', '3']) await call('issue_transition', { id, to: 'approved', aprobacion: 'dale' })
+  const { value, error } = await call('issue_take', { id: '1' })
+  expect(error).toBeNull()
+  expect(value).toMatchObject({
+    id: '1',
+    parts: [
+      { id: '2', title: 'Modelo de pagos', open: true, blockedBy: [] },
+      { id: '3', title: 'Checkout con Stripe', open: true, blockedBy: ['2'] },
+    ],
+    next: '2',
+  })
+  expect(value.branch).toBeUndefined()
+  expect(branch()).toBe('main')
+  expect(db().calls.some(c => c[1] === 'develop' && c.includes('--name'))).toBe(false)
+})

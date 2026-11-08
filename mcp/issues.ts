@@ -113,6 +113,16 @@ export function issueTake(root: string, id: string) {
   const issue = issues.get(id)
   const problem = takeProblem(issue.state)
   if (problem) throw new Error(`el issue #${id} ${problem}`)
+  // Una feature con sub-issues no se trabaja directo: se trabajan sus partes.
+  if (issue.subIssues.length) {
+    const parts = issue.subIssues.map(sub => ({
+      id: sub.id,
+      title: sub.title,
+      open: sub.open,
+      blockedBy: sub.open ? issues.get(sub.id).blockedBy.filter(b => b.open).map(b => b.id) : [],
+    }))
+    return { id, title: issue.title, parts, next: parts.find(p => p.open && !p.blockedBy.length)?.id ?? null }
+  }
   if (git(root, 'status', '--porcelain')) throw new Error('hay cambios sin commitear: commitealos o guardalos antes de tomar el issue')
 
   let branch: string
