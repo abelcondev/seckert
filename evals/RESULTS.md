@@ -2,6 +2,19 @@
 
 Cómo se corren y qué mide cada caso: [README.md](README.md). Cada celda es **con seckert / sin seckert**: el mismo modelo, los mismos pedidos y el mismo repo de prueba, con el plugin y sin él.
 
+## 1.5.0 (sin publicar) · tablero en GitHub Projects · 2026-11-09
+
+Change `tablero-github`: el tablero sigue el estado de los issues, con prioridad, tamaño y cycles. Los dos casos nuevos con 3 corridas y los 12 casos de issues con 1 corrida como regresión, todos con seckert. Modelo `claude-opus-5-5`. Costo: $0,79 + $2,18 de la regresión + $0,33 de la repetición de `tablero-planificar`.
+
+| Caso | Con seckert | Palabras | Palabras por frase | Tokens de salida | Segundos | Costo |
+|---|---|---|---|---|---|---|
+| `tablero-cycle` | 3/3 | 72 | 8,2 | 419 | 13 | $0,12 |
+| `tablero-planificar` | 3/3 | 19 | 9,3 | 278 | 6 | $0,11 |
+
+Notas:
+- `tablero-planificar` dio 0/3 al principio: la herramienta se llamaba `issue_plan` y Claude, que carga las herramientas del MCP por búsqueda, buscó las `board_*` y no la encontró. Concluyó que seckert no editaba el tablero. Pasó a llamarse `board_plan` y el contexto de inicio del modo issues nombra las herramientas del tablero: 3/3; la tabla es esa repetición.
+- Regresión, 1 corrida: los otros 11 casos de `--tag issues` pasaron.
+
 ## 1.4.0 (sin publicar) · features con sub-issues · 2026-11-09
 
 Change `issues-jerarquia`: features divididas en sub-issues nativos, dependencias y cierre de la feature. Los dos casos nuevos con 3 corridas ($1,16) y los 10 casos de issues con 1 corrida como regresión ($1,95), todos con seckert. Modelo `claude-opus-5-5`.

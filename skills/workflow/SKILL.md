@@ -21,6 +21,7 @@ With the line `seckert issues: github` in `AGENTS.md` or `CLAUDE.md`, GitHub iss
 - **A request from the user with no open questions** is approved with their words (`issue_transition`) and taken (`seckert:tomar`). With "para después" or "anotalo", only create it.
 - **The route still applies.** A FIX or SPEC is done directly on the linked branch and ends in a PR with `Fixes #n`. A CHANGE lives in its issue: `change_create` with `issue` and without `why`/`what` attaches the `Plan` artifact, and waits for the "dale". The other change tools work the same way.
 - The design goes in `issue_create` as `design`: it becomes the `Design` link artifact.
+- **Board (optional):** if the repo has a GitHub Projects board linked, creating, approving and taking an issue move its card. `board_plan` sets priority, size and cycle (current, next, none or a title); `issue_create` takes them too. `board_list` answers "¿qué entra en este cycle?" (current cycle by default, ordered by priority). `board_sync` moves cards after a PR or a merge. `board_setup` creates the board, only if the user asks for one.
 - To create or tidy `AGENTS.md`, follow [agents-template.md](agents-template.md) with what you find in the repo and show it before writing it.
 
 Explaining, researching or reviewing is read-only: don't write files or create changes.

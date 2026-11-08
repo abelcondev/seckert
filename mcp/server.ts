@@ -408,7 +408,7 @@ server.registerTool(
 )
 
 server.registerTool(
-  'issue_plan',
+  'board_plan',
   {
     description:
       'Sets the priority (Urgent, High, Medium, Low), size (XS–XL) and cycle (current, next, none or an iteration title) of an issue on the repo board. Only what is passed changes. Fails if the repo has no board (board_setup creates it, only if the user wants one).',

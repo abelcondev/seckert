@@ -137,26 +137,26 @@ test('board_setup crea o completa el tablero del repo', async () => {
 
 const valuesOf = (n: number) => db().board.items.find((i: { url: string }) => i.url.endsWith(`/issues/${n}`))?.values ?? {}
 
-test('issue_create e issue_plan ponen prioridad, tamaño y cycle en el tablero', async () => {
+test('issue_create y board_plan ponen prioridad, tamaño y cycle en el tablero', async () => {
   const { error } = await call('issue_create', { ...ISSUE, priority: 'High', size: 'M', cycle: 'current' })
   expect(error).toBeNull()
   // hoy (2026-11-09 según el reloj del test) cae en Cycle 1
   expect(valuesOf(1)).toMatchObject({ F_priority: 'p1', F_size: 'z2', F_cycle: 'it1' })
 
-  const plan = await call('issue_plan', { id: '1', priority: 'Urgent', cycle: 'next' })
+  const plan = await call('board_plan', { id: '1', priority: 'Urgent', cycle: 'next' })
   expect(plan.error).toBeNull()
   expect(plan.value).toMatchObject({ id: '1', priority: 'Urgent', cycle: 'Cycle 2' })
   expect(valuesOf(1)).toMatchObject({ F_priority: 'p0', F_size: 'z2', F_cycle: 'it2' })
 
-  await call('issue_plan', { id: '1', cycle: 'none' })
+  await call('board_plan', { id: '1', cycle: 'none' })
   expect(valuesOf(1).F_cycle).toBeUndefined()
 })
 
-test('issue_plan sin tablero o con un valor que no existe falla diciendo por qué', async () => {
+test('board_plan sin tablero o con un valor que no existe falla diciendo por qué', async () => {
   await call('issue_create', ISSUE)
-  expect((await call('issue_plan', { id: '1', cycle: 'Cycle 9' })).error).toContain('Cycle 9')
+  expect((await call('board_plan', { id: '1', cycle: 'Cycle 9' })).error).toContain('Cycle 9')
   writeFileSync(state, JSON.stringify({ ...db(), board: undefined }))
-  expect((await call('issue_plan', { id: '1', priority: 'High' })).error).toContain('board_setup')
+  expect((await call('board_plan', { id: '1', priority: 'High' })).error).toContain('board_setup')
 })
 
 test('board_list muestra el cycle actual ordenado por prioridad', async () => {

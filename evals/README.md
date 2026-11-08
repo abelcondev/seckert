@@ -51,6 +51,8 @@ bun evals/metrics.ts evals/results/<version>.json   # palabras, tokens, segundos
 | `pregunta-sin-issue` | Modo issues: una pregunta se responde y no crea issues |
 | `feature-en-partes` | Modo issues: una feature grande se divide en sub-issues nativos con dependencias, aprobados con el «dale», sin rama para el padre ni código |
 | `parte-bloqueada` | Modo issues: tomar un sub-issue bloqueado avisa qué lo bloquea y pregunta, sin forzar |
+| `tablero-planificar` | Con tablero: «poné el 1 como urgente, tamaño M, en este cycle» usa `board_plan` y el tablero queda con Urgent, M y el cycle actual |
+| `tablero-cycle` | Con tablero: «¿qué entra en este cycle?» usa `board_list` y responde con el cycle actual ordenado por prioridad |
 | `tomar-issue-change` | Un issue aprobado de ruta CHANGE se toma en `feature/<slug>` y se convierte en una propuesta con `issue: #1` y el mismo slug, sin tocar código |
 
 En los casos con propuesta, `sin-comandos` chequea que el siguiente paso se ofrezca en palabras, sin `/seckert:…`.
