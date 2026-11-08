@@ -174,7 +174,9 @@ export function branchFor(title: string, route: Route): string {
     if (next.length > 36 && slug) break
     slug = next.slice(0, 36)
   }
-  return `${route === 'CHANGE' ? 'feature' : 'fix'}/${slug || 'issue'}`
+  // Cortado, no termina en un conector suelto: "…-del" no dice nada.
+  const cut = slug.length < words.join('-').length ? slug.replace(/(-(?:a|al|de|del|el|en|la|las|los|para|por|un|una|y|the|of|to|and|for|in))+$/, '') : slug
+  return `${route === 'CHANGE' ? 'feature' : 'fix'}/${cut || 'issue'}`
 }
 
 // null si el issue se puede tomar; si no, por qué. Se toma uno aprobado o se

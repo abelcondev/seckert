@@ -1,6 +1,6 @@
 import { expect, test } from 'claude-code/testing'
 
-import { checkTransition, deriveState, labelOf, parseBody, renderBody, stateOf, type Issue } from '../lib/issue'
+import { branchFor, checkTransition, deriveState, labelOf, parseBody, renderBody, stateOf, type Issue } from '../lib/issue'
 
 const ISSUE: Issue = {
   title: 'Exportar pedidos a CSV',
@@ -76,4 +76,8 @@ test('aprobar exige las palabras del usuario', () => {
   expect(checkTransition('draft', 'approved')).toContain('palabras')
   expect(checkTransition('draft', 'approved', '   ')).toContain('palabras')
   expect(checkTransition('draft', 'approved', 'dale')).toBeNull()
+})
+
+test('la rama de un issue no termina en un conector al cortar el título', () => {
+  expect(branchFor('Cambiar el texto del botón del checkout', 'FIX')).toBe('fix/cambiar-el-texto-del-boton')
 })

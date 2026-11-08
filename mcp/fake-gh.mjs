@@ -65,6 +65,17 @@ if (group === 'label' && cmd === 'create') {
   const issue = find(args[2])
   issue.branches = [...(issue.branches ?? []), flag('--name')]
   if (args.includes('--checkout')) execFileSync('git', ['switch', '-q', '-c', flag('--name')])
+} else if (group === 'pr' && cmd === 'create') {
+  // Guarda el PR y lo enlaza a los issues que nombra con Fixes #n (quedan in-review).
+  const bodyFile = flag('--body-file')
+  const body = flag('--body') ?? (bodyFile ? readFileSync(bodyFile === '-' ? 0 : bodyFile, 'utf8') : '')
+  db.prs = [...(db.prs ?? []), { title: flag('--title'), base: flag('--base'), body }]
+  const number = db.prs.length
+  for (const [, n] of body.matchAll(/(?:Fixes|Closes|Resolves) #(\d+)/gi)) {
+    const issue = db.issues.find(i => String(i.number) === n)
+    if (issue) issue.prs = [...(issue.prs ?? []), { number }]
+  }
+  process.stdout.write(`https://github.com/eval/tienda/pull/${number}\n`)
 } else {
   process.stderr.write(`fake gh: no entiendo ${args.join(' ')}\n`)
   save()
