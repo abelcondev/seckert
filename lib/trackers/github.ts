@@ -2,6 +2,7 @@
 // (`seckert:draft|approved|discarded`); in-progress, in-review y closed se leen
 // de GitHub: rama enlazada, PR enlazado abierto e issue cerrado.
 import { checkTransition, deriveState, kindLabel, kindOf, labelOf, parseBody, renderBody, stateOf, triageOf, type Issue, type IssueBody, type IssueState, type Kind, type Triage } from '../issue'
+import { attachPlan, planInBody } from '../issue-change'
 import type { Artifact, Artifacts, ArtifactType, TrackedIssue, Tracker } from './tracker'
 
 // Corre `gh` con los argumentos y, si hay, `input` por stdin; devuelve stdout.
@@ -71,7 +72,7 @@ export function githubTracker(repo: string, gh: Gh): Tracker {
     const branch = triage === 'approved' && !closed && !openPr && hasBranch(id)
     const state = deriveState({ triage, closed, notPlanned: raw.stateReason === 'NOT_PLANNED', openPr, branch })
     const kind = kindOf(raw.labels.map(l => l.name))
-    return { id, url: raw.url, title: raw.title, state, kind, ...parseBody(raw.body) }
+    return { id, url: raw.url, title: raw.title, state, kind, rawBody: raw.body, ...parseBody(raw.body) }
   }
 
   const get = (id: string) => toTracked(JSON.parse(gh(['issue', 'view', id, '--repo', repo, '--json', FIELDS])))
@@ -113,7 +114,29 @@ export function githubTracker(repo: string, gh: Gh): Tracker {
     },
 
     updateBody(id: string, issue: IssueBody) {
-      gh(['issue', 'edit', id, '--repo', repo, '--body-file', '-'], renderBody(issue))
+      const plan = planInBody(get(id).rawBody)
+      const body = renderBody(issue)
+      gh(['issue', 'edit', id, '--repo', repo, '--body-file', '-'], plan ? attachPlan(body, plan) : body)
+    },
+
+    updateRawBody(id: string, markdown: string) {
+      gh(['issue', 'edit', id, '--repo', repo, '--body-file', '-'], markdown)
+    },
+
+    addLabel(id: string, label: string, color: string) {
+      gh(['label', 'create', label, '--repo', repo, '--force', '--color', color])
+      gh(['issue', 'edit', id, '--repo', repo, '--add-label', label])
+    },
+
+    withLabel(label: string) {
+      const raws: Raw[] = JSON.parse(gh(['issue', 'list', '--repo', repo, '--json', FIELDS, '--limit', '200', '--state', 'open', '--label', label]) || '[]')
+      return raws.flatMap(raw => {
+        try {
+          return [toTracked(raw)]
+        } catch {
+          return []
+        }
+      })
     },
 
     setState(id: string, from: IssueState | null, to: IssueState) {

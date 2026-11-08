@@ -76,8 +76,8 @@ server.registerTool(
     inputSchema: {
       slug: z.string().describe('kebab-case, no date'),
       title: z.string(),
-      why: z.string().describe('The problem, in 1–3 sentences'),
-      what: z.array(z.string()).min(1).describe('Observable behavior, one point per item, quoting the user literally'),
+      why: z.string().optional().describe('The problem, in 1–3 sentences. Omit when the change lives in its issue: the issue gives Why and What'),
+      what: z.array(z.string()).min(1).optional().describe('Observable behavior, one point per item, quoting the user literally'),
       tasks: z.array(z.string()).min(1).describe('Small tasks, without the "T1"; mark the sensitive ones (money, permissions, data)'),
       questions: z.array(z.string()).optional().describe('Decisions missing before approval'),
       specs: z.array(z.string()).optional().describe('sdd/specs areas it touches'),

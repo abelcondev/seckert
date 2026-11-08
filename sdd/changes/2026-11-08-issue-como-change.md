@@ -47,7 +47,7 @@ flowchart LR
 ## Tasks
 
 - [x] T1 [datos] El change leído desde el issue: el qué desde el body v2 y el plan desde el artifact `plan`, con fallback a `## Plan` (tests primero) <!-- commit: 000822b -->
-- [ ] T2 Issue artifacts por la API REST (`gh api`): crear, leer y actualizar `plan` y `link` <!-- commit: -->
+- [x] T2 Issue artifacts por la API REST (`gh api`): crear, leer y actualizar `plan` y `link` <!-- commit: 7c26d09 -->
 - [ ] T3 `change_get`, `change_update` y `task_complete` sobre el issue: tareas como casillas con su commit, y una versión del plan por cambio <!-- commit: -->
 - [ ] T4 Aprobación del plan y `verify_record` como comentarios, con la reapertura de tareas en el plan <!-- commit: -->
 - [ ] T5 Diseño como artifact `link`: al crear el issue con un link de diseño, al tomarlo y en la verificación visual <!-- commit: -->
@@ -75,3 +75,4 @@ dale, ajustá las propuestas y sumalo a la página
 - **L3** P2: Sí, y más amplio: todo pedido de trabajo va a GitHub. El usuario: «cualquier pedido relacionado al flujo de issues deberia ir a gh, es decir: si digo cosas como: vamos a agregar un boton para descargar un csv de x pantalla. Eso deberia conectarse a gh directamente, en vez de decir: crea un issue: vamos a agregar un boton…».
 - 2026-11-08: aprobado ("mergea, y segui"). Rama feature/issue-como-change desde main.
 - 2026-11-08: T1 hecha (000822b). bun run test exit 0; tests/issue-change.test.ts 7/7: el change se arma desde issue y plan, planFromChange devuelve el plan original con commit visible, un change nuevo queda sin Why/What, criterios y líneas nuevas del Log, y el fallback ## Plan en el body se lee igual sin romper parseBody
+- 2026-11-08: T2 hecha (7c26d09). bun run test exit 0; github.test: list con ?type=plan, POST y PATCH con --input y X-GitHub-Api-Version 2026-03-10; un 404 lanza ArtifactsUnavailable; el gh falso crea, lista y versiona artifacts

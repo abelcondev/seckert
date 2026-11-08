@@ -26,10 +26,11 @@ import {
   verifyLine,
 } from '../lib/change'
 import { removeRule, writeRule } from '../lib/spec'
+import { createIssueChange, issuesMode, readIssueChanges, saveIssueChange, type IssueSource } from './issue-changes'
 
 export const CHANGES_DIR = 'sdd/changes'
 
-export type ChangeFile = ParsedChange & { slug: string; file: string; text: string }
+export type ChangeFile = ParsedChange & { slug: string; file: string; text: string; source?: IssueSource }
 
 // La raíz del repo, aunque Claude Code arranque el servidor en una subcarpeta.
 export function projectRoot(): string {
@@ -42,6 +43,10 @@ export function projectRoot(): string {
 }
 
 export function readChanges(root: string): ChangeFile[] {
+  return [...readFileChanges(root), ...(issuesMode(root) ? readIssueChanges(root) : [])]
+}
+
+function readFileChanges(root: string): ChangeFile[] {
   const dir = join(root, CHANGES_DIR)
   if (!existsSync(dir)) return []
   return readdirSync(dir)
@@ -92,7 +97,7 @@ export function summary(change: ChangeFile) {
 }
 
 export function detail(change: ChangeFile) {
-  const { text, ...parsed } = change
+  const { text, source: _source, ...parsed } = change
   return { ...parsed, failures: Object.fromEntries(failuresByPoint(text)) }
 }
 
@@ -103,6 +108,8 @@ export function today(): string {
 // Escribe un change nuevo. No pisa uno existente con el mismo slug: una
 // propuesta que se itera se edita, no se vuelve a crear.
 export function createChange(root: string, change: NewChange): { slug: string; file: string; status: 'proposed' } {
+  if (change.issue && issuesMode(root)) return createIssueChange(root, { ...change, issue: change.issue })
+  if (!change.why?.trim() || !change.what?.length) throw new Error('Faltan `why` y `what`. Solo se omiten cuando el change vive en su issue (modo `seckert issues: github`).')
   if (!SLUG.test(change.slug)) throw new Error(`El slug "${change.slug}" tiene que ser kebab-case: minúsculas, números y guiones.`)
   const existing = readChanges(root).find(c => c.slug === change.slug)
   if (existing) throw new Error(`Ya existe ${existing.file} (${existing.status}). Para ajustarlo, usá change_update.`)
@@ -127,6 +134,7 @@ function gitOk(root: string, ...args: string[]): boolean {
 }
 
 function save(root: string, change: ChangeFile, text: string): void {
+  if (change.source) return saveIssueChange(root, { ...change, source: change.source }, text)
   writeFileSync(join(root, change.file), text)
 }
 

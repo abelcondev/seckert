@@ -34,7 +34,7 @@ function ghIn(root: string): Gh {
   }
 }
 
-function tracker(root: string) {
+export function tracker(root: string) {
   const gh = ghIn(root)
   const repo = repoOf(root)
   return { gh, repo, issues: githubTracker(repo, gh) }
@@ -42,11 +42,13 @@ function tracker(root: string) {
 
 // Un issue nuevo nace siempre en draft: aprobarlo es otro paso, con las palabras del usuario.
 export function issueCreate(root: string, issue: Issue) {
-  return tracker(root).issues.create(issue, 'draft')
+  const { rawBody: _raw, ...created } = tracker(root).issues.create(issue, 'draft')
+  return created
 }
 
 export function issueGet(root: string, id: string) {
-  return tracker(root).issues.get(id)
+  const { rawBody: _raw, ...issue } = tracker(root).issues.get(id)
+  return issue
 }
 
 export function issueList(root: string, state?: IssueState, kind?: Kind) {
@@ -103,7 +105,7 @@ export function issueTake(root: string, id: string) {
     gh(['issue', 'develop', id, '--repo', repo, '--name', branch, '--base', baseBranch(root), '--checkout'])
     how = 'creada'
   }
-  const { state: _state, ...rest } = issue
+  const { state: _state, rawBody: _raw, ...rest } = issue
   return { ...rest, branch, how }
 }
 
@@ -111,7 +113,7 @@ export function issueTake(root: string, id: string) {
 export function issueAnswer(root: string, input: { id: string; question: string; answer: string; decision?: string; by?: string }) {
   const { gh, repo, issues } = tracker(root)
   const current = issues.get(input.id)
-  const { id: _id, url: _url, title: _title, state: _state, kind: _kind, ...body } = current
+  const { id: _id, url: _url, title: _title, state: _state, kind: _kind, rawBody: _raw, ...body } = current
   const date = new Date().toLocaleDateString('sv-SE')
   const next = answerQuestion(body, { ...input, date })
   issues.updateBody(input.id, next)
