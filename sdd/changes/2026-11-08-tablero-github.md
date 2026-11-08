@@ -27,7 +27,7 @@ Parte 4 de 4: después de `issues-jerarquia`. Para reemplazar Linear hace falta 
 
 - [x] T1 Encontrar el Project enlazado al repo o crearlo con el nombre del repo y enlazarlo; asegurar Status (Draft, Approved, In Progress, In Review, Done), Priority, Size e Iteration de 2 semanas <!-- commit: 57e1fa5 -->
 - [x] T2 Sincronizar Status con los estados de seckert al aprobar, tomar, abrir el PR y mergear <!-- commit: e6578d5 -->
-- [ ] T3 Priority, Size e Iteration desde `issue_create` y una herramienta para editarlos <!-- commit: -->
+- [x] T3 Priority, Size e Iteration desde `issue_create` y una herramienta para editarlos <!-- commit: a2ed0ef -->
 - [ ] T4 Consultas: issues del cycle actual, por prioridad <!-- commit: -->
 - [ ] T5 Evals: crear, priorizar y mover un issue en el tablero <!-- commit: -->
 
@@ -51,3 +51,4 @@ Parte 4 de 4: después de `issues-jerarquia`. Para reemplazar Linear hace falta 
 - 2026-11-08: T1 hecha (57e1fa5). bun run test exit 0; tests/board.test.ts: sin Project enlazado lo crea con el nombre del repo y lo enlaza, deja Status con los 5 estados conservando el id de In Progress, crea Priority, Size y Cycle desde el lunes 2026-11-09 con 14 días; con todo listo no escribe nada. Sin probar contra GitHub real
 - **L7** Prueba real de T1 sobre abelcondev/seckert: creó el Project «seckert» (#2, https://github.com/users/abelcondev/projects/2) enlazado al repo, con Status (5 estados), Priority, Size y Cycle (3 iteraciones de 14 días desde el lunes 2026-11-02). Una segunda corrida no escribió nada.
 - 2026-11-08: T2 hecha (e6578d5). bun run test exit 0; mcp/board.spec.ts 5/5: crear, aprobar y tomar dejan Draft, Approved e In Progress; board_sync pone In Review con PR abierto y Done al cerrar, solo lo que cambió; descartar archiva; sin Project no hay llamadas a project; con el tablero roto el issue se crea y avisa. Contra GitHub real solo T1
+- 2026-11-08: T3 hecha (a2ed0ef). bun run test exit 0; board.spec: issue_create con High, M y current deja p1, z2 e it1; issue_plan Urgent y next cambia solo eso a p0 e it2; none quita el cycle; un cycle inexistente y sin tablero fallan diciendo por qué. Real: la consulta de iteraciones del Project #2 devuelve 3 cycles y resuelve current = Cycle 1, next = Cycle 2

@@ -76,7 +76,23 @@ if (group === 'label' && cmd === 'create') {
   // Projects: el Project enlazado (db.board) y las mutaciones de campos.
   const { query, variables } = JSON.parse(readFileSync(0, 'utf8'))
   const b = db.board
-  if (query.includes('ProjectV2IterationField')) {
+  if (query.includes('items(first')) {
+    const nameOf = (field, value) => field.options?.find(o => o.id === value)?.name
+    const nodes = (b?.items ?? []).map(it => {
+      const issue = db.issues.find(i => it.url.endsWith(`/issues/${i.number}`))
+      const fieldValues = b.fields.flatMap(f => {
+        const v = it.values[f.id]
+        if (v === undefined) return []
+        if (f.type === 'ProjectV2IterationField') {
+          const iter = (b.iterations ?? []).find(i => i.id === v)
+          return [{ title: iter?.title, iterationId: v, field: { name: f.name } }]
+        }
+        return [{ name: nameOf(f, v), field: { name: f.name } }]
+      })
+      return { id: it.id, isArchived: it.archived, content: { number: issue?.number, title: issue?.title, url: it.url }, fieldValues: { nodes: fieldValues } }
+    })
+    process.stdout.write(JSON.stringify({ data: { node: { items: { nodes } } } }))
+  } else if (query.includes('ProjectV2IterationField')) {
     process.stdout.write(JSON.stringify({ data: { node: { field: { configuration: { iterations: b?.iterations ?? [] } } } } }))
   } else if (query.includes('projectsV2(')) {
     process.stdout.write(JSON.stringify({ data: { repository: { projectsV2: { nodes: b ? [{ id: b.id, number: b.number, title: b.title }] : [] } } } }))

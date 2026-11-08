@@ -158,3 +158,16 @@ test('issue_plan sin tablero o con un valor que no existe falla diciendo por qu�
   writeFileSync(state, JSON.stringify({ ...db(), board: undefined }))
   expect((await call('issue_plan', { id: '1', priority: 'High' })).error).toContain('board_setup')
 })
+
+test('board_list muestra el cycle actual ordenado por prioridad', async () => {
+  await call('issue_create', { ...ISSUE, title: 'Baja', priority: 'Low', cycle: 'current' })
+  await call('issue_create', { ...ISSUE, title: 'Urgente', priority: 'Urgent', size: 'S', cycle: 'current' })
+  await call('issue_create', { ...ISSUE, title: 'Próximo', priority: 'High', cycle: 'next' })
+  await call('issue_create', { ...ISSUE, title: 'Sin cycle' })
+  const { value } = await call('board_list', {})
+  expect(value.cycle).toBe('Cycle 1')
+  expect(value.items.map((i: { title: string }) => i.title)).toEqual(['Urgente', 'Baja'])
+  expect(value.items[0]).toMatchObject({ id: '2', status: 'Draft', priority: 'Urgent', size: 'S', cycle: 'Cycle 1' })
+  expect((await call('board_list', { cycle: 'next' })).value.items.map((i: { title: string }) => i.title)).toEqual(['Próximo'])
+  expect((await call('board_list', { cycle: 'all' })).value.items.map((i: { title: string }) => i.title)).toEqual(['Urgente', 'Próximo', 'Baja', 'Sin cycle'])
+})

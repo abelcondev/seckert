@@ -66,3 +66,23 @@ export function issuePlan(root: string, input: Plan & { id: string }) {
     ...(cycle !== undefined ? { cycle: cycle?.title ?? null } : {}),
   }
 }
+
+const PRIORITY_ORDER = ['Urgent', 'High', 'Medium', 'Low']
+
+// Lo que hay en el tablero: por defecto el cycle actual, ordenado por prioridad.
+// cycle: current, next, all, none (sin cycle) o el título de una iteración.
+export function boardList(root: string, input: { cycle?: string; status?: string }) {
+  const { board } = boardOf(root)
+  const found = board.find()
+  if (!found) throw new Error('el repo no tiene tablero: si el usuario lo quiere, corré board_setup')
+  const which = (input.cycle ?? 'current').trim().toLowerCase()
+  const cycle = which === 'all' ? undefined : resolveCycle(board.iterations(found), which, board.today())
+  const rank = (p: string | null) => (p ? PRIORITY_ORDER.indexOf(p) : PRIORITY_ORDER.length)
+  const items = board
+    .items(found)
+    .filter(item => cycle === undefined || (cycle === null ? !item.cycleId : item.cycleId === cycle.id))
+    .filter(item => !input.status || item.status?.toLowerCase() === input.status.toLowerCase())
+    .sort((a, b) => rank(a.priority) - rank(b.priority) || Number(a.number) - Number(b.number))
+    .map(({ number, title, status, priority, size, cycle: c, url }) => ({ id: number, title, status, priority, size, cycle: c, url }))
+  return { board: found.number, cycle: cycle === undefined ? 'all' : (cycle?.title ?? null), items }
+}

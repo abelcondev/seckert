@@ -33,7 +33,24 @@ export function statusFor(state: IssueState | null): (typeof STATUSES)[number] |
   return state ? map[state] : null
 }
 
-export type BoardItem = { id: string; url: string; status: string | null }
+export type BoardItem = {
+  id: string
+  url: string
+  number: string | null
+  title: string
+  status: string | null
+  priority: string | null
+  size: string | null
+  cycle: string | null
+  cycleId: string | null
+}
+
+const ITEMS_QUERY = `query($id:ID!){node(id:$id){... on ProjectV2{items(first:100){nodes{id isArchived
+  content{... on Issue{number title url}}
+  fieldValues(first:30){nodes{
+    ... on ProjectV2ItemFieldSingleSelectValue{name field{... on ProjectV2SingleSelectField{name}}}
+    ... on ProjectV2ItemFieldIterationValue{title iterationId field{... on ProjectV2IterationField{name}}}
+  }}}}}}}`
 
 export type BoardField = { id: string; name: string; type: string; options?: { id: string; name: string }[] }
 export type Board = { id: string; number: number; title: string; owner: string; fields: BoardField[] }
@@ -173,9 +190,29 @@ export function githubBoard(repo: string, gh: Gh, today: () => string = defaultT
       }
     },
 
+    // Los items del tablero (sin archivados), con Status, Priority, Size y Cycle. Por GraphQL: esquema estable.
     items(board: Board): BoardItem[] {
-      const raw = JSON.parse(gh(['project', 'item-list', String(board.number), '--owner', owner, '--format', 'json', '--limit', '500']))
-      return (raw.items ?? []).map((i: { id: string; content?: { url?: string }; status?: string; Status?: string }) => ({ id: i.id, url: i.content?.url ?? '', status: i.status ?? i.Status ?? null }))
+      type Value = { name?: string; title?: string; iterationId?: string; field?: { name?: string } }
+      type Node = { id: string; isArchived: boolean; content?: { number?: number; title?: string; url?: string }; fieldValues?: { nodes: Value[] } }
+      const nodes: Node[] = graphql(ITEMS_QUERY, { id: board.id }).data?.node?.items?.nodes ?? []
+      return nodes
+        .filter(n => !n.isArchived && n.content?.url)
+        .map(n => {
+          const values = n.fieldValues?.nodes ?? []
+          const select = (f: string) => values.find(v => v.field?.name === f)?.name ?? null
+          const cycle = values.find(v => v.field?.name === CYCLE)
+          return {
+            id: n.id,
+            url: n.content!.url!,
+            number: n.content?.number !== undefined ? String(n.content.number) : null,
+            title: n.content?.title ?? '',
+            status: select('Status'),
+            priority: select('Priority'),
+            size: select('Size'),
+            cycle: cycle?.title ?? null,
+            cycleId: cycle?.iterationId ?? null,
+          }
+        })
     },
 
     // Agrega el issue al tablero (si ya está, devuelve el mismo item) y le pone el Status; null lo archiva.

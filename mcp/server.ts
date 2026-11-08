@@ -21,7 +21,7 @@ import {
 } from './repo'
 import { testsOnBase } from './base'
 import { prDraft, releaseDraft } from './pr'
-import { boardSetup, boardSync, issuePlan } from './board'
+import { boardList, boardSetup, boardSync, issuePlan } from './board'
 import { issueAnswer, issueClose, issueCreate, issueGet, issueList, issueTake, issueTransition } from './issues'
 import { checkTransition } from '../lib/issue'
 
@@ -423,6 +423,26 @@ server.registerTool(
   async args => {
     try {
       return json(issuePlan(projectRoot(), args))
+    } catch (error) {
+      return failure(error)
+    }
+  },
+)
+
+server.registerTool(
+  'board_list',
+  {
+    description:
+      'Lists what is on the repo board, ordered by priority: by default the current cycle. Answers "¿qué entra en este cycle?", "¿qué es lo más urgente?". cycle: current, next, all, none (without a cycle) or an iteration title; status filters by column.',
+    inputSchema: {
+      cycle: z.string().optional().describe('current (default), next, all, none or an iteration title'),
+      status: z.string().optional().describe('Draft, Approved, In Progress, In Review or Done'),
+    },
+    annotations: { readOnlyHint: true },
+  },
+  async args => {
+    try {
+      return json(boardList(projectRoot(), args))
     } catch (error) {
       return failure(error)
     }
