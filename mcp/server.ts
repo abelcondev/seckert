@@ -20,7 +20,7 @@ import {
 } from './repo'
 import { testsOnBase } from './base'
 import { prDraft, releaseDraft } from './pr'
-import { issueCreate, issueGet, issueList, issueTransition } from './issues'
+import { issueCreate, issueGet, issueList, issueTake, issueTransition } from './issues'
 import { checkTransition } from '../lib/issue'
 
 const server = new McpServer({ name: 'seckert', version: '1.0.0' })
@@ -82,6 +82,7 @@ server.registerTool(
       questions: z.array(z.string()).optional().describe('Decisions missing before approval'),
       specs: z.array(z.string()).optional().describe('sdd/specs areas it touches'),
       design: z.string().optional().describe('Design artifact URL, if the request has one'),
+      issue: z.string().optional().describe('The GitHub issue number it comes from (issue_take), without #; goes to the frontmatter as issue: #n'),
       diagram: z
         .string()
         .optional()
@@ -301,7 +302,7 @@ server.registerTool(
       origin: z
         .object({ meeting: z.string().optional(), date: z.string().optional(), client: z.string().optional() })
         .default({})
-        .describe('meeting: path of the transcript in sdd/reuniones'),
+        .describe('meeting: the meeting title or link'),
     },
     annotations: { destructiveHint: false },
   },
@@ -341,6 +342,23 @@ server.registerTool(
   async ({ state }) => {
     try {
       return json(issueList(projectRoot(), state))
+    } catch (error) {
+      return failure(error)
+    }
+  },
+)
+
+server.registerTool(
+  'issue_take',
+  {
+    description:
+      'Takes an approved seckert issue to work on it: creates its branch linked to the issue from the base with `gh issue develop` (feature/<slug> for CHANGE, fix/<slug> for FIX and SPEC) and switches to it, so GitHub shows it in-progress. An in-progress issue is resumed on its linked branch. Fails on a draft (approve it first) or on an issue in review, closed or discarded, and with uncommitted changes. Returns the issue with its branch.',
+    inputSchema: { id: z.string().describe('The issue number') },
+    annotations: { destructiveHint: false },
+  },
+  async ({ id }) => {
+    try {
+      return json(issueTake(projectRoot(), id))
     } catch (error) {
       return failure(error)
     }

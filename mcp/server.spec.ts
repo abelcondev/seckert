@@ -161,6 +161,18 @@ test('change_create escribe la propuesta con la plantilla, la fecha de hoy y L1 
   expect(got.what).toEqual(['El envío express cuesta $15.', 'Si el pedido supera $100, muestra: "Express gratis"'])
 })
 
+test('change_create enlaza el change a su issue con issue: #n', async () => {
+  const result = text(
+    await client.callTool({
+      name: 'change_create',
+      arguments: { slug: 'exportar-csv', title: 'Exportar', why: 'x', what: ['x'], tasks: ['x'], pedido: 'x', issue: '12' },
+    }),
+  ) as { file: string }
+  expect(readFileSync(join(repo, result.file), 'utf8')).toContain('branch: feature/exportar-csv\nissue: #12\n---')
+  const got = text(await client.callTool({ name: 'change_get', arguments: { slug: 'exportar-csv' } })) as Record<string, unknown>
+  expect(got.issue).toBe('12')
+})
+
 test('change_create no pisa un change que ya existe ni acepta un slug inválido', async () => {
   const again = (await client.callTool({
     name: 'change_create',

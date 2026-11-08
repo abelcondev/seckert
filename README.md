@@ -107,10 +107,11 @@ No hace falta escribir comandos.
 | "dale" · "seguí" · "hacé la T3" | aprueba y avanza tarea por tarea |
 | "¿funciona?" · "verificá" | comprueba cada punto, también en el navegador |
 | "cerralo, abrí el PR" | actualiza las specs y abre el PR |
+| "tomá el issue 12" | crea la rama enlazada al issue y sigue su ruta |
 | "se rompió X en producción" | hotfix con un test que reproduce el fallo |
 | "¿en qué estamos?" | resumen de lo que queda abierto |
 
-<sub>Si prefieres comandos: `/seckert:change` `/seckert:design` `/seckert:next` `/seckert:verify` `/seckert:done` `/seckert:hotfix` `/seckert:release` `/seckert:status`.</sub>
+<sub>Si prefieres comandos: `/seckert:change` `/seckert:design` `/seckert:next` `/seckert:verify` `/seckert:done` `/seckert:hotfix` `/seckert:tomar` `/seckert:release` `/seckert:status`.</sub>
 
 ## 📊 ¿Sirve?
 
