@@ -277,3 +277,28 @@ export function takeProblem(state: IssueState | null): string | null {
   if (state === 'draft') return 'está en draft: hay que aprobarlo primero, con issue_transition y las palabras del usuario'
   return `está ${state}: solo se toma un issue approved o in-progress`
 }
+
+// Palabras con contenido de un texto: sin tildes, en minúsculas, de 4 letras o más y sin las más comunes.
+const COMMON = new Set(['para', 'como', 'pero', 'cuando', 'entonces', 'desde', 'hasta', 'este', 'esta', 'esto', 'tiene', 'hace', 'with', 'that', 'this', 'from', 'when', 'then', 'there', 'have', 'agregar', 'cambiar', 'corregir', 'arreglar'])
+function contentWords(text: string): Set<string> {
+  return new Set(
+    text
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter(w => w.length >= 4 && !COMMON.has(w)),
+  )
+}
+
+// Los issues que se parecen a uno nuevo: comparten al menos dos palabras con contenido
+// entre título y Problem. Sirve para no duplicar un issue que ya existe.
+export function similarIssues<T extends { id: string; title: string; problem: string }>(issue: { title: string; problem: string }, open: T[]): T[] {
+  const words = contentWords(`${issue.title} ${issue.problem}`)
+  return open.filter(other => {
+    const theirs = contentWords(`${other.title} ${other.problem}`)
+    let shared = 0
+    for (const w of words) if (theirs.has(w)) shared++
+    return shared >= 2
+  })
+}

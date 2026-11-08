@@ -344,3 +344,31 @@ test('issue_close cierra la feature solo cuando todos sus sub-issues están cerr
   expect(db().issues[0]).toMatchObject({ state: 'CLOSED', stateReason: 'COMPLETED' })
   expect(db().issues[0]!.comments.at(-1)).toContain('2 de 2')
 })
+
+test('issue_link marca padre y bloqueos entre issues que ya existen, y los saca', async () => {
+  await call('issue_create', { ...ISSUE, title: 'Feature' })
+  await call('issue_create', { ...ISSUE, title: 'Fix del total' })
+  await call('issue_create', { ...ISSUE, title: 'Exportar' })
+  const { value, error } = await call('issue_link', { id: '3', parent: '1', blockedBy: ['2'] })
+  expect(error).toBeNull()
+  expect(value).toMatchObject({ id: '3', parent: '1', blockedBy: [{ id: '2', open: true, title: 'Fix del total' }] })
+  expect(db().calls.find(c => c[1] === 'edit' && c.includes('--add-blocked-by'))).toEqual(expect.arrayContaining(['--add-blocked-by', '2', '--parent', '1']))
+  expect((await call('issue_link', { id: '3', removeBlockedBy: ['2'] })).value.blockedBy).toEqual([])
+})
+
+test('issue_create avisa de issues abiertos parecidos', async () => {
+  await call('issue_create', { ...ISSUE, title: 'totalConDescuento devuelve el descuento en vez del total', problem: 'Con $100 y 10% da $10.' })
+  const dup = await call('issue_create', { ...ISSUE, title: 'Corregir totalConDescuento', problem: 'Devuelve el descuento y no el total.' })
+  expect(dup.value.similar).toEqual([{ id: '1', title: 'totalConDescuento devuelve el descuento en vez del total' }])
+  const other = await call('issue_create', { ...ISSUE, title: 'Botón de confirmar', problem: 'El checkout dice Enviar.' })
+  expect(other.value.similar ?? []).toEqual([])
+})
+
+test('sin origen, el issue dice Source: chat y la fecha de hoy; con origen, lo respeta', async () => {
+  const { origin: _o, ...sinOrigen } = ISSUE
+  await call('issue_create', sinOrigen)
+  const today = new Date().toLocaleDateString('sv-SE')
+  expect((await call('issue_get', { id: '1' })).value.origin).toEqual({ source: 'chat', date: today })
+  await call('issue_create', { ...ISSUE, origin: { source: 'Reunión con Acme', date: '2026-11-06' } })
+  expect((await call('issue_get', { id: '2' })).value.origin).toEqual({ source: 'Reunión con Acme', date: '2026-11-06' })
+})

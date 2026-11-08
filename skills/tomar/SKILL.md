@@ -17,6 +17,7 @@ Issue: $ARGUMENTS
    - Draft: say it isn't approved and ask. With open questions, ask them by number first; record each answer with `issue_answer` (it moves to Decisions). Approve only with no open questions and the user's words (`issue_transition`, `aprobacion` = their exact words), then retry.
    - Uncommitted changes: say which files and ask whether to commit or stash them. Never discard them.
    - Blocked: say which issues block it and that they should merge first. Take it anyway only if the user says so, with `force: true`.
+   - If you find that it depends on another open issue that isn't marked, say so and, on the user's yes, mark it with `issue_link` (`blockedBy`).
    - In review, closed or discarded: say so and stop.
 4. Show the issue in a few lines: title, the client's quote, the acceptance criteria and the route. The route is a suggestion: if the work is clearly bigger or smaller, say so in one line and ask.
 5. Follow the route on the linked branch, with the `seckert:workflow` rules:

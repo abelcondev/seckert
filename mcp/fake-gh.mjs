@@ -59,6 +59,9 @@ if (group === 'label' && cmd === 'create') {
   const issue = find(args[2])
   issue.labels = issue.labels.filter(l => !flags('--remove-label').includes(l)).concat(flags('--add-label'))
   if (flag('--body-file') === '-') issue.body = readFileSync(0, 'utf8')
+  if (flag('--parent')) issue.parent = Number(flag('--parent'))
+  if (flag('--add-blocked-by')) issue.blockedBy = [...new Set([...(issue.blockedBy ?? []), ...flag('--add-blocked-by').split(',').map(Number)])]
+  if (flag('--remove-blocked-by')) issue.blockedBy = (issue.blockedBy ?? []).filter(b => !flag('--remove-blocked-by').split(',').map(Number).includes(b))
 } else if (group === 'issue' && cmd === 'close') {
   const issue = find(args[2])
   issue.state = 'CLOSED'

@@ -1,7 +1,7 @@
 // Issues de seckert en GitHub: el repo sale del remoto `origin` y `gh` corre en la raíz.
 import { execFileSync } from 'node:child_process'
 
-import { answerQuestion, branchFor, checkTransition, openQuestionsProblem, takeProblem, type Issue, type IssueState, type Kind } from '../lib/issue'
+import { similarIssues, answerQuestion, branchFor, checkTransition, openQuestionsProblem, takeProblem, type Issue, type IssueState, type Kind } from '../lib/issue'
 import { ArtifactsUnavailable, githubTracker, type Gh } from '../lib/trackers/github'
 import { issuePlan, syncIssue, type Plan } from './board'
 import { baseBranch } from './repo'
@@ -59,7 +59,10 @@ export function designOf(issues: ReturnType<typeof tracker>['issues'], issue: { 
 // artifacts, lo agrega a References.
 export function issueCreate(root: string, issue: Issue & Plan & { design?: string; parent?: string; blockedBy?: string[] }) {
   const { issues } = tracker(root)
-  const { design, parent, blockedBy, priority, size, cycle, ...rest } = issue
+  const { design, parent, blockedBy, priority, size, cycle, ...given } = issue
+  // Sin origen, el pedido salió del chat: queda dicho, con la fecha de hoy.
+  const rest = { ...given, origin: { ...given.origin, source: given.origin?.source?.trim() || 'chat', date: given.origin?.date?.trim() || new Date().toLocaleDateString('sv-SE') } }
+  const similar = similarIssues(rest, issues.list()).map(({ id, title }) => ({ id, title }))
   let { rawBody: _raw, ...created } = issues.create(rest, 'draft', { parent, blockedBy })
   if (design?.trim()) {
     try {
@@ -79,7 +82,7 @@ export function issueCreate(root: string, issue: Issue & Plan & { design?: strin
       board = `no se pudo planificar en el tablero: ${(error as Error).message}`
     }
   }
-  return { ...created, design: design?.trim() || null, ...(board ? { board } : {}) }
+  return { ...created, design: design?.trim() || null, ...(board ? { board } : {}), ...(similar.length ? { similar } : {}) }
 }
 
 export function issueGet(root: string, id: string) {
@@ -186,4 +189,19 @@ export function issueClose(root: string, id: string) {
   gh(['issue', 'comment', id, '--repo', repo, '--body', `Todas las partes cerradas (${total} de ${total}).`])
   gh(['issue', 'close', id, '--repo', repo, '--reason', 'completed'])
   return { id, closed: true, parts: total, url: issue.url }
+}
+
+// Relaciones entre issues que ya existen: padre (sub-issue) y bloqueos nativos.
+export function issueLink(root: string, input: { id: string; parent?: string; blockedBy?: string[]; removeBlockedBy?: string[] }) {
+  const { gh, repo, issues } = tracker(root)
+  const n = (v: string) => v.replace(/^#/, '')
+  const args = [
+    ...(input.blockedBy?.length ? ['--add-blocked-by', input.blockedBy.map(n).join(',')] : []),
+    ...(input.removeBlockedBy?.length ? ['--remove-blocked-by', input.removeBlockedBy.map(n).join(',')] : []),
+    ...(input.parent ? ['--parent', n(input.parent)] : []),
+  ]
+  if (!args.length) throw new Error('Pasá `parent`, `blockedBy` o `removeBlockedBy`.')
+  gh(['issue', 'edit', n(input.id), '--repo', repo, ...args])
+  const issue = issues.get(n(input.id))
+  return { id: issue.id, parent: issue.parent, blockedBy: issue.blockedBy, url: issue.url }
 }

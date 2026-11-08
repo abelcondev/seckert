@@ -22,7 +22,7 @@ import {
 import { testsOnBase } from './base'
 import { prDraft, releaseDraft } from './pr'
 import { boardList, boardSetup, boardSync, issuePlan } from './board'
-import { issueAnswer, issueClose, issueCreate, issueGet, issueList, issueTake, issueTransition } from './issues'
+import { issueAnswer, issueClose, issueLink, issueCreate, issueGet, issueList, issueTake, issueTransition } from './issues'
 import { checkTransition } from '../lib/issue'
 
 const server = new McpServer({ name: 'seckert', version: '1.0.0' })
@@ -297,7 +297,7 @@ server.registerTool(
   'issue_create',
   {
     description:
-      'Creates a seckert issue (contract v2, docs/contrato-issue.md) in the GitHub repo of `origin`, always as draft (label seckert:draft). Write the content in the language of the request; section headings stay in English. Only decided things go in: an open discussion stays in the session, and small pending doubts go to `questions`, which keep the issue in draft until answered. Approving it is a separate step with issue_transition and the user\'s words.',
+      'Creates a seckert issue (contract v2, docs/contrato-issue.md) in the GitHub repo of `origin`, always as draft (label seckert:draft). Write the content in the language of the request; section headings stay in English. Only decided things go in: an open discussion stays in the session, and small pending doubts go to `questions`, which keep the issue in draft until answered. Approving it is a separate step with issue_transition and the user\'s words. Returns `similar`: open issues that look like this one, to avoid a duplicate.',
     inputSchema: {
       title: z.string(),
       problem: z.string().describe('Who is affected, what happens today and why it matters, in a few sentences'),
@@ -327,7 +327,7 @@ server.registerTool(
       origin: z
         .object({ source: z.string().optional(), date: z.string().optional(), client: z.string().optional(), requestedBy: z.string().optional() })
         .default({})
-        .describe('source: the meeting, chat or document it comes from'),
+        .describe('source: the meeting, chat or document it comes from; default: chat and today\'s date'),
     },
     annotations: { destructiveHint: false },
   },
@@ -443,6 +443,28 @@ server.registerTool(
   async args => {
     try {
       return json(boardList(projectRoot(), args))
+    } catch (error) {
+      return failure(error)
+    }
+  },
+)
+
+server.registerTool(
+  'issue_link',
+  {
+    description:
+      'Links issues that already exist: `parent` makes it a native sub-issue of another, `blockedBy` marks the issues that must close first, `removeBlockedBy` removes those marks. Returns the parent and what blocks it.',
+    inputSchema: {
+      id: z.string().describe('The issue to link'),
+      parent: z.string().optional().describe('Parent issue number'),
+      blockedBy: z.array(z.string()).optional().describe('Issue numbers that block it'),
+      removeBlockedBy: z.array(z.string()).optional().describe('Issue numbers that no longer block it'),
+    },
+    annotations: { destructiveHint: false },
+  },
+  async args => {
+    try {
+      return json(issueLink(projectRoot(), args))
     } catch (error) {
       return failure(error)
     }
