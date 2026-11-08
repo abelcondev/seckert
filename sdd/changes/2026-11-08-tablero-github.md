@@ -29,7 +29,7 @@ Parte 4 de 4: después de `issues-jerarquia`. Para reemplazar Linear hace falta 
 - [x] T2 Sincronizar Status con los estados de seckert al aprobar, tomar, abrir el PR y mergear <!-- commit: e6578d5 -->
 - [x] T3 Priority, Size e Iteration desde `issue_create` y una herramienta para editarlos <!-- commit: a2ed0ef -->
 - [x] T4 Consultas: issues del cycle actual, por prioridad <!-- commit: ad5c2ba -->
-- [ ] T5 Evals: crear, priorizar y mover un issue en el tablero <!-- commit: -->
+- [x] T5 Evals: crear, priorizar y mover un issue en el tablero <!-- commit: 89e49e9 -->
 
 ## Testing
 
@@ -53,3 +53,4 @@ Parte 4 de 4: después de `issues-jerarquia`. Para reemplazar Linear hace falta 
 - 2026-11-08: T2 hecha (e6578d5). bun run test exit 0; mcp/board.spec.ts 5/5: crear, aprobar y tomar dejan Draft, Approved e In Progress; board_sync pone In Review con PR abierto y Done al cerrar, solo lo que cambió; descartar archiva; sin Project no hay llamadas a project; con el tablero roto el issue se crea y avisa. Contra GitHub real solo T1
 - 2026-11-08: T3 hecha (a2ed0ef). bun run test exit 0; board.spec: issue_create con High, M y current deja p1, z2 e it1; issue_plan Urgent y next cambia solo eso a p0 e it2; none quita el cycle; un cycle inexistente y sin tablero fallan diciendo por qué. Real: la consulta de iteraciones del Project #2 devuelve 3 cycles y resuelve current = Cycle 1, next = Cycle 2
 - 2026-11-08: T4 hecha (ad5c2ba). bun run test exit 0; board.spec: board_list por defecto da Cycle 1 con Urgente antes que Baja, next da Próximo y all los 4 por prioridad; la consulta GraphQL de items corre sin errores contra el Project real #2
+- 2026-11-08: T5 hecha (89e49e9). claude plugin eval: tablero-cycle 3/3 y tablero-planificar 3/3 tras renombrar issue_plan a board_plan (antes 0/3: Claude no la encontraba); regresión de --tag issues con 1 corrida: los demás pasan; bun run test exit 0
