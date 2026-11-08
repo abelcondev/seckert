@@ -8,7 +8,7 @@ Issue: $ARGUMENTS
 
 1. No number: `issue_list` with `approved` and with `in-progress`. Show them numbered (number, title, route) and ask which one. None: say so in one line.
 2. `issue_take` with the number. It creates the branch linked to the issue from the base and switches to it, or resumes the one it already has. If it fails:
-   - Draft: say it isn't approved and ask. Approve it only with the user's words (`issue_transition`, `aprobacion` = their exact words), then retry.
+   - Draft: say it isn't approved and ask. With open questions, ask them by number first; record each answer with `issue_answer` (it moves to Decisions). Approve only with no open questions and the user's words (`issue_transition`, `aprobacion` = their exact words), then retry.
    - Uncommitted changes: say which files and ask whether to commit or stash them. Never discard them.
    - In review, closed or discarded: say so and stop.
 3. Show the issue in a few lines: title, the client's quote, the acceptance criteria and the route. The route is a suggestion: if the work is clearly bigger or smaller, say so in one line and ask.

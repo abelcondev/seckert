@@ -20,7 +20,7 @@ import {
 } from './repo'
 import { testsOnBase } from './base'
 import { prDraft, releaseDraft } from './pr'
-import { issueCreate, issueGet, issueList, issueTake, issueTransition } from './issues'
+import { issueAnswer, issueCreate, issueGet, issueList, issueTake, issueTransition } from './issues'
 import { checkTransition } from '../lib/issue'
 
 const server = new McpServer({ name: 'seckert', version: '1.0.0' })
@@ -359,6 +359,29 @@ server.registerTool(
   async ({ state, kind }) => {
     try {
       return json(issueList(projectRoot(), state, kind))
+    } catch (error) {
+      return failure(error)
+    }
+  },
+)
+
+server.registerTool(
+  'issue_answer',
+  {
+    description:
+      'Answers an open question of a seckert issue: removes it from Open questions and adds it to Decisions with who and today\'s date, and leaves the answer as a comment. An issue with open questions cannot be approved. Write `decision` in the issue\'s language, as the decision itself (e.g. "Separator ;").',
+    inputSchema: {
+      id: z.string().describe('The issue number'),
+      question: z.string().regex(/^P\d+$/).describe('P1, P2…'),
+      answer: z.string().describe('The answer, in the user\'s words'),
+      decision: z.string().optional().describe('The decision as it should read in Decisions; default: the question plus the answer'),
+      by: z.string().optional().describe('Who decided'),
+    },
+    annotations: { destructiveHint: false },
+  },
+  async args => {
+    try {
+      return json(issueAnswer(projectRoot(), args))
     } catch (error) {
       return failure(error)
     }

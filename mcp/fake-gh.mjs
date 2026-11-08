@@ -52,6 +52,7 @@ if (group === 'label' && cmd === 'create') {
 } else if (group === 'issue' && cmd === 'edit') {
   const issue = find(args[2])
   issue.labels = issue.labels.filter(l => !flags('--remove-label').includes(l)).concat(flags('--add-label'))
+  if (flag('--body-file') === '-') issue.body = readFileSync(0, 'utf8')
 } else if (group === 'issue' && cmd === 'close') {
   const issue = find(args[2])
   issue.state = 'CLOSED'

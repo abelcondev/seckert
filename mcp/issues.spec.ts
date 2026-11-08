@@ -135,6 +135,31 @@ test('aprobar exige las palabras del usuario y las deja en un comentario', async
   expect(db().issues[0]!.comments).toEqual(['Aprobado por el usuario: «1 y 3 dale»'])
 })
 
+test('un issue con preguntas abiertas no se aprueba; responderlas las pasa a Decisions', async () => {
+  await call('issue_create', { ...ISSUE, questions: [{ id: 'P1', text: '¿Separador ; o ,?', owner: 'Abel' }, { id: 'P2', text: '¿Incluimos cancelados?' }] })
+  const blocked = await call('issue_transition', { id: '1', to: 'approved', aprobacion: 'dale' })
+  expect(blocked.error).toContain('P1')
+  expect(db().issues[0]!.labels).toEqual(['seckert:draft'])
+
+  const { value, error } = await call('issue_answer', { id: '1', question: 'P1', answer: 'Con ;', decision: 'Separador ;', by: 'Abel' })
+  expect(error).toBeNull()
+  expect(value).toMatchObject({ id: '1', pending: ['P2'] })
+  const after = (await call('issue_get', { id: '1' })).value
+  expect(after.questions).toEqual([{ id: 'P2', text: '¿Incluimos cancelados?' }])
+  expect(after.decisions).toEqual([{ text: 'Separador ;', by: 'Abel', date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) }])
+  expect(db().issues[0]!.comments.at(-1)).toBe('P1 respondida por Abel: «Con ;». Pasa a Decisions: Separador ;')
+
+  await call('issue_answer', { id: '1', question: 'P2', answer: 'No' })
+  const ok = await call('issue_transition', { id: '1', to: 'approved', aprobacion: 'dale' })
+  expect(ok.error).toBeNull()
+  expect((await call('issue_get', { id: '1' })).value.decisions.at(-1)).toMatchObject({ text: '¿Incluimos cancelados? No' })
+})
+
+test('responder una pregunta que no existe falla', async () => {
+  await call('issue_create', ISSUE)
+  expect((await call('issue_answer', { id: '1', question: 'P9', answer: 'x' })).error).toContain('P9')
+})
+
 test('descartar cierra el issue como no planeado y deja el motivo', async () => {
   await call('issue_create', ISSUE)
   await call('issue_transition', { id: '1', to: 'discarded', motivo: 'el cliente lo sacó' })

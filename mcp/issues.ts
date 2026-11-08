@@ -1,7 +1,7 @@
 // Issues de seckert en GitHub: el repo sale del remoto `origin` y `gh` corre en la raíz.
 import { execFileSync } from 'node:child_process'
 
-import { branchFor, checkTransition, takeProblem, type Issue, type IssueState, type Kind } from '../lib/issue'
+import { answerQuestion, branchFor, checkTransition, openQuestionsProblem, takeProblem, type Issue, type IssueState, type Kind } from '../lib/issue'
 import { githubTracker, type Gh } from '../lib/trackers/github'
 import { baseBranch } from './repo'
 
@@ -60,8 +60,8 @@ export function issueTransition(root: string, input: { id: string; to: 'approved
   const { gh, repo, issues } = tracker(root)
   const current = issues.get(input.id)
   if (!current.state) throw new Error(`el issue #${input.id} no es de seckert (no tiene label seckert:*)`)
-  const problem = checkTransition(current.state, input.to, input.aprobacion)
-  if (problem) throw new Error(problem)
+  const problem = checkTransition(current.state, input.to, input.aprobacion) ?? (input.to === 'approved' ? openQuestionsProblem(current) : null)
+  if (problem) throw new Error(`el issue #${input.id} ${problem.startsWith('tiene') ? problem : `no se mueve: ${problem}`}`)
   issues.setState(input.id, current.state, input.to)
   const note =
     input.to === 'approved'
@@ -105,4 +105,18 @@ export function issueTake(root: string, id: string) {
   }
   const { state: _state, ...rest } = issue
   return { ...rest, branch, how }
+}
+
+// Responde una pregunta abierta: la pasa a Decisions en el cuerpo y lo deja como comentario.
+export function issueAnswer(root: string, input: { id: string; question: string; answer: string; decision?: string; by?: string }) {
+  const { gh, repo, issues } = tracker(root)
+  const current = issues.get(input.id)
+  const { id: _id, url: _url, title: _title, state: _state, kind: _kind, ...body } = current
+  const date = new Date().toLocaleDateString('sv-SE')
+  const next = answerQuestion(body, { ...input, date })
+  issues.updateBody(input.id, next)
+  const decision = next.decisions!.at(-1)!
+  const who = input.by?.trim() ? ` por ${input.by.trim()}` : ''
+  gh(['issue', 'comment', input.id, '--repo', repo, '--body', `${input.question} respondida${who}: «${input.answer.trim()}». Pasa a Decisions: ${decision.text}`])
+  return { id: input.id, question: input.question, decision, pending: (next.questions ?? []).map(q => q.id) }
 }

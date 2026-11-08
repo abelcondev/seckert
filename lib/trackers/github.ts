@@ -1,7 +1,7 @@
 // Adaptador de GitHub Issues sobre `gh`. Solo el triage es label propia
 // (`seckert:draft|approved|discarded`); in-progress, in-review y closed se leen
 // de GitHub: rama enlazada, PR enlazado abierto e issue cerrado.
-import { checkTransition, deriveState, kindLabel, kindOf, labelOf, parseBody, renderBody, stateOf, triageOf, type Issue, type IssueState, type Kind, type Triage } from '../issue'
+import { checkTransition, deriveState, kindLabel, kindOf, labelOf, parseBody, renderBody, stateOf, triageOf, type Issue, type IssueBody, type IssueState, type Kind, type Triage } from '../issue'
 import type { TrackedIssue, Tracker } from './tracker'
 
 // Corre `gh` con los argumentos y, si hay, `input` por stdin; devuelve stdout.
@@ -80,6 +80,10 @@ export function githubTracker(repo: string, gh: Gh): Tracker {
           return [] // cuerpo editado a mano: no es un issue de seckert legible
         }
       })
+    },
+
+    updateBody(id: string, issue: IssueBody) {
+      gh(['issue', 'edit', id, '--repo', repo, '--body-file', '-'], renderBody(issue))
     },
 
     setState(id: string, from: IssueState | null, to: IssueState) {

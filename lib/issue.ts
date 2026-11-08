@@ -178,6 +178,23 @@ export function stateOf(labels: string[]): Triage | null {
   return states[0] ?? null
 }
 
+// Solo entran al flujo decisiones tomadas: con preguntas abiertas no se aprueba.
+export function openQuestionsProblem(issue: Pick<IssueBody, 'questions'>): string | null {
+  const open = issue.questions ?? []
+  return open.length ? `tiene preguntas abiertas (${open.map(q => q.id).join(', ')}): respondelas antes de aprobarlo` : null
+}
+
+// Responde una pregunta: sale de Open questions y entra a Decisions con quién y cuándo.
+export function answerQuestion(issue: IssueBody, input: { question: string; answer: string; decision?: string; by?: string; date: string }): IssueBody {
+  const q = (issue.questions ?? []).find(item => item.id === input.question)
+  if (!q) throw new Error(`no hay una pregunta abierta ${input.question}`)
+  const text = input.decision?.trim() || `${q.text} ${input.answer.trim()}`
+  const questions = (issue.questions ?? []).filter(item => item.id !== q.id)
+  const decision: Decision = { text, ...(input.by?.trim() ? { by: input.by.trim() } : {}), date: input.date }
+  const { questions: _drop, ...rest } = issue
+  return { ...rest, decisions: [...(issue.decisions ?? []), decision], ...(questions.length ? { questions } : {}) }
+}
+
 // El tipo vive en una label `type:<tipo>`; sin ella es null, con dos es un error.
 export function kindLabel(kind: Kind): string {
   return `type:${kind}`
