@@ -50,7 +50,7 @@ flowchart LR
 - [x] T2 Issue artifacts por la API REST (`gh api`): crear, leer y actualizar `plan` y `link` <!-- commit: 7c26d09 -->
 - [x] T3 `change_get`, `change_update` y `task_complete` sobre el issue: tareas como casillas con su commit, y una versión del plan por cambio <!-- commit: a88d465 -->
 - [x] T4 Aprobación del plan y `verify_record` como comentarios, con la reapertura de tareas en el plan <!-- commit: 628a800 -->
-- [ ] T5 Diseño como artifact `link`: al crear el issue con un link de diseño, al tomarlo y en la verificación visual <!-- commit: -->
+- [x] T5 Diseño como artifact `link`: al crear el issue con un link de diseño, al tomarlo y en la verificación visual <!-- commit: ea8c0ed -->
 - [ ] T6 `pr_draft` y cierre desde el issue: Why y What del body, specs en el mismo PR, sin archivo en `sdd/changes/` <!-- commit: -->
 - [ ] T7 Skills `tomar`, `next`, `verify` y `done` sobre el issue; modo local sin cambios <!-- commit: -->
 - [ ] T8 Evals: un CHANGE con diseño de punta a punta, y el fallback sin artifacts <!-- commit: -->
@@ -78,3 +78,4 @@ dale, ajustá las propuestas y sumalo a la página
 - 2026-11-08: T2 hecha (7c26d09). bun run test exit 0; github.test: list con ?type=plan, POST y PATCH con --input y X-GitHub-Api-Version 2026-03-10; un 404 lanza ArtifactsUnavailable; el gh falso crea, lista y versiona artifacts
 - 2026-11-08: T3 hecha (a88d465). bun run test exit 0; mcp/issue-change.spec.ts 5/5: change_create con issue crea el artifact Plan y la label seckert:change sin archivo; change_get arma What desde los criterios; aprobar, task_complete y what_add escriben plan (3 versiones), casilla con commit visible, comentarios y criterios del body; fallback ## Plan; sin la línea en AGENTS.md sigue en archivo
 - 2026-11-08: T4 hecha (628a800). bun run test exit 0; issue-change.spec: la aprobación queda como comentario con «dale»; verify_record con un FALLA reabre T1 en el plan y comenta una tabla con cada punto, veredicto, detalle, comandos y T1 reabierta
+- 2026-11-08: T5 hecha (ea8c0ed). bun run test exit 0; issue-change.spec: issue_create con design crea el artifact link Design con la URL, issue_get la devuelve y change_get la expone como design; sin artifacts va a References como «Design: url» y se lee igual

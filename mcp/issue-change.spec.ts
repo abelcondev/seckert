@@ -191,3 +191,21 @@ test('sin artifacts, el diseño va a References como «Design: <url>» y el chan
   await call('change_create', { slug: 'exportar-pedidos-a-csv', title: ISSUE.title, tasks: ['x'], pedido: 'x', issue: '1' })
   expect((await call('change_get', { slug: 'exportar-pedidos-a-csv' })).value.design).toBe(url)
 })
+
+test('pr_draft de un change en su issue: Why y What del issue y Fixes #n; cerrarlo deja el plan en done', async () => {
+  await takenChange()
+  await call('change_transition', { slug: 'exportar-pedidos-a-csv', to: 'approved', aprobacion: 'dale' })
+  writeFileSync(join(repo, 'csv.ts'), 'x\n')
+  git('add', '-A')
+  git('commit', '-q', '-m', 'feat: csv')
+  const pr = (await call('pr_draft', { slug: 'exportar-pedidos-a-csv' })).value
+  expect(pr).toMatchObject({ base: 'main', branch: 'feature/exportar-pedidos-a-csv', issue: '1' })
+  expect(pr.body.startsWith('Fixes #1\n\n## Why\n\nEl contador copia los pedidos a mano.\n\nLos pedidos del mes se bajan en un archivo.')).toBe(true)
+  expect(pr.body).toContain('## What\n\n- Hay un botón "Exportar"\n- El CSV trae fecha y total')
+  expect(pr.body).not.toContain('## Tasks')
+  const closed = await call('change_transition', { slug: 'exportar-pedidos-a-csv', to: 'done', aprobacion: 'cerralo', pendientes: true })
+  expect(closed.error).toBeNull()
+  expect(plan().body).toContain('status: done')
+  expect(db().issues[0]!.comments.at(-1)).toContain('cerrado ("cerralo")')
+  expect(existsSync(join(repo, 'sdd/changes'))).toBe(false)
+})
