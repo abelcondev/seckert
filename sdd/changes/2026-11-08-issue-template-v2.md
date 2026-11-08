@@ -27,7 +27,7 @@ Parte 1 de 4: el objetivo es usar GitHub Issues en lugar de Linear. El issue de 
 
 ## Tasks
 
-- [ ] T1 [datos] Modelo v2 en `lib/issue.ts`: secciones nuevas, render y parse, y lectura de v1 (tests primero) <!-- commit: -->
+- [x] T1 [datos] Modelo v2 en `lib/issue.ts`: secciones nuevas, render y parse, y lectura de v1 (tests primero) <!-- commit: fb63583 -->
 - [ ] T2 `issue_create` y `issue_get` con los campos nuevos, y el contenido en el idioma del pedido <!-- commit: -->
 - [ ] T3 `pr_draft` desde un issue v2 <!-- commit: -->
 - [ ] T5 `docs/contrato-issue.md` en inglés con el template v2, un ejemplo y la tabla de versiones <!-- commit: -->
@@ -53,3 +53,4 @@ ademas busca en internet cual es las formas novedosas o mejor estructuradas oara
 - **L6** P1: No se aprueba con Open questions. El usuario: «quiero que entre al flujo solo decisiones ya aprobadas, es decir si se discute sobre stripe vs mercadopago, ya se debio tener una decision especifica antes de crear el issue». Responder una pregunta la mueve a `## Decisions`.
 - **L7** P2: «Cuando…, entonces…» se sugiere sin obligarlo. El usuario: «ok me parece bien».
 - 2026-11-08: aprobado ("dale me gusta, implementalo"). Rama feature/issue-template-v2 desde main.
+- 2026-11-08: T1 hecha (fb63583). bun run test exit 0; tests/issue.test.ts: v2 se escribe y relee igual con el orden de secciones, las opcionales vacías no se escriben, v1 y la marca sin versión se leen, v3 falla y faltar Outcome o criterios es error

@@ -295,14 +295,26 @@ server.registerTool(
   'issue_create',
   {
     description:
-      'Creates a seckert issue in the GitHub repo of `origin`, always as draft (label seckert:draft). The body has fixed sections: context with the client\'s literal quote, acceptance criteria, suggested route (FIX, SPEC or CHANGE) and origin. Approving it is a separate step with issue_transition and the user\'s words.',
+      'Creates a seckert issue (contract v2, docs/contrato-issue.md) in the GitHub repo of `origin`, always as draft (label seckert:draft). Write the content in the language of the request; section headings stay in English. Only decided things go in: an open discussion stays in the session, and small pending doubts go to `questions`, which keep the issue in draft until answered. Approving it is a separate step with issue_transition and the user\'s words.',
     inputSchema: {
       title: z.string(),
       problem: z.string().describe('Who is affected, what happens today and why it matters, in a few sentences'),
       quote: z.string().optional().describe('What the client said, verbatim'),
       outcome: z.string().describe('The expected result, in one or two sentences'),
-      criteria: z.array(z.string()).min(1).describe('Observable acceptance criteria'),
+      criteria: z.array(z.string()).min(1).describe('Verifiable acceptance criteria; "When…, then…" is suggested for behavior'),
+      decisions: z
+        .array(z.object({ text: z.string(), by: z.string().optional(), date: z.string().optional() }))
+        .optional()
+        .describe('What is already decided, with who and when (YYYY-MM-DD)'),
+      outOfScope: z.array(z.string()).optional().describe('What must not be done'),
+      constraints: z.array(z.string()).optional().describe('Limits, e.g. "do not change the orders API"'),
+      references: z.array(z.string()).optional().describe('Files, links or related issues'),
+      questions: z
+        .array(z.object({ id: z.string().regex(/^P\d+$/), text: z.string(), owner: z.string().optional() }))
+        .optional()
+        .describe('Small pending doubts, numbered P1, P2…, with who decides'),
       route: z.enum(['FIX', 'SPEC', 'CHANGE']),
+      routeWhy: z.string().optional().describe('Why that route, in a few words'),
       origin: z
         .object({ source: z.string().optional(), date: z.string().optional(), client: z.string().optional(), requestedBy: z.string().optional() })
         .default({})

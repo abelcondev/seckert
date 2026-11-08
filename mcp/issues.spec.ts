@@ -96,6 +96,33 @@ test('issue_create lo crea en draft en el repo de origin, con el cuerpo de secke
   expect(db().calls.find(c => c[1] === 'create')).toContain('acme/tienda')
 })
 
+test('issue_create escribe y issue_get devuelve todos los campos v2', async () => {
+  const full = {
+    ...ISSUE,
+    decisions: [{ text: 'Separador ;', by: 'Abel', date: '2026-11-09' }],
+    outOfScope: ['Excel nativo'],
+    constraints: ['No cambiar la API de pedidos'],
+    references: ['src/Pedidos.tsx'],
+    questions: [{ id: 'P1', text: '¿Incluimos los cancelados?', owner: 'Abel' }],
+    routeWhy: 'toca datos de pedidos',
+    origin: { source: 'Chat con Abel', requestedBy: 'Abel' },
+  }
+  const { error } = await call('issue_create', full)
+  expect(error).toBeNull()
+  const body: string = db().issues[0]!.body
+  expect(body.startsWith('<!-- seckert:issue v2 -->')).toBe(true)
+  for (const h of ['## Problem', '## Outcome', '## Decisions', '## Out of scope', '## Constraints', '## References', '## Open questions', '## Route', '## Origin']) expect(body).toContain(h)
+  const { value } = await call('issue_get', { id: '1' })
+  expect(value).toMatchObject({ outcome: ISSUE.outcome, decisions: full.decisions, outOfScope: full.outOfScope, questions: full.questions, routeWhy: 'toca datos de pedidos', origin: full.origin })
+})
+
+test('issue_create pide escribir el contenido en el idioma del pedido, con títulos en inglés', async () => {
+  const { tools } = await client.listTools()
+  const description = tools.find(t => t.name === 'issue_create')!.description!
+  expect(description).toMatch(/language of the request/i)
+  expect(description).toMatch(/headings.*English/i)
+})
+
 test('aprobar exige las palabras del usuario y las deja en un comentario', async () => {
   await call('issue_create', ISSUE)
   const without = await call('issue_transition', { id: '1', to: 'approved' })
