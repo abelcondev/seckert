@@ -59,7 +59,9 @@ export function designOf(issues: ReturnType<typeof tracker>['issues'], issue: { 
 // artifacts, lo agrega a References.
 export function issueCreate(root: string, issue: Issue & Plan & { design?: string; parent?: string; blockedBy?: string[] }) {
   const { issues } = tracker(root)
-  const { design, parent, blockedBy, priority, size, cycle, ...rest } = issue
+  const { design, parent, blockedBy, priority, size, cycle, ...given } = issue
+  // Sin origen, el pedido salió del chat: queda dicho, con la fecha de hoy.
+  const rest = { ...given, origin: { ...given.origin, source: given.origin?.source?.trim() || 'chat', date: given.origin?.date?.trim() || new Date().toLocaleDateString('sv-SE') } }
   const similar = similarIssues(rest, issues.list()).map(({ id, title }) => ({ id, title }))
   let { rawBody: _raw, ...created } = issues.create(rest, 'draft', { parent, blockedBy })
   if (design?.trim()) {

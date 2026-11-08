@@ -363,3 +363,12 @@ test('issue_create avisa de issues abiertos parecidos', async () => {
   const other = await call('issue_create', { ...ISSUE, title: 'Botón de confirmar', problem: 'El checkout dice Enviar.' })
   expect(other.value.similar ?? []).toEqual([])
 })
+
+test('sin origen, el issue dice Source: chat y la fecha de hoy; con origen, lo respeta', async () => {
+  const { origin: _o, ...sinOrigen } = ISSUE
+  await call('issue_create', sinOrigen)
+  const today = new Date().toLocaleDateString('sv-SE')
+  expect((await call('issue_get', { id: '1' })).value.origin).toEqual({ source: 'chat', date: today })
+  await call('issue_create', { ...ISSUE, origin: { source: 'Reunión con Acme', date: '2026-11-06' } })
+  expect((await call('issue_get', { id: '2' })).value.origin).toEqual({ source: 'Reunión con Acme', date: '2026-11-06' })
+})

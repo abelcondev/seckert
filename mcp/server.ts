@@ -327,7 +327,7 @@ server.registerTool(
       origin: z
         .object({ source: z.string().optional(), date: z.string().optional(), client: z.string().optional(), requestedBy: z.string().optional() })
         .default({})
-        .describe('source: the meeting, chat or document it comes from'),
+        .describe('source: the meeting, chat or document it comes from; default: chat and today\'s date'),
     },
     annotations: { destructiveHint: false },
   },
