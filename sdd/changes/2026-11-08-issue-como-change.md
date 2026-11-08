@@ -1,0 +1,76 @@
+---
+status: approved
+specs: [issues, pr, changes]
+design: none
+branch: feature/issue-como-change
+---
+
+# El issue es el change
+
+## Why
+
+Parte 2 de 4: después de `issue-template-v2`. Hoy un cambio se escribe dos veces: en el issue y en `sdd/changes`. El usuario quiere menos SDD y más peso en los issues: «no me importaria reducir el sdd o que los issues tengan mas relevancia».
+
+## What
+
+- Con GitHub Issues, el issue es el change. El body dice qué y por qué (template v2) y lo escribe el usuario o Claude al crearlo.
+- El plan de un CHANGE es un issue artifact de tipo `plan`, con las tareas como casillas y su commit, el diagrama y cómo se testea. Cada cambio del plan queda como versión.
+- El diseño es un issue artifact de tipo `link` llamado «Diseño». `tomar` y la traducción del diseño lo leen de ahí, y la verificación visual lo compara.
+- Las aprobaciones, las respuestas a preguntas y la verificación quedan como comentarios del issue.
+- Aprobar el issue decide si se hace y qué. El «dale» del plan decide cómo, y solo existe en un CHANGE.
+- Las herramientas no cambian de forma: `change_get`, `change_update`, `task_complete`, `verify_record` y `pr_draft` leen y escriben en el issue cuando el change tiene uno.
+- `sdd/specs/` se actualiza en el mismo PR. No queda archivo en `sdd/changes/`: el historial son los issues y PRs cerrados.
+- Si los artifacts no están disponibles (son una preview), el plan va en una sección `## Plan` del body. Sin GitHub Issues, `sdd/changes/` sigue funcionando como hoy.
+- Un pedido de trabajo dicho en lenguaje natural va directo a GitHub, sin decir «creá un issue». Por ejemplo, «vamos a agregar un botón para descargar un CSV de la lista de pedidos» crea el issue. Las preguntas, explicaciones y exploraciones no crean issues.
+- Si el pedido viene del usuario y no tiene Open questions, el issue nace `approved` con sus palabras como aprobación, y Claude lo toma: un FIX se hace directo y termina en PR, un CHANGE adjunta el plan y espera el «dale». Con «para después» o «anótalo», solo se crea.
+- Lo que todavía no está claro se discute en la sesión, sin issue. Cuando la conversación llega a algo concreto, Claude ofrece en una línea pasarlo a issue, con lo decidido en `## Decisions`.
+- El modo issues se activa con la línea `seckert issues: github` en el AGENTS.md del proyecto. Sin esa línea, seckert trabaja como hoy, con `sdd/changes/`, aunque el repo esté en GitHub.
+
+## Diagram
+
+```mermaid
+flowchart LR
+  A[Issue draft] -->|aprobás el qué| B[approved]
+  B -->|tomá el n| C{Ruta}
+  C -->|FIX o SPEC| F[Trabajo directo]
+  C -->|CHANGE| P[Artifact plan]
+  P -->|dale: aprobás el cómo| T[Tareas con commit]
+  T --> V[Verificación como comentario]
+  F --> R[PR con Fixes n y sdd/specs]
+  V --> R
+  R -->|merge| X[closed]
+```
+
+## Open questions
+
+
+## Tasks
+
+- [ ] T1 [datos] El change leído desde el issue: el qué desde el body v2 y el plan desde el artifact `plan`, con fallback a `## Plan` (tests primero) <!-- commit: -->
+- [ ] T2 Issue artifacts por la API REST (`gh api`): crear, leer y actualizar `plan` y `link` <!-- commit: -->
+- [ ] T3 `change_get`, `change_update` y `task_complete` sobre el issue: tareas como casillas con su commit, y una versión del plan por cambio <!-- commit: -->
+- [ ] T4 Aprobación del plan y `verify_record` como comentarios, con la reapertura de tareas en el plan <!-- commit: -->
+- [ ] T5 Diseño como artifact `link`: al crear el issue con un link de diseño, al tomarlo y en la verificación visual <!-- commit: -->
+- [ ] T6 `pr_draft` y cierre desde el issue: Why y What del body, specs en el mismo PR, sin archivo en `sdd/changes/` <!-- commit: -->
+- [ ] T7 Skills `tomar`, `next`, `verify` y `done` sobre el issue; modo local sin cambios <!-- commit: -->
+- [ ] T8 Evals: un CHANGE con diseño de punta a punta, y el fallback sin artifacts <!-- commit: -->
+- [ ] T9 Pedidos en lenguaje natural a issue: reglas del contexto de inicio y de `seckert:workflow` con `seckert issues: github`, y la oferta de pasar a issue al cerrar una discusión <!-- commit: -->
+- [ ] T10 Evals: un pedido natural crea el issue aprobado y termina en PR; una pregunta exploratoria no crea issue; sin la línea en AGENTS.md todo sigue como hoy <!-- commit: -->
+
+## Testing
+
+- Runner: bun run test
+- Nivel: risk
+- Lógica: Tests primero en mcp/ con el gh falso extendido a artifacts y comentarios; el modo archivo con sus tests actuales
+- Presentación: No aplica
+
+## Log
+
+- **L1** (pedido original, verbatim): ahora me surge una duda: nosotros en sdd tenemos por ejemplo un change que tiene sus todos internas o un spec. no seria como duplicar el trabajo cuando usemos gh issues? como podriamos hacer un flujo mas eficiente entre issue y sdd. Nota: no me importaria reducir el sdd o que los issues tengan mas relevancia, ahi evalua como funcionaria mejor
+[...]
+en caso de features grandes que tengan artifact como seria? veo aqui que se puede adjuntar en gh issues
+[...]
+dale, ajustá las propuestas y sumalo a la página
+- **L2** P1: Los changes `done` quedan en `sdd/changes/` como historial, sin migrar. El usuario: «ok me parece bien».
+- **L3** P2: Sí, y más amplio: todo pedido de trabajo va a GitHub. El usuario: «cualquier pedido relacionado al flujo de issues deberia ir a gh, es decir: si digo cosas como: vamos a agregar un boton para descargar un csv de x pantalla. Eso deberia conectarse a gh directamente, en vez de decir: crea un issue: vamos a agregar un boton…».
+- 2026-11-08: aprobado ("mergea, y segui"). Rama feature/issue-como-change desde main.
