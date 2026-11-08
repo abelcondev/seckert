@@ -9,9 +9,18 @@ case "$input" in
   *) exit 0 ;;
 esac
 
-# Crear una rama en el mismo comando (checkout -b / switch -c) es el camino correcto.
-if printf '%s' "$input" | grep -Eq 'git (checkout( -[a-zA-Z-]+)* -b|switch( -[a-zA-Z-]+)* (-c|--create)) '; then
+# Crear una rama en el mismo comando (checkout -b / switch -c, también con flags juntos
+# como -qb o -qc) es el camino correcto.
+if printf '%s' "$input" | grep -Eq 'git (checkout( -[a-zA-Z-]+)* -[a-zA-Z]*b|switch( -[a-zA-Z-]+)* (-[a-zA-Z]*c|--create)) '; then
   exit 0
+fi
+
+# El repo que importa es el del comando: `cd <dir> && git …` o `git -C <dir> …`, si no el de la sesión.
+target=$(printf '%s' "$input" | grep -Eo '(^|[^a-zA-Z])cd [^ ;&|"]+|git -C [^ ;&|"]+' | head -1 | sed -E 's/^.*(cd|-C) //')
+if [ -n "$target" ]; then
+  target=$(printf '%s' "$target" | sed -E "s/^['\\]+//; s/['\\]+$//")
+  case "$target" in "~"*) target="$HOME${target#\~}" ;; esac
+  cd "$target" 2>/dev/null || exit 0
 fi
 
 branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null) || exit 0
