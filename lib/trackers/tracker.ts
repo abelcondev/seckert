@@ -2,7 +2,19 @@
 // guarda el issue canónico de lib/issue.ts y su estado a su manera.
 import type { Issue, IssueBody, IssueState, Kind } from '../issue'
 
-export type TrackedIssue = Omit<Issue, 'kind'> & { id: string; url: string; state: IssueState | null; kind: Kind | null; rawBody: string }
+// Otro issue relacionado (sub-issue o bloqueante): número, título y si sigue abierto.
+export type Related = { id: string; open: boolean; title: string }
+
+export type TrackedIssue = Omit<Issue, 'kind'> & {
+  id: string
+  url: string
+  state: IssueState | null
+  kind: Kind | null
+  rawBody: string
+  parent: string | null
+  subIssues: Related[]
+  blockedBy: Related[]
+}
 
 export type ArtifactType = 'plan' | 'link' | 'generic'
 export type Artifact = { number: number; type: ArtifactType; name: string; body: string; url: string }

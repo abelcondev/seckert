@@ -33,7 +33,11 @@ const out = issue => ({
   stateReason: issue.stateReason ?? '',
   labels: issue.labels.map(name => ({ name })),
   closedByPullRequestsReferences: issue.prs ?? [],
+  parent: issue.parent ? { number: issue.parent } : null,
+  subIssues: { nodes: db.issues.filter(i => i.parent === issue.number).map(rel), totalCount: 0 },
+  blockedBy: { nodes: (issue.blockedBy ?? []).map(n => rel(db.issues.find(i => i.number === n))), totalCount: 0 },
 })
+const rel = i => ({ number: i.number, state: i.state, title: i.title })
 
 const [group, cmd] = args
 if (group === 'label' && cmd === 'create') {

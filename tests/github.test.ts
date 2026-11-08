@@ -153,3 +153,21 @@ test('si la API de artifacts no existe para el repo, el error lo dice', () => {
   }
   expect(() => githubTracker('o/r', gh).artifacts.list('12', 'plan')).toThrow(ArtifactsUnavailable)
 })
+
+test('leer devuelve padre, sub-issues y dependencias; sin ellos, vacíos', () => {
+  const { gh, calls } = fakeGh({
+    'issue view': view({
+      parent: { number: 50, title: 'Cobrar con tarjeta', url: 'u' },
+      subIssues: { nodes: [{ number: 51, state: 'CLOSED', title: 'a' }, { number: 52, state: 'OPEN', title: 'b' }], totalCount: 2 },
+      blockedBy: { nodes: [{ number: 49, state: 'OPEN', title: 'c' }], totalCount: 1 },
+    }),
+  })
+  const issue = githubTracker('o/r', gh).get('12')
+  expect(calls[0]!.args.join(' ')).toContain('parent,subIssues,blockedBy')
+  expect(issue.parent).toBe('50')
+  expect(issue.subIssues).toEqual([{ id: '51', open: false, title: 'a' }, { id: '52', open: true, title: 'b' }])
+  expect(issue.blockedBy).toEqual([{ id: '49', open: true, title: 'c' }])
+
+  const plain = githubTracker('o/r', fakeGh({ 'issue view': view() }).gh).get('12')
+  expect(plain).toMatchObject({ parent: null, subIssues: [], blockedBy: [] })
+})

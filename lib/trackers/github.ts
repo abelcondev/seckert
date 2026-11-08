@@ -3,13 +3,13 @@
 // de GitHub: rama enlazada, PR enlazado abierto e issue cerrado.
 import { checkTransition, deriveState, kindLabel, kindOf, labelOf, parseBody, renderBody, stateOf, triageOf, type Issue, type IssueBody, type IssueState, type Kind, type Triage } from '../issue'
 import { attachPlan, planInBody } from '../issue-change'
-import type { Artifact, Artifacts, ArtifactType, TrackedIssue, Tracker } from './tracker'
+import type { Artifact, Artifacts, ArtifactType, Related, TrackedIssue, Tracker } from './tracker'
 
 // Corre `gh` con los argumentos y, si hay, `input` por stdin; devuelve stdout.
 // El real vive en el MCP: los tests del módulo no dejan a lib/ correr procesos.
 export type Gh = (args: string[], input?: string) => string
 
-const FIELDS = 'number,title,body,url,state,stateReason,labels,closedByPullRequestsReferences'
+const FIELDS = 'number,title,body,url,state,stateReason,labels,closedByPullRequestsReferences,parent,subIssues,blockedBy'
 
 const KIND_COLORS: Record<Kind, string> = { feature: 'a2eeef', fix: 'd73a4a', task: 'ededed' }
 
@@ -28,7 +28,13 @@ type Raw = {
   stateReason?: string
   labels: { name: string }[]
   closedByPullRequestsReferences?: unknown[]
+  parent?: { number: number } | null
+  subIssues?: { nodes: RawRelated[] }
+  blockedBy?: { nodes: RawRelated[] }
 }
+
+type RawRelated = { number: number; state: string; title: string }
+const related = (nodes?: RawRelated[]): Related[] => (nodes ?? []).map(n => ({ id: String(n.number), open: n.state !== 'CLOSED', title: n.title }))
 
 // La API de issue artifacts es una preview: si el repo no la tiene, se usa el plan en el body.
 export class ArtifactsUnavailable extends Error {
@@ -72,7 +78,18 @@ export function githubTracker(repo: string, gh: Gh): Tracker {
     const branch = triage === 'approved' && !closed && !openPr && hasBranch(id)
     const state = deriveState({ triage, closed, notPlanned: raw.stateReason === 'NOT_PLANNED', openPr, branch })
     const kind = kindOf(raw.labels.map(l => l.name))
-    return { id, url: raw.url, title: raw.title, state, kind, rawBody: raw.body, ...parseBody(raw.body) }
+    return {
+      id,
+      url: raw.url,
+      title: raw.title,
+      state,
+      kind,
+      rawBody: raw.body,
+      parent: raw.parent ? String(raw.parent.number) : null,
+      subIssues: related(raw.subIssues?.nodes),
+      blockedBy: related(raw.blockedBy?.nodes),
+      ...parseBody(raw.body),
+    }
   }
 
   const get = (id: string) => toTracked(JSON.parse(gh(['issue', 'view', id, '--repo', repo, '--json', FIELDS])))
