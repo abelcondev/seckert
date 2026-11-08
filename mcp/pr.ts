@@ -6,6 +6,8 @@ import { join } from 'node:path'
 
 import { section, verifyRows } from '../lib/change'
 import { issueGet } from './issues'
+import { CHANGE_LABEL } from './issue-changes'
+import { tracker } from './issues'
 import { findChange, flow, readChanges } from './repo'
 
 function git(root: string, ...args: string[]): string {
@@ -160,10 +162,11 @@ export function releaseDraft(root: string, input: { version?: string }) {
     breaking && major >= 1 ? `${major + 1}.0.0` : breaking || features.length ? `${major}.${minor + 1}.0` : `${major}.${minor}.${patch + 1}`
   const version = input.version ?? proposed
 
-  const touched = lastTag ? git(root, 'diff', '--name-only', lastTag, 'HEAD', '--', 'sdd/changes').split('\n') : null
-  const changesDone = readChanges(root)
-    .filter(change => change.status === 'done' && (!touched || touched.includes(change.file)))
-    .map(change => ({ slug: change.slug, title: change.title }))
+  // Los changes de la release: sus issues se cerraron (con el merge del PR) desde el último tag.
+  const since = lastTag ? git(root, 'log', '-1', '--format=%cs', lastTag) : null
+  const changesDone = tracker(root)
+    .issues.closedWithLabel(CHANGE_LABEL, since)
+    .map(issue => ({ issue: `#${issue.id}`, title: issue.title }))
 
   const { main, develop } = flow(root)
   const notes = [

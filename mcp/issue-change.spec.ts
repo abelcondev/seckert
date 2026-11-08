@@ -1,4 +1,4 @@
-// Un change que vive en su issue: con `seckert issues: github` en AGENTS.md, las
+// Un change vive en su issue: las
 // herramientas del change leen y escriben el issue y su artifact plan (gh falso).
 import { afterAll, beforeAll, beforeEach, expect, test } from 'bun:test'
 import { execFileSync } from 'node:child_process'
@@ -44,7 +44,7 @@ beforeAll(async () => {
   mkdirSync(repo)
   execFileSync('git', ['init', '-q', '-b', 'main', repo])
   execFileSync('git', ['remote', 'add', 'origin', 'git@github.com:acme/tienda.git'], { cwd: repo })
-  writeFileSync(join(repo, 'AGENTS.md'), '# tienda\n\n- seckert issues: github\n')
+  writeFileSync(join(repo, 'AGENTS.md'), '# tienda\n')
   git('add', '-A')
   git('commit', '-q', '-m', 'init')
   const bin = join(dir, 'bin')
@@ -130,19 +130,6 @@ test('sin la API de artifacts, el plan va en ## Plan del body y el issue se sigu
   expect((await call('change_transition', { slug: 'exportar-pedidos-a-csv', to: 'approved', aprobacion: 'dale' })).error).toBeNull()
   expect(db().issues[0]!.body).toContain('status: approved')
   expect((await call('issue_get', { id: '1' })).value.criteria).toEqual(ISSUE.criteria)
-})
-
-test('sin la línea en AGENTS.md, un change con issue sigue siendo un archivo', async () => {
-  writeFileSync(join(repo, 'AGENTS.md'), '# tienda\n')
-  try {
-    await call('issue_create', ISSUE)
-    const { value } = await call('change_create', { slug: 'csv-archivo', title: 'x', why: 'x', what: ['x'], tasks: ['x'], pedido: 'x', issue: '1' })
-    expect(value.file).toMatch(/^sdd\/changes\/.*-csv-archivo\.md$/)
-    expect(db().issues[0]!.artifacts ?? []).toEqual([])
-  } finally {
-    writeFileSync(join(repo, 'AGENTS.md'), '# tienda\n\n- seckert issues: github\n')
-    rmSync(join(repo, 'sdd'), { recursive: true, force: true })
-  }
 })
 
 test('verify_record deja la verificación como tabla en un comentario y reabre la tarea en el plan', async () => {

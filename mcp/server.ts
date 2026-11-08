@@ -1,5 +1,5 @@
-// Servidor MCP de seckert: los changes de sdd/changes se leen y escriben con
-// herramientas en vez de editar el markdown a mano. Se compila a un solo
+// Servidor MCP de seckert: los changes viven en su issue de GitHub y se leen y
+// escriben con herramientas. Se compila a un solo
 // archivo (mcp/dist/server.mjs) que viene en el plugin; solo necesita node.
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
@@ -39,7 +39,7 @@ server.registerTool(
   'change_list',
   {
     description:
-      'Lists the changes in sdd/changes with status, tasks done/total, next task, open questions, branch and last verification. Open ones only (proposed and approved) by default.',
+      'Lists the changes (each lives in its GitHub issue) with status, tasks done/total, next task, open questions, branch and last verification. Open ones only (proposed and approved) by default.',
     inputSchema: { done: z.boolean().optional().describe('Also include done changes') },
     annotations: { readOnlyHint: true },
   },
@@ -74,17 +74,15 @@ server.registerTool(
   'change_create',
   {
     description:
-      'Creates a change proposal in sdd/changes with the seckert template: status proposed, today\'s date, branch feature/<slug>, numbered questions (P1, P2…) and L1 with the user\'s request verbatim. Never overwrites an existing change: to adjust a proposal, use change_update. Write the content in the user\'s language.',
+      'Creates a change proposal in its GitHub issue: attaches the plan (artifact `Plan`, or a `## Plan` section without artifacts) with status proposed, branch feature/<slug>, numbered questions (P1, P2…) and L1 with the user\'s request verbatim. Why and What come from the issue (Problem, Outcome, criteria). Never overwrites an existing plan: to adjust a proposal, use change_update. Write the content in the user\'s language.',
     inputSchema: {
       slug: z.string().describe('kebab-case, no date'),
       title: z.string(),
-      why: z.string().optional().describe('The problem, in 1–3 sentences. Omit when the change lives in its issue: the issue gives Why and What'),
-      what: z.array(z.string()).min(1).optional().describe('Observable behavior, one point per item, quoting the user literally'),
       tasks: z.array(z.string()).min(1).describe('Small tasks, without the "T1"; mark the sensitive ones (money, permissions, data)'),
       questions: z.array(z.string()).optional().describe('Decisions missing before approval'),
       specs: z.array(z.string()).optional().describe('sdd/specs areas it touches'),
       design: z.string().optional().describe('Design artifact URL, if the request has one'),
-      issue: z.string().optional().describe('The GitHub issue number it comes from (issue_take), without #; goes to the frontmatter as issue: #n'),
+      issue: z.string().describe('The GitHub issue number (issue_take), without #'),
       diagram: z
         .string()
         .optional()

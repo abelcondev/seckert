@@ -1,18 +1,11 @@
-// change_update y spec_write contra un repo git real.
+// change_update y spec_write contra un repo git real; el change vive en su issue (gh falso).
 import { afterAll, beforeAll, expect, test } from 'bun:test'
-import { execFileSync } from 'node:child_process'
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join, resolve } from 'node:path'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
 
-import { Client } from '@modelcontextprotocol/sdk/client/index.js'
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
+import { fixture, type Fixture } from './fixture'
 
-import { serverEnv } from './test-env'
-
-const SERVER = resolve(import.meta.dir, 'dist/server.mjs')
 const TODAY = new Date().toLocaleDateString('sv-SE', { timeZone: 'UTC' })
-const FILE = 'sdd/changes/2026-11-01-csv.md'
 
 const CHANGE = `---
 status: approved
@@ -45,31 +38,22 @@ x
 - **L1** (pedido original, verbatim): x
 `
 
+let fx: Fixture
 let repo: string
-let client: Client
-const git = (...args: string[]) => execFileSync('git', args, { cwd: repo, encoding: 'utf8' }).trim()
-const read = (path = FILE) => readFileSync(join(repo, path), 'utf8')
-type Result = { isError?: boolean; content: { text: string }[] }
-const call = async (name: string, args: Record<string, unknown>) => (await client.callTool({ name, arguments: args })) as Result
-const body = (result: Result) => JSON.parse(result.content[0]!.text)
+const git = (...args: string[]) => fx.git(...args)
+// Sin ruta: el change csv. Con ruta: un archivo del repo (sdd/specs).
+const read = (path?: string) => (path ? readFileSync(join(repo, path), 'utf8') : fx.changeText('csv'))
+const call = (name: string, args: Record<string, unknown>) => fx.call(name, args)
+const body = (result: { content: { text: string }[] }) => JSON.parse(result.content[0]!.text)
 
 beforeAll(async () => {
-  repo = mkdtempSync(join(tmpdir(), 'seckert-mcp-u-'))
-  git('init', '-q', '-b', 'main')
-  git('config', 'user.email', 't@t')
-  git('config', 'user.name', 't')
-  writeFileSync(join(repo, 'README.md'), 'x\n')
-  git('add', '.')
-  git('commit', '-q', '-m', 'init')
-  mkdirSync(join(repo, 'sdd/changes'), { recursive: true })
-  writeFileSync(join(repo, FILE), CHANGE)
-  client = new Client({ name: 'test', version: '0.0.0' })
-  await client.connect(new StdioClientTransport({ command: 'node', args: [SERVER], env: serverEnv({ TZ: 'UTC' }), cwd: repo }))
+  fx = await fixture('seckert-mcp-u-')
+  repo = fx.repo
+  fx.seedChange(CHANGE)
 })
 
 afterAll(async () => {
-  await client?.close()
-  rmSync(repo, { recursive: true, force: true })
+  await fx?.close()
 })
 
 test('change_update responde una pregunta y agrega una tarea en una llamada, y devuelve los números nuevos', async () => {
@@ -111,8 +95,6 @@ test('change_update con resync_commits actualiza los hashes tras un rebase', asy
   git('commit', '-q', '-m', 'feat: primera')
   const old = git('rev-parse', '--short=7', 'HEAD')
   await call('task_complete', { slug: 'csv', task: 'T1', commit: old, evidencia: 'ok' })
-  git('add', '.')
-  git('commit', '-q', '-m', 'docs: T1')
   // main avanza y la rama se rebasa: el commit de T1 cambia de hash.
   git('switch', '-q', 'main')
   writeFileSync(join(repo, 'b.txt'), 'b\n')

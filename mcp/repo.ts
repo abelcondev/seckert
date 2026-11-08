@@ -1,6 +1,6 @@
 // El repo del proyecto y sus changes, leídos del disco en cada llamada.
 import { execFileSync } from 'node:child_process'
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -26,11 +26,10 @@ import {
   verifyLine,
 } from '../lib/change'
 import { removeRule, writeRule } from '../lib/spec'
-import { cachePath, createIssueChange, issuesMode, readCachedChanges, readIssueChanges, saveIssueChange, type IssueSource } from './issue-changes'
+import { cachePath, createIssueChange, readCachedChanges, readIssueChanges, saveIssueChange, type IssueSource } from './issue-changes'
 
-export const CHANGES_DIR = 'sdd/changes'
-
-export type ChangeFile = ParsedChange & { slug: string; file: string; text: string; source?: IssueSource }
+// Un change vive en su issue: `file` es «issue #n» y `source`, de dónde salió.
+export type ChangeFile = ParsedChange & { slug: string; file: string; text: string; source: IssueSource }
 
 // La raíz del repo, aunque Claude Code arranque el servidor en una subcarpeta.
 export function projectRoot(): string {
@@ -43,29 +42,17 @@ export function projectRoot(): string {
 }
 
 export function readChanges(root: string): ChangeFile[] {
-  return [...readFileChanges(root), ...(issuesMode(root) ? readIssueChanges(root) : [])]
+  return readIssueChanges(root)
 }
 
-// Para el contexto de inicio: los de issues salen de la copia local, sin red.
-export function readChangesOffline(root: string): ChangeFile[] {
-  return [...readFileChanges(root), ...(issuesMode(root) ? readCachedChanges(root) : [])]
+// Para el contexto de inicio: la copia local, sin red.
+export function readChangesOffline(root: string): Omit<ChangeFile, 'source'>[] {
+  return readCachedChanges(root)
 }
 
-// El archivo que se le pasa al verificador: el change, o la copia del change del issue.
-export function pathOf(root: string, change: ChangeFile): string {
-  return change.source ? cachePath(root, change.slug) : change.file
-}
-
-function readFileChanges(root: string): ChangeFile[] {
-  const dir = join(root, CHANGES_DIR)
-  if (!existsSync(dir)) return []
-  return readdirSync(dir)
-    .filter(name => name.endsWith('.md'))
-    .sort()
-    .map(name => {
-      const text = readFileSync(join(dir, name), 'utf8')
-      return { ...parseChange(text), slug: slugOf(name), file: `${CHANGES_DIR}/${name}`, text }
-    })
+// El archivo que se le pasa al verificador: la copia del change del issue.
+export function pathOf(root: string, change: { slug: string }): string {
+  return cachePath(root, change.slug)
 }
 
 // El change por slug o, sin slug, el único approved. Si no se puede decidir, el
@@ -76,7 +63,7 @@ export function findChange(root: string, slug?: string): ChangeFile {
   const names = open.map(change => `${change.slug} (${change.status})`).join(', ') || 'ninguno'
 
   if (slug) {
-    const found = changes.find(change => change.slug === slug || change.file.endsWith(`/${slug}.md`))
+    const found = changes.find(change => change.slug === slug)
     if (!found) throw new Error(`No hay un change "${slug}". Abiertos: ${names}.`)
     return found
   }
@@ -89,13 +76,13 @@ export function findChange(root: string, slug?: string): ChangeFile {
   )
 }
 
-export function summary(change: ChangeFile, root?: string) {
+export function summary(change: Omit<ChangeFile, "source">, root?: string) {
   const pending = change.tasks.filter(task => !task.done)
   const next = pending[0]
   return {
     slug: change.slug,
     file: change.file,
-    ...(root && change.source ? { path: pathOf(root, change) } : {}),
+    ...(root ? { path: pathOf(root, change) } : {}),
     status: change.status,
     done: change.tasks.length - pending.length,
     total: change.tasks.length,
@@ -116,19 +103,11 @@ export function today(): string {
   return new Date().toLocaleDateString('sv-SE')
 }
 
-// Escribe un change nuevo. No pisa uno existente con el mismo slug: una
+// Un change nuevo: el plan se adjunta a su issue. No pisa uno existente: una
 // propuesta que se itera se edita, no se vuelve a crear.
 export function createChange(root: string, change: NewChange): { slug: string; file: string; status: 'proposed' } {
-  if (change.issue && issuesMode(root)) return createIssueChange(root, { ...change, issue: change.issue })
-  if (!change.why?.trim() || !change.what?.length) throw new Error('Faltan `why` y `what`. Solo se omiten cuando el change vive en su issue (modo `seckert issues: github`).')
-  if (!SLUG.test(change.slug)) throw new Error(`El slug "${change.slug}" tiene que ser kebab-case: minúsculas, números y guiones.`)
-  const existing = readChanges(root).find(c => c.slug === change.slug)
-  if (existing) throw new Error(`Ya existe ${existing.file} (${existing.status}). Para ajustarlo, usá change_update.`)
-
-  const file = `${CHANGES_DIR}/${today()}-${change.slug}.md`
-  mkdirSync(join(root, CHANGES_DIR), { recursive: true })
-  writeFileSync(join(root, file), renderChange(change), { flag: 'wx' })
-  return { slug: change.slug, file, status: 'proposed' }
+  if (!change.issue?.trim()) throw new Error('Falta `issue`: el change vive en su issue. Creá o tomá el issue primero (issue_create, issue_take).')
+  return createIssueChange(root, { ...change, issue: change.issue })
 }
 
 function git(root: string, ...args: string[]): string {
@@ -145,8 +124,7 @@ function gitOk(root: string, ...args: string[]): boolean {
 }
 
 function save(root: string, change: ChangeFile, text: string): void {
-  if (change.source) return saveIssueChange(root, { ...change, source: change.source }, text)
-  writeFileSync(join(root, change.file), text)
+  saveIssueChange(root, change, text)
 }
 
 // La base de las ramas de trabajo según detect-flow.sh, el mismo script que usan

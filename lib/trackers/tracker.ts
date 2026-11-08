@@ -40,6 +40,8 @@ export interface Tracker {
   addLabel(id: string, label: string, color: string): void
   // Los issues de seckert abiertos con una label dada.
   withLabel(label: string): TrackedIssue[]
+  // Los issues cerrados como completados con una label dada, desde una fecha (YYYY-MM-DD) si se da.
+  closedWithLabel(label: string, since: string | null): { id: string; title: string }[]
   // Solo mueve el estado; las reglas de transición las aplica quien llama.
   setState(id: string, from: IssueState | null, to: IssueState): void
 }

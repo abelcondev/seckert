@@ -1,16 +1,10 @@
-// change_transition y task_complete contra un repo git real.
+// change_transition y task_complete contra un repo git real; el change vive en su issue (gh falso).
 import { afterAll, beforeAll, expect, test } from 'bun:test'
-import { execFileSync } from 'node:child_process'
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join, resolve } from 'node:path'
+import { writeFileSync } from 'node:fs'
+import { join } from 'node:path'
 
-import { Client } from '@modelcontextprotocol/sdk/client/index.js'
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
+import { fixture, type Fixture } from './fixture'
 
-import { serverEnv } from './test-env'
-
-const SERVER = resolve(import.meta.dir, 'dist/server.mjs')
 const TODAY = new Date().toLocaleDateString('sv-SE', { timeZone: 'UTC' })
 
 const change = (slug: string, status: string, questions = '') => `---
@@ -43,36 +37,20 @@ ${questions}
 - **L1** (pedido original, verbatim): x
 `
 
-let repo: string
-let client: Client
-
-const git = (...args: string[]) => execFileSync('git', args, { cwd: repo, encoding: 'utf8' }).trim()
-const read = (slug: string) => readFileSync(join(repo, `sdd/changes/2026-11-01-${slug}.md`), 'utf8')
-
-type Result = { isError?: boolean; content: { text: string }[] }
-const call = async (name: string, args: Record<string, unknown>) =>
-  (await client.callTool({ name, arguments: args })) as Result
+let fx: Fixture
+const git = (...args: string[]) => fx.git(...args)
+const read = (slug: string) => fx.changeText(slug)
+const call = (name: string, args: Record<string, unknown>) => fx.call(name, args)
 
 beforeAll(async () => {
-  repo = mkdtempSync(join(tmpdir(), 'seckert-mcp-t-'))
-  git('init', '-q', '-b', 'main')
-  git('config', 'user.email', 't@t')
-  git('config', 'user.name', 't')
-  writeFileSync(join(repo, 'README.md'), 'x\n')
-  git('add', '.')
-  git('commit', '-q', '-m', 'init')
+  fx = await fixture('seckert-mcp-t-', (_, g) => g('commit', '-q', '--allow-empty', '-m', 'base'))
   git('branch', 'develop')
-  mkdirSync(join(repo, 'sdd/changes'), { recursive: true })
-  writeFileSync(join(repo, 'sdd/changes/2026-11-01-csv.md'), change('csv', 'proposed'))
-  writeFileSync(join(repo, 'sdd/changes/2026-11-01-dudas.md'), change('dudas', 'proposed', '- **P1** ¿Con qué separador?\n'))
-
-  client = new Client({ name: 'test', version: '0.0.0' })
-  await client.connect(new StdioClientTransport({ command: 'node', args: [SERVER], env: serverEnv({ TZ: 'UTC' }), cwd: repo }))
+  fx.seedChange(change('csv', 'proposed'))
+  fx.seedChange(change('dudas', 'proposed', '- **P1** ¿Con qué separador?\n'))
 })
 
 afterAll(async () => {
-  await client?.close()
-  rmSync(repo, { recursive: true, force: true })
+  await fx?.close()
 })
 
 test('aprobar exige las palabras del usuario', async () => {
@@ -115,7 +93,7 @@ test('task_complete exige un commit que exista en la rama', async () => {
 })
 
 test('task_complete marca la tarea con el hash corto y anota la evidencia', async () => {
-  writeFileSync(join(repo, 'a.txt'), 'a\n')
+  writeFileSync(join(fx.repo, 'a.txt'), 'a\n')
   git('add', 'a.txt')
   git('commit', '-q', '-m', 'feat: a')
   const hash = git('rev-parse', '--short=7', 'HEAD')

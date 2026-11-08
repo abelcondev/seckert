@@ -8,7 +8,6 @@ import { compact, shouldCompact } from './compact'
 const CHANGES_DIR = 'sdd/changes'
 // Los changes que viven en su issue: el servidor MCP deja una copia acá (no se sube al repo).
 const ISSUE_CHANGES_DIR = '.git/seckert/changes'
-const ISSUES_MODE = /^\s*(?:[-*]\s*)?`?seckert issues:\s*github`?\s*$/im
 const EMPTY: Snapshot = { changes: [], branch: null }
 
 const snapshot = atom({ plugin: 'seckert', key: 'snapshot' } as const, EMPTY)
@@ -77,13 +76,7 @@ async function load($: EngineInterface): Promise<void> {
     changes.push(...parsed.filter((change): change is Change => change !== null))
   }
 
-  let issues = false
-  for (const name of ['AGENTS.md', 'CLAUDE.md']) {
-    const path = root ? `${root}/${name}` : name
-    if (await $.fs.exists(path)) issues ||= ISSUES_MODE.test(await $.fs.read(path))
-  }
-
-  await update($, snapshot, () => ({ changes, branch, issues }))
+  await update($, snapshot, () => ({ changes, branch }))
 }
 
 // El título de la tarea, sin el detalle que sigue a ":" o " — ".
@@ -140,9 +133,7 @@ function contextText(state: Snapshot): string {
     ...lines,
     state.branch ? `Rama actual: ${state.branch}.` : '',
     current ? `Si el usuario dice "seguí" o aprueba sin nombrar uno, se refiere a ${current.slug}.` : '',
-    state.issues
-      ? 'Los pedidos de trabajo nuevos van a un issue de GitHub (modo issues); lo que no está claro se discute en la sesión.'
-      : 'Los pedidos chicos que no tienen que ver con estos changes se hacen directo, sin tocarlos.',
+    'Los pedidos de trabajo nuevos van a un issue de GitHub; lo que no está claro se discute en la sesión.',
   ]
     .filter(Boolean)
     .join('\n')

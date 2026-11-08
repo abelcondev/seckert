@@ -1,4 +1,4 @@
-// Changes que viven en su issue (modo `seckert issues: github`). El texto del
+// Los changes viven en su issue de GitHub. El texto del
 // change se arma desde el issue y su artifact plan (lib/issue-change.ts); al
 // guardar, el plan vuelve al artifact (o al body, sin artifacts), los criterios
 // editados vuelven al body y lo nuevo del Log queda como comentario. Una copia
@@ -17,14 +17,6 @@ import type { ChangeFile } from './repo'
 export const CHANGE_LABEL = 'seckert:change'
 const DESIGN_NAME = 'Design'
 
-// El modo issues se activa con `seckert issues: github` en el AGENTS.md (o CLAUDE.md) del proyecto.
-export function issuesMode(root: string): boolean {
-  return ['AGENTS.md', 'CLAUDE.md'].some(name => {
-    const path = join(root, name)
-    return existsSync(path) && /^\s*(?:[-*]\s*)?`?seckert issues:\s*github`?\s*$/im.test(readFileSync(path, 'utf8'))
-  })
-}
-
 export type IssueSource = { number: string; artifact: number | null; plan: string; criteria: string[] }
 
 function cacheDir(root: string): string {
@@ -38,7 +30,7 @@ export function cachePath(root: string, slug: string): string {
 }
 
 // Los changes de issues según la copia local, sin llamar a gh (para el contexto de inicio).
-export function readCachedChanges(root: string): ChangeFile[] {
+export function readCachedChanges(root: string): Omit<ChangeFile, 'source'>[] {
   let dir: string
   try {
     dir = cacheDir(root)

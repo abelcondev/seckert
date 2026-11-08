@@ -12,8 +12,6 @@ export type Change = {
 export type Snapshot = {
   changes: Change[]
   branch: string | null
-  // `seckert issues: github` en AGENTS.md o CLAUDE.md: los pedidos van a un issue.
-  issues?: boolean
 }
 
 declare module 'claude-code' {
