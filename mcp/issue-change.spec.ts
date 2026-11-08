@@ -225,3 +225,9 @@ test('el contexto de inicio lee la copia local, sin llamar a gh', async () => {
   expect(out).toContain('issue #1 (proposed, 0/2 tasks)')
   expect(db().calls.length).toBe(calls)
 })
+
+test('issue_take devuelve el diseño del issue', async () => {
+  await call('issue_create', { ...ISSUE, design: 'https://claude.ai/artifact/abc123' })
+  await call('issue_transition', { id: '1', to: 'approved', aprobacion: 'dale' })
+  expect((await call('issue_take', { id: '1' })).value.design).toBe('https://claude.ai/artifact/abc123')
+})

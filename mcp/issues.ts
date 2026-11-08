@@ -134,7 +134,7 @@ export function issueTake(root: string, id: string) {
     how = 'creada'
   }
   const { state: _state, rawBody: _raw, ...rest } = issue
-  return { ...rest, branch, how }
+  return { ...rest, design: designOf(issues, issue), branch, how }
 }
 
 // Responde una pregunta abierta: la pasa a Decisions en el cuerpo y lo deja como comentario.
