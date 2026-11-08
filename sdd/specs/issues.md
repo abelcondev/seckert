@@ -27,3 +27,11 @@ El tipo de un issue es una label: `type:feature`, `type:fix` o `type:task`. `iss
 ## Decisiones y preguntas abiertas
 
 A un issue entran solo decisiones tomadas. Una discusión abierta se resuelve antes de crearlo, en la sesión. Un issue con `## Open questions` no se aprueba: `issue_transition` a approved falla nombrando las preguntas. `issue_answer` responde una: la saca de Open questions, la agrega a `## Decisions` con quién y la fecha de hoy, y deja la respuesta como comentario.
+
+## Pedidos en modo issues
+
+Con `seckert issues: github` en el AGENTS.md o CLAUDE.md, todo pedido de trabajo se vuelve un issue sin que el usuario diga «creá un issue»; las preguntas, explicaciones y exploraciones no. Un pedido del usuario sin preguntas abiertas se crea, se aprueba con sus palabras y se toma: un FIX se hace directo y termina en PR, un CHANGE adjunta su plan y espera el «dale». Con «para después» o «anotalo», solo se crea. Lo que no está claro se discute en la sesión; cuando llega a algo concreto, Claude ofrece pasarlo a issue con lo decidido en Decisions. El contexto de inicio y el contexto vivo llevan estas reglas.
+
+## Diseño
+
+`issue_create` con `design` adjunta el link como artifact `link` llamado `Design`; sin la API de artifacts, lo agrega a References como «Design: <url>». `issue_get` e `issue_take` devuelven el diseño.

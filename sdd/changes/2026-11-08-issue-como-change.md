@@ -53,9 +53,9 @@ flowchart LR
 - [x] T5 Diseño como artifact `link`: al crear el issue con un link de diseño, al tomarlo y en la verificación visual <!-- commit: ea8c0ed -->
 - [x] T6 `pr_draft` y cierre desde el issue: Why y What del body, specs en el mismo PR, sin archivo en `sdd/changes/` <!-- commit: 3f4086a -->
 - [x] T7 Skills `tomar`, `next`, `verify` y `done` sobre el issue; modo local sin cambios <!-- commit: fdf4530 -->
-- [ ] T8 Evals: un CHANGE con diseño de punta a punta, y el fallback sin artifacts <!-- commit: -->
+- [x] T8 Evals: un CHANGE con diseño de punta a punta, y el fallback sin artifacts <!-- commit: 0185e54 -->
 - [x] T9 Pedidos en lenguaje natural a issue: reglas del contexto de inicio y de `seckert:workflow` con `seckert issues: github`, y la oferta de pasar a issue al cerrar una discusión <!-- commit: b0b48f7 -->
-- [ ] T10 Evals: un pedido natural crea el issue aprobado y termina en PR; una pregunta exploratoria no crea issue; sin la línea en AGENTS.md todo sigue como hoy <!-- commit: -->
+- [x] T10 Evals: un pedido natural crea el issue aprobado y termina en PR; una pregunta exploratoria no crea issue; sin la línea en AGENTS.md todo sigue como hoy <!-- commit: b1c64f0 -->
 
 ## Testing
 
@@ -82,3 +82,5 @@ dale, ajustá las propuestas y sumalo a la página
 - 2026-11-08: T6 hecha (3f4086a). bun run test exit 0; issue-change.spec: pr_draft del change en su issue empieza con Fixes #1, Why con Problem y Outcome, What con los criterios y sin Tasks; change_transition done deja status: done en el plan, comenta el cierre y no crea sdd/changes. Pasó sin código nuevo: sale de T3
 - 2026-11-08: T7 hecha (fdf4530). bun run test exit 0; live.test: la barra muestra un change leído de .git/seckert/changes; issue-change.spec: change_get da path .git/seckert/changes/<slug>.md con el change completo y --context lo lista sin ninguna llamada a gh; skills tomar, verify, done y el verificador actualizados
 - 2026-11-08: T9 hecha (b0b48f7). bun run test exit 0; tests/session-context.sh 5/5: con la línea en AGENTS.md o CLAUDE.md aparecen las reglas del modo issues, sin ella no; live.test: en modo issues el contexto vivo dice que los pedidos nuevos van a un issue y no que se hacen directo
+- 2026-11-08: T8 hecha (0185e54). claude plugin eval: issue-change-diseno 3/3 (tras corregir que issue_take no devolvía el diseño) e issue-change-sin-artifacts 3/3; bun run test exit 0
+- 2026-11-08: T10 hecha (b1c64f0). claude plugin eval: pedido-natural 3/3 (crea, aprueba con las palabras del usuario, toma y hace el FIX), pregunta-sin-issue 3/3 (sin issue_create) y el control fix-texto-boton 3/3 sin la línea en AGENTS.md
