@@ -57,7 +57,7 @@ beforeAll(async () => {
   state = join(dir, 'gh.json')
   reset()
   client = new Client({ name: 'test', version: '0.0.0' })
-  const env = { ...(process.env as Record<string, string>), PATH: `${bin}:${process.env.PATH}`, FAKE_GH_STATE: state }
+  const env = { ...(process.env as Record<string, string>), PATH: `${bin}:${process.env.PATH}`, FAKE_GH_STATE: state, TZ: 'UTC' }
   await client.connect(new StdioClientTransport({ command: 'node', args: [SERVER], env, cwd: join(repo, 'src') }))
 })
 
@@ -367,7 +367,7 @@ test('issue_create avisa de issues abiertos parecidos', async () => {
 test('sin origen, el issue dice Source: chat y la fecha de hoy; con origen, lo respeta', async () => {
   const { origin: _o, ...sinOrigen } = ISSUE
   await call('issue_create', sinOrigen)
-  const today = new Date().toLocaleDateString('sv-SE')
+  const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'UTC' })
   expect((await call('issue_get', { id: '1' })).value.origin).toEqual({ source: 'chat', date: today })
   await call('issue_create', { ...ISSUE, origin: { source: 'Reunión con Acme', date: '2026-11-06' } })
   expect((await call('issue_get', { id: '2' })).value.origin).toEqual({ source: 'Reunión con Acme', date: '2026-11-06' })
