@@ -8,6 +8,8 @@ import { join, resolve } from 'node:path'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 
+import { serverEnv } from './test-env'
+
 const SERVER = resolve(import.meta.dir, 'dist/server.mjs')
 const FAKE = resolve(import.meta.dir, 'fake-gh.mjs')
 
@@ -60,7 +62,7 @@ beforeAll(async () => {
   chmodSync(join(bin, 'gh'), 0o755)
   state = join(dir, 'gh.json')
   client = new Client({ name: 'test', version: '0.0.0' })
-  const env = { ...(process.env as Record<string, string>), PATH: `${bin}:${process.env.PATH}`, FAKE_GH_STATE: state, SECKERT_TODAY: '2026-11-09' }
+  const env = serverEnv({ PATH: `${bin}:${process.env.PATH}`, FAKE_GH_STATE: state, SECKERT_TODAY: '2026-11-09' })
   await client.connect(new StdioClientTransport({ command: 'node', args: [SERVER], env, cwd: repo }))
 })
 

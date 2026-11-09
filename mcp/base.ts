@@ -28,6 +28,14 @@ function refExists(root: string, ref: string): boolean {
 
 const shellQuote = (s: string) => `'${s.replace(/'/g, `'\\''`)}'`
 
+// El env de los tests en la base: el del servidor sin CLAUDE_PROJECT_DIR, que
+// apunta al proyecto real y no al worktree temporal. Un test que arranca el
+// servidor MCP lo heredaría y actuaría sobre el proyecto (ramas, HEAD).
+function baseEnv(): NodeJS.ProcessEnv {
+  const { CLAUDE_PROJECT_DIR: _project, ...env } = process.env
+  return env
+}
+
 export function testsOnBase(root: string, input: { tests: string[]; runner: string }) {
   if (!input.tests.length) throw new Error('Pasá los tests que fallaron en la rama.')
   const branch = baseBranch(root)
@@ -48,7 +56,7 @@ export function testsOnBase(root: string, input: { tests: string[]; runner: stri
     const resultados: BaseResult[] = input.tests.map(test => {
       const comando = `${input.runner} ${test}`
       if (!existsSync(join(wt, test))) return { test, veredicto: 'FALLA', motivo: 'el test no existe en la base', comando }
-      const ran = spawnSync('sh', ['-c', `${input.runner} ${shellQuote(test)}`], { cwd: wt, timeout: TIMEOUT_MS, encoding: 'utf8' })
+      const ran = spawnSync('sh', ['-c', `${input.runner} ${shellQuote(test)}`], { cwd: wt, timeout: TIMEOUT_MS, encoding: 'utf8', env: baseEnv() })
       if (ran.error || ran.status === null || ran.status === 126 || ran.status === 127)
         return { test, veredicto: 'FALLA', motivo: `no se pudo correr en la base (${ran.error?.message ?? `salida ${ran.status ?? 'cortada'}`})`, comando }
       return ran.status === 0

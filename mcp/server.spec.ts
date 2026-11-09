@@ -9,6 +9,8 @@ import { join, resolve } from 'node:path'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 
+import { serverEnv } from './test-env'
+
 const SERVER = resolve(import.meta.dir, 'dist/server.mjs')
 
 const change = (status: string, tasks: string, log = '') => `---
@@ -67,7 +69,7 @@ beforeAll(async () => {
 
   client = new Client({ name: 'test', version: '0.0.0' })
   // Parado en una subcarpeta: el servidor tiene que encontrar la raíz del repo.
-  await client.connect(new StdioClientTransport({ command: 'node', args: [SERVER], env: { ...(process.env as Record<string, string>), TZ: 'UTC' }, cwd: join(repo, 'src') }))
+  await client.connect(new StdioClientTransport({ command: 'node', args: [SERVER], env: serverEnv({ TZ: 'UTC' }), cwd: join(repo, 'src') }))
 })
 
 afterAll(async () => {

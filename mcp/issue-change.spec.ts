@@ -9,6 +9,8 @@ import { join, resolve } from 'node:path'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 
+import { serverEnv } from './test-env'
+
 const SERVER = resolve(import.meta.dir, 'dist/server.mjs')
 const FAKE = resolve(import.meta.dir, 'fake-gh.mjs')
 
@@ -51,7 +53,7 @@ beforeAll(async () => {
   chmodSync(join(bin, 'gh'), 0o755)
   state = join(dir, 'gh.json')
   client = new Client({ name: 'test', version: '0.0.0' })
-  const env = { ...(process.env as Record<string, string>), PATH: `${bin}:${process.env.PATH}`, FAKE_GH_STATE: state }
+  const env = serverEnv({ PATH: `${bin}:${process.env.PATH}`, FAKE_GH_STATE: state })
   await client.connect(new StdioClientTransport({ command: 'node', args: [SERVER], env, cwd: repo }))
 })
 
@@ -221,7 +223,7 @@ test('el contexto de inicio lee la copia local, sin llamar a gh', async () => {
   await takenChange()
   await call('change_get', { slug: 'exportar-pedidos-a-csv' })
   const calls = db().calls.length
-  const out = execFileSync('node', [SERVER, '--context'], { cwd: repo, encoding: 'utf8', env: { ...process.env, PATH: `${join(dir, 'bin')}:${process.env.PATH}`, FAKE_GH_STATE: state } })
+  const out = execFileSync('node', [SERVER, '--context'], { cwd: repo, encoding: 'utf8', env: serverEnv({ PATH: `${join(dir, 'bin')}:${process.env.PATH}`, FAKE_GH_STATE: state }) })
   expect(out).toContain('issue #1 (proposed, 0/2 tasks)')
   expect(db().calls.length).toBe(calls)
 })

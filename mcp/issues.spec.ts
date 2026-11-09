@@ -9,6 +9,8 @@ import { join, resolve } from 'node:path'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 
+import { serverEnv } from './test-env'
+
 import { branchFor } from '../lib/issue'
 import { parseRemote } from './issues'
 
@@ -57,7 +59,7 @@ beforeAll(async () => {
   state = join(dir, 'gh.json')
   reset()
   client = new Client({ name: 'test', version: '0.0.0' })
-  const env = { ...(process.env as Record<string, string>), PATH: `${bin}:${process.env.PATH}`, FAKE_GH_STATE: state, TZ: 'UTC' }
+  const env = serverEnv({ PATH: `${bin}:${process.env.PATH}`, FAKE_GH_STATE: state, TZ: 'UTC' })
   await client.connect(new StdioClientTransport({ command: 'node', args: [SERVER], env, cwd: join(repo, 'src') }))
 })
 

@@ -33,16 +33,21 @@ beforeAll(async () => {
   // En la base: uno ya roto y uno sano. Los "tests" son scripts de sh.
   put('t/roto.sh', 'exit 1\n')
   put('t/sano.sh', 'exit 0\n')
+  // En la base pasa solo si no hereda CLAUDE_PROJECT_DIR del servidor.
+  put('t/sin-proyecto.sh', '[ -z "$CLAUDE_PROJECT_DIR" ]\n')
   put('package.json', '{}\n')
   git('add', '.')
   git('commit', '-q', '-m', 'base')
   git('switch', '-q', '-c', 'feature/x')
   put('t/sano.sh', 'exit 1\n') // el change lo rompió
   put('t/nuevo.sh', 'exit 1\n') // test nuevo del change
+  put('t/sin-proyecto.sh', 'exit 1\n') // en la rama falla siempre
   git('add', '.')
   git('commit', '-q', '-m', 'feat: x')
   client = new Client({ name: 'test', version: '0.0.0' })
-  await client.connect(new StdioClientTransport({ command: 'node', args: [SERVER], cwd: repo }))
+  // Como lo arranca Claude Code: con CLAUDE_PROJECT_DIR apuntando al proyecto.
+  const env = { ...(process.env as Record<string, string>), CLAUDE_PROJECT_DIR: repo }
+  await client.connect(new StdioClientTransport({ command: 'node', args: [SERVER], cwd: repo, env }))
 })
 
 afterAll(async () => {
@@ -61,6 +66,11 @@ test('distingue un fallo que ya estaba en la base de uno del change y de un test
   ])
   // El worktree temporal se borra siempre.
   expect(worktrees()).toBe(before)
+})
+
+test('los tests de la base no heredan CLAUDE_PROJECT_DIR: si no, un test que arranca el servidor actúa sobre el proyecto real', async () => {
+  const { value } = await run({ tests: ['t/sin-proyecto.sh'], runner: 'sh' })
+  expect(value.resultados[0]).toMatchObject({ veredicto: 'FALLA', motivo: expect.stringContaining('pasa en la base') })
 })
 
 test('si el runner no se puede correr en la base, es FALLA', async () => {
