@@ -8,6 +8,8 @@ import { join, resolve } from 'node:path'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 
+import { serverEnv } from './test-env'
+
 const SERVER = resolve(import.meta.dir, 'dist/server.mjs')
 const TODAY = new Date().toLocaleDateString('sv-SE', { timeZone: 'UTC' })
 const DESCUENTO = 'Un descuento del 10% sobre un total de $100 deja el total en $90.'
@@ -59,7 +61,7 @@ beforeAll(async () => {
   execFileSync('git', ['init', '-q', '-b', 'main', repo])
   mkdirSync(join(repo, 'sdd/changes'), { recursive: true })
   client = new Client({ name: 'test', version: '0.0.0' })
-  await client.connect(new StdioClientTransport({ command: 'node', args: [SERVER], env: { ...(process.env as Record<string, string>), TZ: 'UTC' }, cwd: repo }))
+  await client.connect(new StdioClientTransport({ command: 'node', args: [SERVER], env: serverEnv({ TZ: 'UTC' }), cwd: repo }))
 })
 
 afterAll(async () => {

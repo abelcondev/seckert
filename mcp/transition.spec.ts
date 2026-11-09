@@ -8,6 +8,8 @@ import { join, resolve } from 'node:path'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 
+import { serverEnv } from './test-env'
+
 const SERVER = resolve(import.meta.dir, 'dist/server.mjs')
 const TODAY = new Date().toLocaleDateString('sv-SE', { timeZone: 'UTC' })
 
@@ -65,7 +67,7 @@ beforeAll(async () => {
   writeFileSync(join(repo, 'sdd/changes/2026-11-01-dudas.md'), change('dudas', 'proposed', '- **P1** ¿Con qué separador?\n'))
 
   client = new Client({ name: 'test', version: '0.0.0' })
-  await client.connect(new StdioClientTransport({ command: 'node', args: [SERVER], env: { ...(process.env as Record<string, string>), TZ: 'UTC' }, cwd: repo }))
+  await client.connect(new StdioClientTransport({ command: 'node', args: [SERVER], env: serverEnv({ TZ: 'UTC' }), cwd: repo }))
 })
 
 afterAll(async () => {
