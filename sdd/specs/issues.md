@@ -2,7 +2,7 @@
 
 ## Dónde viven
 
-Los issues de seckert son issues de GitHub del repo del remoto `origin` (ssh o https). No hay config: sin `origin` de GitHub, las herramientas fallan diciéndolo. Se leen y escriben con las herramientas del MCP (`issue_create`, `issue_get`, `issue_list`, `issue_transition`), que llaman a `gh` en la raíz del proyecto.
+Los issues de seckert son issues de GitHub del repo del remoto `origin` (ssh o https). No hay config ni otro modo: es el flujo de trabajo de seckert. Se leen y escriben con las herramientas del MCP, que llaman a `gh` en la raíz del proyecto.
 
 ## Formato
 
@@ -28,10 +28,6 @@ El tipo de un issue es una label: `type:feature`, `type:fix` o `type:task`. `iss
 
 A un issue entran solo decisiones tomadas. Una discusión abierta se resuelve antes de crearlo, en la sesión. Un issue con `## Open questions` no se aprueba: `issue_transition` a approved falla nombrando las preguntas. `issue_answer` responde una: la saca de Open questions, la agrega a `## Decisions` con quién y la fecha de hoy, y deja la respuesta como comentario.
 
-## Pedidos en modo issues
-
-Con `seckert issues: github` en el AGENTS.md o CLAUDE.md, todo pedido de trabajo se vuelve un issue sin que el usuario diga «creá un issue»; las preguntas, explicaciones y exploraciones no. Un pedido del usuario sin preguntas abiertas se crea, se aprueba con sus palabras y se toma: un FIX se hace directo y termina en PR, un CHANGE adjunta su plan y espera el «dale». Con «para después» o «anotalo», solo se crea. Lo que no está claro se discute en la sesión; cuando llega a algo concreto, Claude ofrece pasarlo a issue con lo decidido en Decisions. El contexto de inicio y el contexto vivo llevan estas reglas.
-
 ## Diseño
 
 `issue_create` con `design` adjunta el link como artifact `link` llamado `Design`; sin la API de artifacts, lo agrega a References como «Design: <url>». `issue_get` e `issue_take` devuelven el diseño.
@@ -51,3 +47,11 @@ Un issue creado sin origen lleva `Source: chat` y la fecha de hoy en `## Origin`
 ## Relaciones entre issues existentes
 
 `issue_link` marca relaciones entre issues que ya existen: `parent` lo vuelve sub-issue de otro, `blockedBy` marca los issues que tienen que cerrarse antes y `removeBlockedBy` los saca. Devuelve el padre y lo que lo bloquea. Si al tomar un issue Claude encuentra una dependencia sin marcar, lo dice y la marca con el sí del usuario.
+
+## Pedidos de trabajo
+
+Todo pedido de trabajo se vuelve un issue sin que el usuario diga «creá un issue»; las preguntas, explicaciones y exploraciones no. Un pedido del usuario sin preguntas abiertas se crea, se aprueba con sus palabras y se toma: un FIX se hace directo en la rama del issue y termina en PR, un CHANGE adjunta su plan y espera el «dale». Con «para después» o «anotalo», solo se crea. Lo que no está claro se discute en la sesión; cuando llega a algo concreto, Claude ofrece pasarlo a issue con lo decidido en Decisions. El contexto de inicio lleva estas reglas.
+
+## Sin GitHub
+
+Si el repo no tiene `origin` o su `origin` no es de GitHub, el contexto de inicio lo avisa en una línea (agregar un origin de GitHub y correr `gh auth login`) y no da las reglas de issues. Las herramientas del MCP fallan con el mismo aviso. seckert no vuelve a otro lugar para guardar el trabajo.

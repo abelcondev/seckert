@@ -2,19 +2,15 @@
 
 ## Herramientas del MCP de seckert
 
-Los changes de `sdd/changes` se leen y escriben con las herramientas del servidor MCP del plugin: `change_list` y `change_get` para leer, `change_create` para crear la propuesta, `change_update` para editar su contenido, `change_transition` para aprobar y cerrar, `task_complete` para marcar una tarea y `verify_record` para registrar una verificación. Son el camino preferido; si una no alcanza, Claude edita el archivo directamente.
+Los changes viven en su issue de GitHub y se leen y escriben solo con las herramientas del servidor MCP del plugin: `change_list` y `change_get` para leer, `change_create` para adjuntar el plan, `change_update` para editar su contenido, `change_transition` para aprobar y cerrar, `task_complete` para marcar una tarea y `verify_record` para registrar una verificación. `change_get` devuelve también `text`, el change entero con su Log: es lo que lee el verificador.
 
 ## Aprobar y cerrar
 
-Un change pasa de `proposed` a `approved` y de `approved` a `done`, en ese orden y solo con las palabras textuales del usuario. Si esas palabras no están en su último mensaje, la llamada se rechaza. Al aprobar se crea la rama `feature/<slug>` desde la base. Con preguntas abiertas (al aprobar) o tareas sin hacer (al cerrar) hay que confirmarlo con el usuario, y lo que quedó pendiente va al Log.
+Un change pasa de `proposed` a `approved` y de `approved` a `done`, en ese orden y solo con las palabras textuales del usuario. Si esas palabras no están en su último mensaje, el módulo rechaza la llamada. Al aprobar, Claude pasa a la rama del change (`feature/<slug>`, la que creó `issue_take`) o la crea desde la base. Con preguntas abiertas (al aprobar) o tareas sin hacer (al cerrar) hay que confirmarlo con el usuario, y lo que quedó pendiente va al Log.
 
 ## Tareas hechas
 
 Una tarea se marca solo con un commit que existe en la rama actual, anotado con su hash corto, y una línea de evidencia en el Log. Sin commit, el comentario queda `<!-- commit: -->`.
-
-## Edición a mano
-
-Editar a mano un change no puede cambiar su `status:` ni marcar `- [x]`: con Edit o Write, el módulo lo rechaza antes de escribir y nombra la herramienta. El resto de un change y las specs se pueden editar a mano cuando `change_update` o `spec_write` no alcanzan. Un Bash sobre `sdd/` no se controla ni se restaura después, así no se pierde lo que haga git ni nada sin commitear.
 
 ## Open questions
 
@@ -42,4 +38,4 @@ Las specs de `sdd/specs/<area>.md` describen cómo funciona el sistema hoy, una 
 
 ## Change en su issue
 
-Con la línea `seckert issues: github` en el AGENTS.md o CLAUDE.md del proyecto, un change con issue vive en el issue y no en `sdd/changes/`. El título, el Why (Problem, cita y Outcome) y el What (los criterios) salen del body del issue. El resto es el plan: el artifact `plan` llamado `Plan`, con los metadatos en un comentario HTML (status, specs, branch, issue), diagrama, preguntas, tareas, testing y log; cada tarea hecha muestra su commit. Sin la API de artifacts, el plan va en una sección `## Plan` al final del body, con sus títulos un nivel abajo. `change_create` con `issue` y sin `why` ni `what` adjunta el plan y agrega la label `seckert:change`; las demás herramientas leen y escriben el issue igual que un archivo. Al guardar, un What editado vuelve a los criterios del body y las líneas nuevas del Log quedan como un comentario del issue (una verificación, como tabla). El diseño es el artifact `link` llamado `Design`, o la referencia «Design: <url>» sin artifacts. Una copia del change queda en `.git/seckert/changes/<slug>.md`: la leen la barra, el contexto de inicio (sin llamar a gh) y el verificador. Sin la línea, todo change es un archivo, aunque tenga issue.
+Todo change vive en su issue: no hay archivos de changes en el repo ni copia local. El título, el Why (Problem, cita y Outcome) y el What (los criterios) salen del body del issue. El resto es el plan: el artifact `plan` llamado `Plan`, con los metadatos en un comentario HTML (status, specs, branch, issue), diagrama, preguntas, tareas, testing y log; cada tarea hecha muestra su commit. Sin la API de artifacts, el plan va en una sección `## Plan` al final del body, con sus títulos un nivel abajo. `change_create` exige `issue`: adjunta el plan y agrega la label `seckert:change`; si el issue ya tiene plan, falla. Al guardar, un What editado vuelve a los criterios del body y las líneas nuevas del Log quedan como un comentario del issue (una verificación, como tabla). El diseño es el artifact `link` llamado `Design`, o la referencia «Design: <url>» sin artifacts.

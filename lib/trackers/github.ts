@@ -160,6 +160,15 @@ export function githubTracker(repo: string, gh: Gh): Tracker {
       })
     },
 
+    closedWithLabel(label: string, since: string | null) {
+      const raws: { number: number; title: string; stateReason?: string; closedAt?: string | null }[] = JSON.parse(
+        gh(['issue', 'list', '--repo', repo, '--json', 'number,title,stateReason,closedAt', '--limit', '200', '--state', 'closed', '--label', label]) || '[]',
+      )
+      return raws
+        .filter(raw => raw.stateReason !== 'NOT_PLANNED' && (!since || (raw.closedAt ?? '').slice(0, 10) >= since))
+        .map(raw => ({ id: String(raw.number), title: raw.title }))
+    },
+
     setState(id: string, from: IssueState | null, to: IssueState) {
       if (to !== 'draft' && to !== 'approved' && to !== 'discarded') throw new Error(checkTransition(from ?? 'draft', to)!)
       ensureLabel(to)

@@ -12,7 +12,7 @@ import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { serverEnv } from './test-env'
 
 import { branchFor } from '../lib/issue'
-import { parseRemote } from './issues'
+import { parseRemote, repoOf } from './issues'
 
 const SERVER = resolve(import.meta.dir, 'dist/server.mjs')
 const FAKE = resolve(import.meta.dir, 'fake-gh.mjs')
@@ -82,6 +82,15 @@ test('el repo sale de origin, por ssh o https', () => {
   expect(parseRemote('https://github.com/acme/tienda.git\n')).toBe('acme/tienda')
   expect(parseRemote('https://github.com/acme/tienda')).toBe('acme/tienda')
   expect(parseRemote('git@gitlab.com:acme/tienda.git')).toBeNull()
+})
+
+test('sin origin en GitHub, el error lo dice y explica qué hacer', () => {
+  const bare = mkdtempSync(join(tmpdir(), 'seckert-sin-origin-'))
+  execFileSync('git', ['init', '-q', bare])
+  expect(() => repoOf(bare)).toThrow('seckert usa los issues de GitHub y este repo no tiene remoto origin')
+  execFileSync('git', ['remote', 'add', 'origin', 'git@gitlab.com:acme/tienda.git'], { cwd: bare })
+  expect(() => repoOf(bare)).toThrow('seckert usa los issues de GitHub y origin no es un repo de GitHub (git@gitlab.com:acme/tienda.git)')
+  rmSync(bare, { recursive: true, force: true })
 })
 
 test('expone las cuatro herramientas; get y list son solo lectura', async () => {

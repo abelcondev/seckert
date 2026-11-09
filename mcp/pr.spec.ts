@@ -1,30 +1,24 @@
-// pr_draft y release_draft contra un repo git real.
+// pr_draft y release_draft contra un repo git real; los changes viven en su issue (gh falso).
 import { afterAll, beforeAll, expect, test } from 'bun:test'
-import { execFileSync } from 'node:child_process'
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join, resolve } from 'node:path'
+import { mkdirSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
 
-import { Client } from '@modelcontextprotocol/sdk/client/index.js'
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
+import { fixture, type Fixture } from './fixture'
 
-const SERVER = resolve(import.meta.dir, 'dist/server.mjs')
-
-let repo: string
-let client: Client
+let fx: Fixture
 type Result = { isError?: boolean; content: { text: string }[] }
 
-const git = (...args: string[]) => execFileSync('git', args, { cwd: repo, encoding: 'utf8' }).trim()
+const git = (...args: string[]) => fx.git(...args)
 const put = (file: string, text: string) => {
-  mkdirSync(join(repo, file, '..'), { recursive: true })
-  writeFileSync(join(repo, file), text)
+  mkdirSync(join(fx.repo, file, '..'), { recursive: true })
+  writeFileSync(join(fx.repo, file), text)
 }
 const commit = (message: string) => {
   git('add', '-A')
   git('commit', '-q', '-m', message)
 }
 const call = async (name: string, args: Record<string, unknown>) => {
-  const result = (await client.callTool({ name, arguments: args })) as Result
+  const result = (await fx.client.callTool({ name, arguments: args })) as Result
   return result.isError ? { error: result.content[0]!.text } : JSON.parse(result.content[0]!.text)
 }
 
@@ -70,19 +64,24 @@ ${tasks}
 - **L1** (pedido original, verbatim): cupones
 ${log}`
 
+// El plan de un change en el gh falso, para cambiarle la rama.
+const setBranch = (id: string, branch: string) => {
+  const data = fx.db()
+  const plan = data.issues.find(i => String(i.number) === id)!.artifacts[0]
+  plan.body = plan.body.replace(/^branch: .*$/m, `branch: ${branch}`)
+  fx.saveDb(data)
+}
+
 beforeAll(async () => {
-  repo = mkdtempSync(join(tmpdir(), 'seckert-mcp-pr-'))
-  git('init', '-q', '-b', 'main')
-  git('config', 'user.email', 't@t')
-  git('config', 'user.name', 't')
-  put('package.json', '{ "name": "tienda", "version": "1.3.2" }\n')
-  put('src/app.ts', 'x\n')
-  commit('chore: init')
+  fx = await fixture('seckert-mcp-pr-', r => {
+    writeFileSync(join(r, 'package.json'), '{ "name": "tienda", "version": "1.3.2" }\n')
+    mkdirSync(join(r, 'src'))
+    writeFileSync(join(r, 'src/app.ts'), 'x\n')
+  })
   git('tag', 'v1.3.2')
 
   git('switch', '-q', '-c', 'feature/cupones')
-  put(
-    'sdd/changes/2026-11-01-cupones.md',
+  fx.seedChange(
     change(
       'cupones',
       '- [x] T1 Calcular el descuento (sensible: dinero) <!-- commit: aaaaaaa -->\n- [x] T2 Campo en el checkout <!-- commit: bbbbbbb -->',
@@ -94,19 +93,15 @@ beforeAll(async () => {
   commit('feat(pedidos): cupones de descuento')
 
   git('switch', '-q', '-c', 'feature/banner', 'main')
-  put('sdd/changes/2026-11-03-banner.md', change('banner', '- [x] T1 Banner <!-- commit: ccccccc -->').replace('# Cupones de descuento', '# Banner de bienvenida'))
+  fx.seedChange(change('banner', '- [x] T1 Banner <!-- commit: ccccccc -->').replace('# Cupones de descuento', '# Banner de bienvenida').replace('design: https://claude.ai/artifact/abc', 'design: none'))
   put('src/Banner.tsx', 'x\n')
   put('scripts/session-context.sh', 'x\n')
   put('src/useSessionStorage.ts', 'x\n')
   commit('feat(home): banner')
-
-  client = new Client({ name: 'test', version: '0.0.0' })
-  await client.connect(new StdioClientTransport({ command: 'node', args: [SERVER], cwd: repo }))
 })
 
 afterAll(async () => {
-  await client?.close()
-  rmSync(repo, { recursive: true, force: true })
+  await fx?.close()
 })
 
 test('pr_draft arma base, título y cuerpo con Risk de archivos y tareas sensibles y Evidence de la última verificación', async () => {
@@ -118,7 +113,8 @@ test('pr_draft arma base, título y cuerpo con Risk de archivos y tareas sensibl
   expect(pr.has_migration).toBe(true)
   const body: string = pr.body
   expect(body).toContain('## Why\n\nEl checkout no acepta cupones.')
-  expect(body).toContain('## What\n\n**Cupón**\n- El cliente escribe un código')
+  expect(body.startsWith('Fixes #1\n\n## Why')).toBe(true)
+  expect(body).toContain('## What\n\n- El cliente escribe un código')
   expect(body).toContain('## Testing\n\n- Runner: `bun test`')
   expect(body).toContain('Diseño: https://claude.ai/artifact/abc')
   expect(body).toContain('## Diagram\n\n```mermaid\nerDiagram\n  CUPON ||--o{ PEDIDO : aplica\n```')
@@ -144,23 +140,13 @@ test('pr_draft en gitflow apunta a develop, y un hotfix a main', async () => {
   git('switch', '-q', 'feature/banner')
   expect((await call('pr_draft', { slug: 'banner' })).base).toBe('develop')
   git('switch', '-q', '-c', 'hotfix/banner')
-  put('sdd/changes/2026-11-03-banner.md', change('banner', '- [x] T1 Banner <!-- commit: ccccccc -->').replace('branch: feature/banner', 'branch: hotfix/banner'))
+  setBranch('2', 'hotfix/banner')
+  put('src/hotfix.ts', 'x\n')
   commit('fix: hotfix')
   expect((await call('pr_draft', { slug: 'banner' })).base).toBe('main')
+  setBranch('2', 'feature/banner')
   git('switch', '-q', 'main')
   git('branch', '-q', '-D', 'develop', 'hotfix/banner')
-})
-
-test('pr_draft de un change que sale de un issue lleva Fixes #n', async () => {
-  git('switch', '-q', '-c', 'feature/csv', 'main')
-  put('sdd/changes/2026-11-04-csv.md', change('csv', '- [x] T1 CSV <!-- commit: ddddddd -->').replace('branch: feature/csv\n', 'branch: feature/csv\nissue: #12\n'))
-  put('src/csv.ts', 'x\n')
-  commit('feat: csv')
-  const pr = await call('pr_draft', { slug: 'csv' })
-  expect(pr.issue).toBe('12')
-  expect(pr.body.startsWith('Fixes #12\n\n## Why')).toBe(true)
-  git('switch', '-q', 'main')
-  git('branch', '-q', '-D', 'feature/csv')
 })
 
 test('release_draft propone minor si hay feat, la rama según el flujo, notas y los archivos de versión', async () => {
@@ -170,15 +156,17 @@ test('release_draft propone minor si hay feat, la rama según el flujo, notas y 
   commit('fix(checkout): el total no se redondeaba')
   put('docs.md', 'x\n')
   commit('docs: notas')
-  put('sdd/changes/2026-11-01-cupones.md', change('cupones', '- [x] T1 x <!-- commit: aaaaaaa -->').replace('status: approved', 'status: done'))
-  commit('docs(sdd): cierra cupones')
+  // El merge del PR cerró el issue de cupones; el de banner sigue abierto.
+  const data = fx.db()
+  Object.assign(data.issues[0]!, { state: 'CLOSED', stateReason: 'COMPLETED', closedAt: new Date().toISOString() })
+  fx.saveDb(data)
 
   const rel = await call('release_draft', {})
   expect(rel).toMatchObject({ last_tag: 'v1.3.2', version: '1.4.0', branch: 'release/1.4.0', from: 'main', version_files: ['package.json'] })
   expect(rel.notes).toContain('## Features\n\n- cupones de descuento')
   expect(rel.notes).toContain('## Fixes\n\n- el total no se redondeaba')
   expect(rel.notes).not.toContain('notas')
-  expect(rel.changes_done).toEqual([{ slug: 'cupones', title: 'Cupones de descuento' }])
+  expect(rel.changes_done).toEqual([{ issue: '#1', title: 'Cupones de descuento' }])
 })
 
 test('release_draft con solo fixes propone patch; con versión indicada la respeta', async () => {

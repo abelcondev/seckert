@@ -1,7 +1,7 @@
 ---
 type: regex
-pattern: 'status: proposed'
+pattern: '"name":\s*"Plan",\s*"body":\s*"<!-- seckert:plan\\nstatus: proposed'
 match: contains
-target: {source: file, path: sdd/changes/2026-10-28-exportar-pedidos.md}
+target: {source: file, path: .gh.json}
 ---
-Ajustar no es aprobar: sigue en proposed.
+Ajustar no es aprobar: el plan sigue en proposed.

@@ -12,15 +12,17 @@ export function parseRemote(url: string): string | null {
   return match ? `${match[1]}/${match[2]}` : null
 }
 
+const NEEDS_GITHUB = 'Avisale al usuario: hace falta un origin en GitHub (git remote add origin …) y `gh auth login`.'
+
 export function repoOf(root: string): string {
   let url: string
   try {
     url = execFileSync('git', ['remote', 'get-url', 'origin'], { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })
   } catch {
-    throw new Error('el repo no tiene remoto origin: los issues van al repo de GitHub de origin')
+    throw new Error(`seckert usa los issues de GitHub y este repo no tiene remoto origin. ${NEEDS_GITHUB}`)
   }
   const repo = parseRemote(url)
-  if (!repo) throw new Error(`origin no es un repo de GitHub: ${url.trim()}`)
+  if (!repo) throw new Error(`seckert usa los issues de GitHub y origin no es un repo de GitHub (${url.trim()}). ${NEEDS_GITHUB}`)
   return repo
 }
 

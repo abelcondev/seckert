@@ -1,4 +1,4 @@
-// Un change que vive en su issue: con `seckert issues: github` en AGENTS.md, las
+// Un change vive en su issue: las
 // herramientas del change leen y escriben el issue y su artifact plan (gh falso).
 import { afterAll, beforeAll, beforeEach, expect, test } from 'bun:test'
 import { execFileSync } from 'node:child_process'
@@ -44,7 +44,7 @@ beforeAll(async () => {
   mkdirSync(repo)
   execFileSync('git', ['init', '-q', '-b', 'main', repo])
   execFileSync('git', ['remote', 'add', 'origin', 'git@github.com:acme/tienda.git'], { cwd: repo })
-  writeFileSync(join(repo, 'AGENTS.md'), '# tienda\n\n- seckert issues: github\n')
+  writeFileSync(join(repo, 'AGENTS.md'), '# tienda\n')
   git('add', '-A')
   git('commit', '-q', '-m', 'init')
   const bin = join(dir, 'bin')
@@ -132,19 +132,6 @@ test('sin la API de artifacts, el plan va en ## Plan del body y el issue se sigu
   expect((await call('issue_get', { id: '1' })).value.criteria).toEqual(ISSUE.criteria)
 })
 
-test('sin la línea en AGENTS.md, un change con issue sigue siendo un archivo', async () => {
-  writeFileSync(join(repo, 'AGENTS.md'), '# tienda\n')
-  try {
-    await call('issue_create', ISSUE)
-    const { value } = await call('change_create', { slug: 'csv-archivo', title: 'x', why: 'x', what: ['x'], tasks: ['x'], pedido: 'x', issue: '1' })
-    expect(value.file).toMatch(/^sdd\/changes\/.*-csv-archivo\.md$/)
-    expect(db().issues[0]!.artifacts ?? []).toEqual([])
-  } finally {
-    writeFileSync(join(repo, 'AGENTS.md'), '# tienda\n\n- seckert issues: github\n')
-    rmSync(join(repo, 'sdd'), { recursive: true, force: true })
-  }
-})
-
 test('verify_record deja la verificación como tabla en un comentario y reabre la tarea en el plan', async () => {
   await takenChange()
   await call('change_transition', { slug: 'exportar-pedidos-a-csv', to: 'approved', aprobacion: 'dale' })
@@ -212,20 +199,17 @@ test('pr_draft de un change en su issue: Why y What del issue y Fixes #n; cerrar
   expect(existsSync(join(repo, 'sdd/changes'))).toBe(false)
 })
 
-test('change_get da la ruta de la copia local, que es la que se le pasa al verificador', async () => {
+test('change_get da el texto entero del change, con el Log, para el verificador; no deja copia local', async () => {
   await takenChange()
   const { value } = await call('change_get', { slug: 'exportar-pedidos-a-csv' })
-  expect(value.path).toBe('.git/seckert/changes/exportar-pedidos-a-csv.md')
-  expect(readFileSync(join(repo, value.path), 'utf8')).toContain('## What\n\n- Hay un botón "Exportar"')
+  expect(value.path).toBeUndefined()
+  expect(value.text).toContain('## What\n\n- Hay un botón "Exportar"')
+  expect(value.text).toContain('- **L1** (pedido original, verbatim): exportar pedidos')
+  expect(existsSync(join(repo, '.git/seckert'))).toBe(false)
 })
 
-test('el contexto de inicio lee la copia local, sin llamar a gh', async () => {
-  await takenChange()
-  await call('change_get', { slug: 'exportar-pedidos-a-csv' })
-  const calls = db().calls.length
-  const out = execFileSync('node', [SERVER, '--context'], { cwd: repo, encoding: 'utf8', env: serverEnv({ PATH: `${join(dir, 'bin')}:${process.env.PATH}`, FAKE_GH_STATE: state }) })
-  expect(out).toContain('issue #1 (proposed, 0/2 tasks)')
-  expect(db().calls.length).toBe(calls)
+test('el servidor no tiene modo --context: el contexto de inicio no lista changes', () => {
+  expect(readFileSync(SERVER, 'utf8')).not.toContain('--context')
 })
 
 test('issue_take devuelve el diseño del issue', async () => {

@@ -3,6 +3,6 @@ type: regex
 pattern: 'email|e-mail|correo'
 flags: i
 match: contains
-target: {source: file, path: sdd/changes/2026-10-28-exportar-pedidos.md}
+target: {source: file, path: .gh.json}
 ---
-El pedido nuevo queda en What o Tasks del mismo change.
+El pedido nuevo queda en los criterios del issue o en las tareas del plan.

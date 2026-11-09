@@ -1,7 +1,7 @@
 ---
 type: regex
-pattern: 'verify:[^\n]*PREEXISTENTE'
+pattern: '"name":\s*"Plan",\s*"body":\s*"(?:[^"\\]|\\.)*verify:(?:[^"\\]|\\[^n])*PREEXISTENTE'
 match: contains
-target: {source: file, path: sdd/changes/2026-10-29-envio-express.md}
+target: {source: file, path: .gh.json}
 ---
 La línea `verify:` del Log marca el fallo como `PREEXISTENTE`.

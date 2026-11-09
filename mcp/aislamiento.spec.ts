@@ -21,7 +21,7 @@ beforeAll(() => {
 
 afterAll(() => rmSync(sentinel, { recursive: true, force: true }))
 
-for (const spec of ['issues.spec.ts', 'issue-change.spec.ts', 'board.spec.ts']) {
+for (const spec of ['issues.spec.ts', 'issue-change.spec.ts', 'board.spec.ts', 'transition.spec.ts', 'update.spec.ts', 'verify.spec.ts', 'server.spec.ts', 'pr.spec.ts']) {
   test(`${spec} con CLAUDE_PROJECT_DIR heredado no crea ramas ni cambia HEAD en ese proyecto`, () => {
     const ran = spawnSync('bun', ['test', join('mcp', spec)], { cwd: ROOT, encoding: 'utf8', env: { ...process.env, CLAUDE_PROJECT_DIR: sentinel } })
     expect(git('branch', '--format=%(refname:short)')).toBe('main')

@@ -1,16 +1,8 @@
 // verify_record: la línea verify con formato fijo, reabrir tareas y el tope de 3 rondas.
 import { afterAll, beforeAll, expect, test } from 'bun:test'
-import { execFileSync } from 'node:child_process'
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join, resolve } from 'node:path'
 
-import { Client } from '@modelcontextprotocol/sdk/client/index.js'
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
+import { fixture, type Fixture } from './fixture'
 
-import { serverEnv } from './test-env'
-
-const SERVER = resolve(import.meta.dir, 'dist/server.mjs')
 const TODAY = new Date().toLocaleDateString('sv-SE', { timeZone: 'UTC' })
 const DESCUENTO = 'Un descuento del 10% sobre un total de $100 deja el total en $90.'
 const CODIGO = 'Un código desconocido no cambia el total'
@@ -47,26 +39,21 @@ x
 - **L1** (pedido original, verbatim): x
 ${log}`
 
-let repo: string
-let client: Client
+let fx: Fixture
 type Result = { isError?: boolean; content: { text: string }[] }
 
-const write = (slug: string, log: string) => writeFileSync(join(repo, `sdd/changes/2026-11-01-${slug}.md`), change(log))
-const read = (slug: string) => readFileSync(join(repo, `sdd/changes/2026-11-01-${slug}.md`), 'utf8')
-const record = async (args: Record<string, unknown>) => (await client.callTool({ name: 'verify_record', arguments: args })) as Result
+// Cada caso es un change propio en su issue (rama feature/<slug>).
+const write = (slug: string, log: string) => fx.seedChange(change(log).replace('branch: feature/x', `branch: feature/${slug}`))
+const read = (slug: string) => fx.changeText(slug)
+const record = async (args: Record<string, unknown>) => (await fx.client.callTool({ name: 'verify_record', arguments: args })) as Result
 const json = (result: Result) => JSON.parse(result.content[0]!.text)
 
 beforeAll(async () => {
-  repo = mkdtempSync(join(tmpdir(), 'seckert-mcp-v-'))
-  execFileSync('git', ['init', '-q', '-b', 'main', repo])
-  mkdirSync(join(repo, 'sdd/changes'), { recursive: true })
-  client = new Client({ name: 'test', version: '0.0.0' })
-  await client.connect(new StdioClientTransport({ command: 'node', args: [SERVER], env: serverEnv({ TZ: 'UTC' }), cwd: repo }))
+  fx = await fixture('seckert-mcp-v-')
 })
 
 afterAll(async () => {
-  await client?.close()
-  rmSync(repo, { recursive: true, force: true })
+  await fx?.close()
 })
 
 test('primer fallo: escribe la línea verify con formato fijo y reabre la tarea', async () => {

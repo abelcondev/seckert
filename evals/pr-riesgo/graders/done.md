@@ -1,7 +1,7 @@
 ---
 type: regex
-pattern: 'status:\s*done'
+pattern: '"name":\s*"Plan",\s*"body":\s*"<!-- seckert:plan\\nstatus: done'
 match: contains
-target: {source: file, path: sdd/changes/2026-10-29-cupones.md}
+target: {source: file, path: .gh.json}
 ---
 "cerralo" deja el change en done.

@@ -2,7 +2,7 @@
 # Change de cupones (dinero) terminado y verificado, en su rama, con un remoto local para el push.
 set -e
 here=$(cd "$(dirname "$0")" && pwd)
-"$here/../_fixture/setup.sh" "$here/overlay"
+"$here/../_fixture/setup.sh"
 git switch -qc feature/cupones
 cat > src/cupones.ts <<'TS'
 const CUPONES: Record<string, number> = { SECK10: 10 }
@@ -27,7 +27,5 @@ test('un cupón desconocido no cambia el total', () => {
 TS
 git add -A
 git -c user.name=eval -c user.email=eval@seckert commit -qm "feat(cupones): aplicar cupón de descuento al total"
-git init -q --bare .remote.git
-echo .remote.git >> .git/info/exclude
-git remote add origin "$PWD/.remote.git"
-git push -q origin main
+"$here/../_fixture/gh-repo.sh"
+bun "$here/../_fixture/changes.ts" "$here/changes"

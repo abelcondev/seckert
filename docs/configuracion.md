@@ -81,16 +81,16 @@ Pídele a Claude "armá el AGENTS.md" o "ordená el AGENTS.md" y lo rellena con 
 > [!TIP]
 > Conviene que sea corto (60-150 líneas, porque se carga en cada sesión), con instrucciones concretas, sin secretos y sin nada que ya imponga una herramienta. En un monorepo, uno por subproyecto. Cuando Claude se equivoca dos veces en lo mismo, se agrega ahí.
 
-## 📟 Barra, contexto vivo y ahorro de tokens
+## 📟 Aprobaciones y ahorro de tokens
 
 seckert trae un módulo (`hooks/register.tsx`) que corre dentro de Claude Code:
 
-- **Barra encima del prompt** con el change activo, solo cuando hay uno abierto:
-  `seckert csv-pedidos · 1/3 · sigue: T2 Filtro por fecha · feature/csv-pedidos`
-- **Contexto vivo.** Cuando cambia un change (tarea marcada, aprobación, rama), Claude se entera junto con tu siguiente mensaje. Si nada cambió, no se manda nada.
+- **Aprobación con tus palabras.** Claude solo aprueba o cierra un change con palabras que estén en tu último mensaje.
 - **Salidas recortadas.** Tests, builds, linters y typecheck de más de 80 líneas le llegan a Claude como fallos con contexto y el resumen final. Con `SECKERT_FULL=1` delante del comando llega entera.
 
 Además, seckert le pide a Claude respuestas cortas, tests en modo silencioso y Grep para archivos enormes, y el verificador corre en Sonnet.
 
 > [!NOTE]
 > El módulo usa la API de plugins de función, en acceso anticipado: necesita una versión reciente de Claude Code. Con una versión anterior, el resto del plugin funciona igual.
+
+Para saber en qué estás, preguntá "¿en qué estamos?": lista los issues abiertos y el avance de cada change.

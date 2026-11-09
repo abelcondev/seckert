@@ -20,7 +20,7 @@ bun evals/metrics.ts evals/results/<version>.json   # palabras, tokens, segundos
 - La comparación con Claude sin seckert (`--ablation with-without`) dobla el costo y casi no cambia entre versiones, porque no depende de nuestro código. Ya está medida en `RESULTS.md` (0.8.0: 51/51 con seckert, 21/51 sin seckert). Se repite solo en una release mayor o al agregar un caso nuevo, para saber si seckert aporta.
 - Solo hay casos para reglas que Claude no cumple sin seckert, o que seckert podría romper (`fix-texto-boton`: lo chico se hace directo). Después de 0.8.1 se quitaron los 5 que también pasaban siempre sin seckert: `hotfix-gitflow`, `iterar-propuesta`, `pantalla-nueva-fix`, `solo-lectura` y `spec-envio-gratis`. `iterar-propuesta` volvió en 0.9.0: ahora exige `change_update`, que Claude sin seckert no tiene. Antes de agregar uno, preguntarse si Claude ya lo hace solo.
 - Usamos 3 corridas y no 5 porque 5 se come casi todo el límite de uso de 5 horas. Si igual se corta, las corridas cortadas dan error de API y hay que repetir esos casos con `--case`. Para probar un ajuste alcanza con los casos afectados.
-- Los casos de issues (`--tag issues`) usan un `gh` falso que guarda issues y PRs en `.gh.json`. Hay que correrlos con `PATH="$PWD/evals/_fixture/bin:$PATH"` delante de `claude plugin eval`, para que el servidor MCP lo encuentre. El Bash de Claude no hereda ese PATH: su `gh pr create` llama al `gh` real y falla sin sesión, por eso esos graders miran el comando y no el PR creado.
+- Todos los casos usan un `gh` falso que guarda issues y PRs en `.gh.json`: el trabajo vive en issues de GitHub. Hay que correr las evals con `PATH="$PWD/evals/_fixture/bin:$PATH"` delante de `claude plugin eval`, para que el servidor MCP lo encuentre. Un caso que parte de un change lo trae en `<caso>/changes/<slug>.md`, y el scaffold lo siembra como issue con su plan (`_fixture/changes.ts`). El Bash de Claude no hereda ese PATH: su `gh pr create` llama al `gh` real y falla sin sesión, por eso esos graders miran el comando y no el PR creado.
 - Correrla antes de subir la versión en `plugin.json`, y anotar los números en `RESULTS.md`.
 - Un solo caso: `--case <nombre>`. Varios: `--tag <tag>` (`--case` repetido corre solo uno).
 - `--keep-temp` conserva las trazas, que son las que usa `metrics.ts`. Las copia a `evals/results/<version>-traces/`, donde se pueden leer las respuestas de cada corrida.
@@ -30,13 +30,13 @@ bun evals/metrics.ts evals/results/<version>.json   # palabras, tokens, segundos
 
 | Caso | Regla de seckert |
 |---|---|
-| `fix-texto-boton` | Un cambio chico se hace directo: sin propuesta ni anunciar la ruta |
-| `change-cupones` | Lógica nueva de dinero: propuesta en `proposed` y nada de código |
-| `change-grande-partes` | Un pedido con partes que sirven solas se parte en varios changes en orden; el layout queda como FIX; la parte de datos lleva un `erDiagram` |
-| `iterar-propuesta` | Los ajustes van al mismo change con `change_update` (quitar una tarea, sumar un punto), que sigue en `proposed` |
-| `aprobar-con-dale` | "dale" aprueba el change, lo anota en el Log y crea `feature/<slug>` |
+| `fix-texto-boton` | Un cambio chico crea su issue y se hace directo en su rama: sin plan ni anunciar la ruta |
+| `change-cupones` | Lógica nueva de dinero: issue con ruta CHANGE, plan en `proposed` (o issue en draft con preguntas) y nada de código |
+| `change-grande-partes` | Un pedido con partes que sirven solas se vuelve un issue partido en sub-issues; el layout queda como FIX |
+| `iterar-propuesta` | Los ajustes van al mismo plan con `change_update` (quitar una tarea, sumar un punto), que sigue en `proposed` |
+| `aprobar-con-dale` | "dale" aprueba el plan del issue, lo anota en el Log y crea `feature/<slug>` |
 | `bug-test-primero` | Con `seckert tests: strict`, el test se escribe antes del fix |
-| `fix-commit-gitflow` | Con `develop`, el commit va en `fix/…`, no en la rama protegida |
+| `fix-commit-gitflow` | Con `develop`, el pedido se toma como issue y el commit va en su rama `fix/…`, no en la rama protegida |
 | `verify-tercera-ronda` | Al tercer fallo del mismo punto, verify lo deja en Preguntas abiertas en vez de reabrir la tarea |
 | `verify-segunda-ronda` | Desde la segunda ronda, al verificador se le pasa solo el punto que falló |
 | `verify-preexistente` | Un test que ya fallaba en `main` se comprueba en la base, queda `PREEXISTENTE` y no reabre tareas |
@@ -45,12 +45,12 @@ bun evals/metrics.ts evals/results/<version>.json   # palabras, tokens, segundos
 | `pr-riesgo` | El PR de un change con lógica de dinero trae Risk, How to revert y Evidence |
 | `tomar-issue-fix` | Un issue aprobado de ruta FIX se toma con `issue_take` (rama `fix/` enlazada), se hace directo y su PR empieza con `Fixes #1` y completa How to revert |
 | `crear-issue-es` y `crear-issue-en` | Un issue se crea con el contrato v2 (títulos en inglés) y el contenido en el idioma del pedido. Lo ya decidido va a Decisions, lleva su tipo y queda en draft. |
-| `issue-change-diseno` | Modo issues: un CHANGE con diseño se planifica en su issue (artifact Plan, sin Why/What ni archivo en `sdd/changes`) y menciona el diseño |
-| `issue-change-sin-artifacts` | Modo issues sin la API de artifacts: el plan va en `## Plan` del body |
-| `pedido-natural` | Modo issues: «vamos a cambiar…» crea el issue, lo aprueba con las palabras del usuario, lo toma y hace el FIX |
-| `pregunta-sin-issue` | Modo issues: una pregunta se responde y no crea issues |
-| `feature-en-partes` | Modo issues: una feature grande se divide en sub-issues nativos con dependencias, aprobados con el «dale», sin rama para el padre ni código |
-| `parte-bloqueada` | Modo issues: tomar un sub-issue bloqueado avisa qué lo bloquea y pregunta, sin forzar |
+| `issue-change-diseno` | Un CHANGE con diseño se planifica en su issue (artifact Plan, sin Why/What) y menciona el diseño |
+| `issue-change-sin-artifacts` | Sin la API de artifacts: el plan va en `## Plan` del body |
+| `pedido-natural` | «vamos a cambiar…» crea el issue, lo aprueba con las palabras del usuario, lo toma y hace el FIX |
+| `pregunta-sin-issue` | Una pregunta se responde y no crea issues |
+| `feature-en-partes` | Una feature grande se divide en sub-issues nativos con dependencias, aprobados con el «dale», sin rama para el padre ni código |
+| `parte-bloqueada` | Tomar un sub-issue bloqueado avisa qué lo bloquea y pregunta, sin forzar |
 | `tablero-planificar` | Con tablero: «poné el 1 como urgente, tamaño M, en este cycle» usa `board_plan` y el tablero queda con Urgent, M y el cycle actual |
 | `tablero-cycle` | Con tablero: «¿qué entra en este cycle?» usa `board_list` y responde con el cycle actual ordenado por prioridad |
 | `tomar-issue-change` | Un issue aprobado de ruta CHANGE se toma en `feature/<slug>` y se convierte en una propuesta con `issue: #1` y el mismo slug, sin tocar código |

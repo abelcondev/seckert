@@ -31,6 +31,7 @@ const out = issue => ({
   url: `https://github.com/${flag('--repo')}/issues/${issue.number}`,
   state: issue.state,
   stateReason: issue.stateReason ?? '',
+  closedAt: issue.closedAt ?? null,
   labels: issue.labels.map(name => ({ name })),
   closedByPullRequestsReferences: issue.prs ?? [],
   parent: issue.parent ? { number: issue.parent } : null,
@@ -53,7 +54,7 @@ if (group === 'label' && cmd === 'create') {
 } else if (group === 'issue' && cmd === 'list') {
   const state = flag('--state') ?? 'open'
   const labels = flags('--label')
-  const list = db.issues.filter(i => (state === 'all' || i.state === 'OPEN') && labels.every(l => i.labels.includes(l)))
+  const list = db.issues.filter(i => (state === 'all' || i.state === (state === 'closed' ? 'CLOSED' : 'OPEN')) && labels.every(l => i.labels.includes(l)))
   process.stdout.write(JSON.stringify(list.map(out)))
 } else if (group === 'issue' && cmd === 'edit') {
   const issue = find(args[2])
@@ -66,6 +67,7 @@ if (group === 'label' && cmd === 'create') {
   const issue = find(args[2])
   issue.state = 'CLOSED'
   issue.stateReason = flag('--reason') === 'not planned' ? 'NOT_PLANNED' : 'COMPLETED'
+  issue.closedAt = new Date().toISOString()
 } else if (group === 'issue' && cmd === 'comment') {
   find(args[2]).comments.push(flag('--body'))
 } else if (group === 'issue' && cmd === 'develop' && args[2] === '--list') {

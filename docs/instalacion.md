@@ -4,6 +4,8 @@
 
 Necesitas Claude Code actualizado y acceso al repo privado [`abelcondev/seckert`](https://github.com/abelcondev/seckert) con tu usuario de GitHub. Es privado: solo entra quien tenga acceso al repo.
 
+En cada proyecto, seckert trabaja sobre los issues del repo de GitHub de `origin`. Necesita [`gh`](https://cli.github.com) con sesión iniciada (`gh auth login`).
+
 ## Con un prompt (recomendado)
 
 Abre Claude Code en cualquier carpeta y pega el prompt del [README](../README.md#-instalación). Comprueba el acceso, agrega el marketplace, instala (o actualiza) y te dice qué versión quedó.
