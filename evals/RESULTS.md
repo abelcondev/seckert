@@ -2,6 +2,18 @@
 
 Cómo se corren y qué mide cada caso: [README.md](README.md). Cada celda es **con seckert / sin seckert**: el mismo modelo, los mismos pedidos y el mismo repo de prueba, con el plugin y sin él.
 
+## 2.0.0 (sin publicar) · GitHub issues como único flujo · 2026-11-09
+
+Change `github-issues-como-flujo-por-defecto` (#14): sin `sdd/changes`, sin la línea `seckert issues: github`, sin barra ni copia local. Todos los casos parten de issues en el `gh` falso. Los 25 casos con 1 corrida, con seckert (`--ablation none`). Modelo `claude-opus-5-5`. Costo: $5,12 + $0,70 de repetir los 3 que fallaron.
+
+Resultado: 22/25 en la primera corrida; los 3 que fallaron pasaron al repetirlos.
+
+Notas:
+- `qa-sin-navegador` fallaba por el armado, no por seckert: el `.claude/settings.local.json` del overlay nunca se commiteó porque un `.gitignore` global lo ignora. El scaffold ahora escribe la preferencia.
+- `feature-en-partes` propuso la división sin crearla aunque el pedido ya decía «dale con la división»; al repetirlo, la creó.
+- `issue-change-diseno`: el juez votó FALLA aunque la respuesta nombraba el diseño; al repetirlo, pasó.
+- Graders que cambiaron de sentido: `change-grande-partes` espera sub-issues en lugar de varios archivos de changes, y los FIX chicos esperan `issue_take` en lugar de «sin rama ni commit».
+
 ## 1.5.0 (sin publicar) · tablero en GitHub Projects · 2026-11-09
 
 Change `tablero-github`: el tablero sigue el estado de los issues, con prioridad, tamaño y cycles. Los dos casos nuevos con 3 corridas y los 12 casos de issues con 1 corrida como regresión, todos con seckert. Modelo `claude-opus-5-5`. Costo: $0,79 + $2,18 de la regresión + $0,33 de la repetición de `tablero-planificar`.
