@@ -1,12 +1,7 @@
 // Los changes viven en su issue de GitHub. El texto del
 // change se arma desde el issue y su artifact plan (lib/issue-change.ts); al
 // guardar, el plan vuelve al artifact (o al body, sin artifacts), los criterios
-// editados vuelven al body y lo nuevo del Log queda como comentario. Una copia
-// del texto queda en .git/seckert/changes para los hooks, que no llaman a gh.
-import { execFileSync } from 'node:child_process'
-import { existsSync, mkdirSync, readdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs'
-import { join, relative, resolve } from 'node:path'
-
+// editados vuelven al body y lo nuevo del Log queda como comentario.
 import { parseChange, renderChange, SLUG, type NewChange } from '../lib/change'
 import { attachPlan, changeFromIssue, criteriaOf, logComment, newLogLines, PLAN_NAME, planFromChange, planInBody } from '../lib/issue-change'
 import { ArtifactsUnavailable } from '../lib/trackers/github'
@@ -19,44 +14,6 @@ const DESIGN_NAME = 'Design'
 
 export type IssueSource = { number: string; artifact: number | null; plan: string; criteria: string[] }
 
-function cacheDir(root: string): string {
-  const gitDir = execFileSync('git', ['rev-parse', '--git-dir'], { cwd: root, encoding: 'utf8' }).trim()
-  return join(resolve(root, gitDir), 'seckert', 'changes')
-}
-
-// La ruta de la copia, relativa a la raíz: la lee el verificador.
-export function cachePath(root: string, slug: string): string {
-  return relative(root, join(cacheDir(root), `${slug}.md`))
-}
-
-// Los changes de issues según la copia local, sin llamar a gh (para el contexto de inicio).
-export function readCachedChanges(root: string): Omit<ChangeFile, 'source'>[] {
-  let dir: string
-  try {
-    dir = cacheDir(root)
-  } catch {
-    return []
-  }
-  if (!existsSync(dir)) return []
-  return readdirSync(dir)
-    .filter(name => name.endsWith('.md'))
-    .map(name => {
-      const text = readFileSync(join(dir, name), 'utf8')
-      const parsed = parseChange(text)
-      return { ...parsed, slug: name.slice(0, -3), file: `issue #${parsed.issue ?? '?'}`, text }
-    })
-}
-
-function cache(root: string, slug: string, text: string): void {
-  try {
-    const dir = cacheDir(root)
-    mkdirSync(dir, { recursive: true })
-    writeFileSync(join(dir, `${slug}.md`), text)
-  } catch {
-    // sin git o sin permisos: la copia es solo para los hooks
-  }
-}
-
 function artifactsOf(id: string, issues: ReturnType<typeof tracker>['issues']): Artifact[] | null {
   try {
     return issues.artifacts.list(id)
@@ -68,7 +25,7 @@ function artifactsOf(id: string, issues: ReturnType<typeof tracker>['issues']): 
 
 const slugOfBranch = (branch: string | null) => branch?.split('/').slice(1).join('/') || null
 
-function fromIssue(root: string, issue: TrackedIssue, artifacts: Artifact[] | null): ChangeFile | null {
+function fromIssue(issue: TrackedIssue, artifacts: Artifact[] | null): ChangeFile | null {
   const planArtifact = artifacts?.find(a => a.type === 'plan' && a.name === PLAN_NAME) ?? null
   const plan = planArtifact?.body ?? planInBody(issue.rawBody)
   if (!plan) return null
@@ -77,7 +34,6 @@ function fromIssue(root: string, issue: TrackedIssue, artifacts: Artifact[] | nu
   const text = changeFromIssue({ title, body, plan, design })
   const parsed = parseChange(text)
   const slug = slugOfBranch(parsed.branch) ?? `issue-${issue.id}`
-  cache(root, slug, text)
   return { ...parsed, slug, file: `issue #${issue.id}`, text, source: { number: issue.id, artifact: planArtifact?.number ?? null, plan, criteria: body.criteria } }
 }
 
@@ -85,16 +41,8 @@ export function readIssueChanges(root: string): ChangeFile[] {
   const { issues } = tracker(root)
   const changes = issues
     .withLabel(CHANGE_LABEL)
-    .map(issue => fromIssue(root, issue, artifactsOf(issue.id, issues)))
+    .map(issue => fromIssue(issue, artifactsOf(issue.id, issues)))
     .filter((change): change is ChangeFile => change !== null)
-  // La copia de un issue que ya no está abierto con plan se borra.
-  const keep = new Set(changes.map(change => `${change.slug}.md`))
-  try {
-    const dir = cacheDir(root)
-    if (existsSync(dir)) for (const name of readdirSync(dir)) if (!keep.has(name)) unlinkSync(join(dir, name))
-  } catch {
-    // la copia es solo para los hooks
-  }
   return changes
 }
 
@@ -105,13 +53,12 @@ export function createIssueChange(root: string, change: NewChange & { issue: str
   const id = change.issue.replace(/^#/, '')
   const issue = issues.get(id)
   const artifacts = artifactsOf(id, issues)
-  if (fromIssue(root, issue, artifacts)) throw new Error(`El issue #${id} ya tiene un plan. Para ajustarlo, usá change_update.`)
+  if (fromIssue(issue, artifacts)) throw new Error(`El issue #${id} ya tiene un plan. Para ajustarlo, usá change_update.`)
   const plan = planFromChange(renderChange({ ...change, why: change.why || '-', what: change.what?.length ? change.what : ['-'], issue: id }))
   if (artifacts) issues.artifacts.create(id, { type: 'plan', name: PLAN_NAME, body: plan })
   else issues.updateRawBody(id, attachPlan(issue.rawBody, plan))
   issues.addLabel(id, CHANGE_LABEL, 'fbca04')
   gh(['issue', 'comment', id, '--repo', repo, '--body', `Plan propuesto${artifacts ? ' (artifact Plan)' : ' (sección Plan)'}: espera el «dale».`])
-  cache(root, change.slug, changeFromIssue({ title: issue.title, body: issue, plan, design: null }))
   return { slug: change.slug, file: `issue #${id}`, status: 'proposed' }
 }
 
@@ -132,5 +79,4 @@ export function saveIssueChange(root: string, change: ChangeFile & { source: Iss
   }
   const added = newLogLines(change.source.plan, plan)
   if (added.length) gh(['issue', 'comment', id, '--repo', repo, '--body', logComment(added)])
-  cache(root, change.slug, text)
 }

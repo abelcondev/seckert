@@ -193,11 +193,3 @@ test('change_create sin preguntas deja la sección vacía', async () => {
   expect(written).toContain('## Open questions\n\n## Tasks')
   expect(written).toContain('specs: []')
 })
-
-test('el contexto de inicio lista los changes abiertos con el mismo lector', () => {
-  const out = execFileSync('sh', [resolve(import.meta.dir, '../scripts/session-context.sh')], { cwd: join(repo, 'src'), encoding: 'utf8' })
-  expect(out).toContain('Open changes:\n')
-  expect(out).toContain('- issue #1 (approved, 1/2 tasks)\n')
-  expect(out).toContain('- issue #2 (proposed, 0/1 tasks)\n')
-  expect(out).not.toContain('issue #3')
-})

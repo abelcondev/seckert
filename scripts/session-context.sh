@@ -1,5 +1,5 @@
 #!/bin/sh
-# Contexto de inicio de sesión: recuerda el flujo de seckert y lista los changes abiertos.
+# Contexto de inicio de sesión: las reglas fijas de seckert y el flujo de ramas detectado.
 
 # Desde la raíz del repo, aunque la sesión arranque en una subcarpeta.
 root=$(git rev-parse --show-toplevel 2>/dev/null) && cd "$root"
@@ -52,7 +52,4 @@ GitHub issues are the work tracker, and a CHANGE lives in its issue (the plan is
 - Board (if the repo has a GitHub Projects board): board_plan sets priority, size and cycle; board_list answers what is in the current cycle; board_sync moves cards after a PR or a merge.
 - What isn't clear yet stays in the session, without an issue. When the discussion reaches something concrete, offer in one line to turn it into an issue, with what was decided in Decisions. Small pending doubts go to Open questions and block approval until answered (issue_answer).
 TXT
-
-# Los changes abiertos, con el mismo lector que el servidor MCP del plugin.
-command -v node >/dev/null 2>&1 && node "$(dirname "$0")/../mcp/dist/server.mjs" --context 2>/dev/null
 exit 0

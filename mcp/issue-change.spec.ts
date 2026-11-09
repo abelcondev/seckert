@@ -199,20 +199,17 @@ test('pr_draft de un change en su issue: Why y What del issue y Fixes #n; cerrar
   expect(existsSync(join(repo, 'sdd/changes'))).toBe(false)
 })
 
-test('change_get da la ruta de la copia local, que es la que se le pasa al verificador', async () => {
+test('change_get da el texto entero del change, con el Log, para el verificador; no deja copia local', async () => {
   await takenChange()
   const { value } = await call('change_get', { slug: 'exportar-pedidos-a-csv' })
-  expect(value.path).toBe('.git/seckert/changes/exportar-pedidos-a-csv.md')
-  expect(readFileSync(join(repo, value.path), 'utf8')).toContain('## What\n\n- Hay un botón "Exportar"')
+  expect(value.path).toBeUndefined()
+  expect(value.text).toContain('## What\n\n- Hay un botón "Exportar"')
+  expect(value.text).toContain('- **L1** (pedido original, verbatim): exportar pedidos')
+  expect(existsSync(join(repo, '.git/seckert'))).toBe(false)
 })
 
-test('el contexto de inicio lee la copia local, sin llamar a gh', async () => {
-  await takenChange()
-  await call('change_get', { slug: 'exportar-pedidos-a-csv' })
-  const calls = db().calls.length
-  const out = execFileSync('node', [SERVER, '--context'], { cwd: repo, encoding: 'utf8', env: serverEnv({ PATH: `${join(dir, 'bin')}:${process.env.PATH}`, FAKE_GH_STATE: state }) })
-  expect(out).toContain('issue #1 (proposed, 0/2 tasks)')
-  expect(db().calls.length).toBe(calls)
+test('el servidor no tiene modo --context: el contexto de inicio no lista changes', () => {
+  expect(readFileSync(SERVER, 'utf8')).not.toContain('--context')
 })
 
 test('issue_take devuelve el diseño del issue', async () => {

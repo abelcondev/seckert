@@ -26,7 +26,7 @@ import {
   verifyLine,
 } from '../lib/change'
 import { removeRule, writeRule } from '../lib/spec'
-import { cachePath, createIssueChange, readCachedChanges, readIssueChanges, saveIssueChange, type IssueSource } from './issue-changes'
+import { createIssueChange, readIssueChanges, saveIssueChange, type IssueSource } from './issue-changes'
 
 // Un change vive en su issue: `file` es «issue #n» y `source`, de dónde salió.
 export type ChangeFile = ParsedChange & { slug: string; file: string; text: string; source: IssueSource }
@@ -43,16 +43,6 @@ export function projectRoot(): string {
 
 export function readChanges(root: string): ChangeFile[] {
   return readIssueChanges(root)
-}
-
-// Para el contexto de inicio: la copia local, sin red.
-export function readChangesOffline(root: string): Omit<ChangeFile, 'source'>[] {
-  return readCachedChanges(root)
-}
-
-// El archivo que se le pasa al verificador: la copia del change del issue.
-export function pathOf(root: string, change: { slug: string }): string {
-  return cachePath(root, change.slug)
 }
 
 // El change por slug o, sin slug, el único approved. Si no se puede decidir, el
@@ -76,13 +66,12 @@ export function findChange(root: string, slug?: string): ChangeFile {
   )
 }
 
-export function summary(change: Omit<ChangeFile, "source">, root?: string) {
+export function summary(change: ChangeFile) {
   const pending = change.tasks.filter(task => !task.done)
   const next = pending[0]
   return {
     slug: change.slug,
     file: change.file,
-    ...(root ? { path: pathOf(root, change) } : {}),
     status: change.status,
     done: change.tasks.length - pending.length,
     total: change.tasks.length,
@@ -94,9 +83,10 @@ export function summary(change: Omit<ChangeFile, "source">, root?: string) {
   }
 }
 
-export function detail(change: ChangeFile, root?: string) {
+// El change estructurado y su texto entero (con el Log): lo lee el verificador.
+export function detail(change: ChangeFile) {
   const { text, source: _source, ...parsed } = change
-  return { ...parsed, path: root ? pathOf(root, change) : change.file, failures: Object.fromEntries(failuresByPoint(text)) }
+  return { ...parsed, text, failures: Object.fromEntries(failuresByPoint(text)) }
 }
 
 export function today(): string {

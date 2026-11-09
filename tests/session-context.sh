@@ -27,6 +27,8 @@ check "lo que no está claro se discute en la sesión" 1 "$(has 'stays in the se
 check "antes de crear, revisa los issues abiertos" 1 "$(has 'look at the open issues')"
 check "el plan del change va a su issue con change_update" 1 "$(has 'plan in its issue with change_update')"
 check "no manda a escribir sdd/changes" 0 "$(has 'sdd/changes')"
+check "no lista changes abiertos" 0 "$(has 'Open changes')"
+check "no corre el servidor MCP" 0 "$(grep -c 'server.mjs' "$script")"
 check "no depende de una línea en AGENTS.md" 0 "$(has 'seckert issues:')"
 
 rm -rf "$t"

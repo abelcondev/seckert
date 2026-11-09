@@ -12,7 +12,6 @@ import {
   findChange,
   projectRoot,
   readChanges,
-  readChangesOffline,
   recordVerify,
   updateChange,
   writeSpec,
@@ -46,7 +45,7 @@ server.registerTool(
   async ({ done }) => {
     try {
       const changes = readChanges(projectRoot()).filter(change => done || change.status !== 'done')
-      return json(changes.map(change => summary(change, projectRoot())))
+      return json(changes.map(change => summary(change)))
     } catch (error) {
       return failure(error)
     }
@@ -57,13 +56,13 @@ server.registerTool(
   'change_get',
   {
     description:
-      'A change, structured: What as a list of points, tasks with their commit, open questions (P1, P2…), last verification and how many times each What point failed. No slug: the only approved one.',
+      'A change, structured: What as a list of points, tasks with their commit, open questions (P1, P2…), last verification, how many times each What point failed, and `text`: the whole change with its Log (what the verifier reads). No slug: the only approved one.',
     inputSchema: { slug: z.string().optional().describe('The change slug, without the date') },
     annotations: { readOnlyHint: true },
   },
   async ({ slug }) => {
     try {
-      return json(detail(findChange(projectRoot(), slug), projectRoot()))
+      return json(detail(findChange(projectRoot(), slug)))
     } catch (error) {
       return failure(error)
     }
@@ -552,17 +551,4 @@ server.registerTool(
   },
 )
 
-// `node server.mjs --context`: los changes abiertos para el contexto de inicio
-// (scripts/session-context.sh), con el mismo lector que las herramientas.
-if (process.argv.includes('--context')) {
-  const open = readChangesOffline(projectRoot()).filter(change => change.status === 'proposed' || change.status === 'approved')
-  if (open.length) {
-    const lines = open.map(change => {
-      const { done, total } = summary(change)
-      return `- ${change.file} (${change.status}, ${done}/${total} tasks)`
-    })
-    process.stdout.write(`\nOpen changes:\n${lines.join('\n')}\n`)
-  }
-} else {
-  await server.connect(new StdioServerTransport())
-}
+await server.connect(new StdioServerTransport())
