@@ -21,7 +21,7 @@ claude plugin eval . …        # evals de comportamiento: ver evals/README.md
 |---|---|
 | `skills/` | Una skill por paso: `change`, `next`, `verify`, `done`, `design`, `hotfix`, `tomar`, `release`, `status` y las reglas en `workflow` |
 | `agents/` | El verificador independiente (`seckert-verifier`) |
-| `hooks/` | `hooks.json` y el módulo que corre dentro de Claude Code: barra, contexto vivo y salidas recortadas |
+| `hooks/` | `hooks.json` y el módulo que corre dentro de Claude Code: guarda de aprobación y salidas recortadas |
 | `scripts/` | Guardia de ramas protegidas, contexto de sesión, detección del flujo de ramas y búsqueda de Chrome |
-| `mcp/` | Servidor MCP con las herramientas de changes, verificación, PR y release |
+| `mcp/` | Servidor MCP con las herramientas de issues, changes, tablero, verificación, PR y release |
 | `evals/` | Evals de comportamiento: solo con seckert entre versiones, con y sin seckert en una release mayor |

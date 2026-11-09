@@ -1,6 +1,6 @@
 ---
 name: status
-description: Shows the state of the changes in sdd/changes and the seckert issues on GitHub. Use it when the user asks "¿en qué estamos?", "¿qué falta?", "¿cómo vamos?" or wants a summary of pending work.
+description: Shows the state of the seckert issues on GitHub and their changes. Use it when the user asks "¿en qué estamos?", "¿qué falta?", "¿cómo vamos?" or wants a summary of pending work.
 argument-hint: "[slug]"
 allowed-tools: Read, Glob, Grep, Bash(git log:*), Bash(git status:*), mcp__plugin_seckert_seckert__change_list, mcp__plugin_seckert_seckert__change_get, mcp__plugin_seckert_seckert__issue_list
 ---

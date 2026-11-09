@@ -33,7 +33,7 @@ Ante la duda, Claude elige **FIX**. Si el trabajo crece a más de ~8 archivos, p
 
 ```mermaid
 flowchart LR
-    A(["💬 Hablan<br/>de la idea"]) --> B["📝 Propuesta<br/>sdd/changes"]
+    A(["💬 Hablan<br/>de la idea"]) --> B["📝 Propuesta<br/>en el issue"]
     B -- "«sacá el punto 3»" --> B
     B -- "«dale»" --> C["🔨 Tareas<br/>rama feature/…<br/>un commit c/u"]
     C --> D{"🔍 Verifica<br/>tests · app<br/>navegador"}
@@ -119,5 +119,5 @@ No hace falta escribir comandos.
 |---|---|
 | 🗺️ [Flujo de trabajo](docs/flujo.md) | Rutas, cómo se planifica una feature y qué archivos crea |
 | ✅ [Verificación y PR](docs/verificacion.md) | Rondas de verificación, QA en el navegador y qué trae el PR |
-| ⚙️ [Configuración del proyecto](docs/configuracion.md) | Ramas, nivel de tests, AGENTS.md y la barra de estado |
+| ⚙️ [Configuración del proyecto](docs/configuracion.md) | Ramas, nivel de tests, AGENTS.md y aprobaciones |
 | 🛠️ [Desarrollo del plugin](docs/desarrollo.md) | Para quien modifica seckert |

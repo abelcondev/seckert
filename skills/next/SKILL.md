@@ -1,6 +1,6 @@
 ---
 name: next
-description: Implements the next task of a change in sdd/changes. Use it when the user approves a proposal ("sí", "dale", "ok, adelante", "aprobado") or asks to continue ("seguí", "siguiente", "continuá", "hacé la T3").
+description: Implements the next task of a change (it lives in its GitHub issue). Use it when the user approves a proposal ("sí", "dale", "ok, adelante", "aprobado") or asks to continue ("seguí", "siguiente", "continuá", "hacé la T3").
 argument-hint: "[slug] [T#]"
 ---
 

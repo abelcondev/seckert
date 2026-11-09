@@ -6,7 +6,7 @@ root=$(git rev-parse --show-toplevel 2>/dev/null) && cd "$root"
 
 cat <<'TXT'
 Project with the seckert plugin: the user speaks naturally, without commands. Reply in the user's language.
-- Small work (bug, style, copy, refactor, a screen without new logic) is done directly: no announcing the route, no documents, no branch switch. Changing the value of an existing rule (a threshold, a price) too, updating its spec in sdd/specs.
+- Small work (bug, style, copy, refactor, a screen without new logic) is done directly on its issue's branch: no announcing the route, no plan. Changing the value of an existing rule (a threshold, a price) too, updating its spec in sdd/specs.
 - Large or sensitive work (schema, new money or permissions logic, AI, unclear approach) goes through a proposal (seckert:change) and waits for the "sí". With a change in proposed, "sí"/"dale" approves it (seckert:next).
 - Write a CHANGE's plan in its issue with change_update and sdd/specs with spec_write (seckert MCP); edit a file directly only if a tool can't do it.
 - Logic bug, even a small one: first a test that reproduces it and see it fail; then the fix.
@@ -27,7 +27,7 @@ if git rev-parse --git-dir >/dev/null 2>&1; then
     prs)
       echo "Branch flow (detected): PRs only. Work branches from $SECKERT_MAIN with PR to $SECKERT_MAIN; a release is a version bump by PR plus a tag; a hotfix is a normal fix with priority." ;;
   esac
-  echo "Protected branches (no direct commit or push): $SECKERT_PROTECTED. If the user asks to commit and you are on one, create fix/<slug> from the base (feature/<slug> is for an approved change). If they don't ask, don't switch branches or commit."
+  echo "Protected branches (no direct commit or push): $SECKERT_PROTECTED. Work happens on the branch linked to its issue: issue_take creates it (fix/<slug> or feature/<slug>). Commit only when the work is done or the user asks."
 fi
 
 # La preferencia vive en .claude/settings.local.json (env.SECKERT_QA). Se lee también del archivo

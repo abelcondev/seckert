@@ -61,7 +61,7 @@ Borra estos comentarios y las secciones que no apliquen.
 
 ## Workflow (seckert)
 
-Cambios chicos directo; pasan por propuesta en `sdd/changes/`: <lo sensible en este proyecto: schema, dinero, permisos, IA…>.
+El trabajo vive en los issues de GitHub. Cambios chicos directo; pasan por propuesta (plan en el issue): <lo sensible en este proyecto: schema, dinero, permisos, IA…>.
 
 ## Gotchas
 
