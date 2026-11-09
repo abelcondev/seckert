@@ -13,4 +13,4 @@ El cuerpo lo arma la herramienta `pr_draft` desde el change y el diff contra la 
 
 ## Release
 
-`release_draft` propone la versión desde el último tag (feat sube minor, solo fix sube patch, breaking sube major), la rama `release/x.y.z` y desde dónde sale, los archivos de versión del proyecto y las notas Features / Fixes desde `git log`, con los changes `done` desde ese tag. Claude reescribe las notas en lenguaje de usuario.
+`release_draft` propone la versión desde el último tag (feat sube minor, solo fix sube patch, breaking sube major), la rama `release/x.y.z` y desde dónde sale, los archivos de versión del proyecto y las notas Features / Fixes desde `git log`. Los changes de la release son los issues con label `seckert:change` cerrados como completados desde la fecha de ese tag. Claude reescribe las notas en lenguaje de usuario.
