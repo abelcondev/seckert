@@ -3,6 +3,8 @@
 set -e
 here=$(cd "$(dirname "$0")" && pwd)
 "$here/../_fixture/setup.sh" "$here/overlay"
+"$here/../_fixture/gh-repo.sh"
+bun "$here/../_fixture/changes.ts" "$here/changes"
 git switch -qc feature/envio-express
 cat >> src/envio.ts <<'TS'
 

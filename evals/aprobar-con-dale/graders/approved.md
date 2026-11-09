@@ -1,7 +1,7 @@
 ---
 type: regex
-pattern: 'status:\s*approved'
+pattern: '"name":\s*"Plan",\s*"body":\s*"<!-- seckert:plan\\nstatus: approved'
 match: contains
-target: {source: file, path: sdd/changes/2026-10-28-exportar-pedidos.md}
+target: {source: file, path: .gh.json}
 ---
-"dale" con un change en proposed lo aprueba.
+"dale" con un change en proposed lo aprueba: el plan del issue queda en approved.

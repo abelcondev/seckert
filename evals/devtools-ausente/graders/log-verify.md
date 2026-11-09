@@ -1,7 +1,7 @@
 ---
 type: regex
-pattern: 'verify:'
+pattern: '"name":\s*"Plan",\s*"body":\s*"(?:[^"\\]|\\.)*verify:'
 match: contains
-target: {source: file, path: sdd/changes/2026-10-29-boton-confirmar.md}
+target: {source: file, path: .gh.json}
 ---
-La verificación sigue y queda en el Log aunque no haya navegador.
+La verificación sigue y queda en el Log del plan aunque no haya navegador.

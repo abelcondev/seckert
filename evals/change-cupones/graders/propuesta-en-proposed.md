@@ -1,7 +1,7 @@
 ---
 type: regex
-pattern: '"file_path"\s*:\s*"[^"]*sdd/changes/[^"]*"[\s\S]*?status:\s*proposed|\\?"status\\?"\s*:\s*\\?"proposed'
+pattern: 'seckert:plan\\nstatus: proposed|"seckert:draft"'
 match: contains
-target: trace
+target: {source: file, path: .gh.json}
 ---
-La propuesta nace en status: proposed (escrita a mano o con change_create, que lo devuelve).
+Nada queda aprobado sin el «sí»: el plan nace en proposed o, con preguntas abiertas, el issue queda en draft.

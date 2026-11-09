@@ -2,7 +2,9 @@
 # Change aprobado cuyo único punto ya falló dos veces; el bug sigue en src/precio.ts.
 set -e
 here=$(cd "$(dirname "$0")" && pwd)
-"$here/../_fixture/setup.sh" "$here/overlay"
+"$here/../_fixture/setup.sh"
+"$here/../_fixture/gh-repo.sh"
+bun "$here/../_fixture/changes.ts" "$here/changes"
 git switch -qc feature/descuento
 cat > tests/precio.test.ts <<'TS'
 import { expect, test } from 'bun:test'

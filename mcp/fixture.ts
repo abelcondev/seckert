@@ -10,11 +10,10 @@ import { join, resolve } from 'node:path'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 
+import { parseBody } from '../lib/issue'
+import { changeFromIssue, PLAN_NAME } from '../lib/issue-change'
+import { changeIssue } from './seed'
 import { serverEnv } from './test-env'
-
-import { parseChange } from '../lib/change'
-import { parseBody, renderBody } from '../lib/issue'
-import { changeFromIssue, criteriaOf, PLAN_NAME, planFromChange } from '../lib/issue-change'
 
 const SERVER = resolve(import.meta.dir, 'dist/server.mjs')
 const FAKE = resolve(import.meta.dir, 'fake-gh.mjs')
@@ -34,11 +33,6 @@ export type Fixture = {
   seedChange: (text: string) => string
   changeText: (slug: string) => string
   close: () => Promise<void>
-}
-
-// El Why del change es el Problem del issue; el What, sus criterios.
-function whyOf(text: string): string {
-  return text.match(/^## Why\n\n([\s\S]*?)\n*(?=^## )/m)?.[1]?.trim() || 'x'
 }
 
 // `cwd`: la subcarpeta del repo donde arranca el servidor (por defecto, la raíz).
@@ -72,27 +66,7 @@ export async function fixture(prefix: string, setup?: (repo: string, git: (...ar
   const seedChange = (text: string) => {
     const data = db()
     const number = data.issues.length + 1
-    const parsed = parseChange(text)
-    const body = renderBody({
-      problem: whyOf(text),
-      outcome: 'x',
-      criteria: criteriaOf(text),
-      route: 'CHANGE',
-      origin: { source: 'chat', date: '2026-11-01' },
-    })
-    const plan = planFromChange(text.replace(/^(---\n[\s\S]*?)(\n---\n)/, (_, head, end) => (/^issue:/m.test(head) ? head : `${head}\nissue: #${number}`) + end))
-    data.issues.push({
-      number,
-      title: parsed.title ?? `change ${number}`,
-      body,
-      state: 'OPEN',
-      labels: ['seckert:approved', 'seckert:change', 'type:feature'],
-      comments: [],
-      artifacts: [
-        { number: 1, type: 'plan', name: PLAN_NAME, body: plan, versions: [plan] },
-        ...(parsed.design ? [{ number: 2, type: 'link', name: 'Design', body: parsed.design, versions: [parsed.design] }] : []),
-      ],
-    })
+    data.issues.push(changeIssue(text, number))
     saveDb(data)
     return String(number)
   }

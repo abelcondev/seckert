@@ -1,8 +1,8 @@
 ---
 type: regex
-pattern: '\*\*L2\*\*|(?:aprob)'
+pattern: '"name":\s*"Plan",\s*"body":\s*"(?:[^"\\]|\\.)*aprobado'
 flags: i
 match: contains
-target: {source: file, path: sdd/changes/2026-10-28-exportar-pedidos.md}
+target: {source: file, path: .gh.json}
 ---
-La aprobación queda anotada en el Log.
+La aprobación queda anotada en el Log del plan.

@@ -1,7 +1,7 @@
 ---
 type: regex
-pattern: '## (Open questions|Preguntas abiertas)\s*\n\s*- \S'
+pattern: '"name":\s*"Plan",\s*"body":\s*"(?:[^"\\]|\\.)*## (Open questions|Preguntas abiertas)\\n\\n- \S'
 match: contains
-target: {source: file, path: sdd/changes/2026-10-29-descuento.md}
+target: {source: file, path: .gh.json}
 ---
 El tercer fallo queda como pregunta abierta, con una recomendación.

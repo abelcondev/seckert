@@ -1,7 +1,7 @@
 ---
 type: regex
-pattern: 'Rama feature/exportar-pedidos (desde|ya existía)'
+pattern: '"name":\s*"Plan",\s*"body":\s*"(?:[^"\\]|\\.)*Rama feature/exportar-pedidos (desde|ya existía)'
 match: contains
-target: {source: file, path: sdd/changes/2026-10-28-exportar-pedidos.md}
+target: {source: file, path: .gh.json}
 ---
-Al aprobar se crea la rama del change desde la base: change_transition lo anota en el Log del change. Se mira el archivo y no la traza, porque Claude ya no relee el change después de aprobarlo.
+Al aprobar se crea la rama del change desde la base: change_transition lo anota en el Log del plan. Se mira el issue y no la traza, porque Claude ya no relee el change después de aprobarlo.
