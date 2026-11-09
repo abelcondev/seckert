@@ -2,7 +2,7 @@
 
 Cómo se corren y qué mide cada caso: [README.md](README.md). Cada celda es **con seckert / sin seckert**: el mismo modelo, los mismos pedidos y el mismo repo de prueba, con el plugin y sin él.
 
-## 2.0.0 (sin publicar) · GitHub issues como único flujo · 2026-11-09
+## 2.0.0 · GitHub issues como único flujo · 2026-11-09
 
 Change `github-issues-como-flujo-por-defecto` (#14): sin `sdd/changes`, sin la línea `seckert issues: github`, sin barra ni copia local. Todos los casos parten de issues en el `gh` falso. Los 25 casos con 1 corrida, con seckert (`--ablation none`). Modelo `claude-opus-5-5`. Costo: $5,12 + $0,70 de repetir los 3 que fallaron.
 
@@ -13,6 +13,19 @@ Notas:
 - `feature-en-partes` propuso la división sin crearla aunque el pedido ya decía «dale con la división»; al repetirlo, la creó.
 - `issue-change-diseno`: el juez votó FALLA aunque la respuesta nombraba el diseño; al repetirlo, pasó.
 - Graders que cambiaron de sentido: `change-grande-partes` espera sub-issues en lugar de varios archivos de changes, y los FIX chicos esperan `issue_take` en lugar de «sin rama ni commit».
+
+Después de publicar, con la versión instalada (`claude plugin eval seckert@seckert`, desde `~/.claude/plugins/cache/seckert/seckert/2.0.0`): 8 casos clave, 1 corrida, con seckert. Pasaron 8/8. Costo: $1,82. El repo del plugin quedó igual después de correrlas.
+
+| Caso | Con seckert | Segundos | Costo |
+|---|---|---|---|
+| `aprobar-con-dale` | 1/1 | 40 | $0,27 |
+| `iterar-propuesta` | 1/1 | 24 | $0,19 |
+| `pedido-natural` | 1/1 | 24 | $0,21 |
+| `pr-riesgo` | 1/1 | 37 | $0,24 |
+| `qa-sin-navegador` | 1/1 | 33 | $0,22 |
+| `tomar-issue-change` | 1/1 | 36 | $0,23 |
+| `tomar-issue-fix` | 1/1 | 34 | $0,23 |
+| `verify-tercera-ronda` | 1/1 | 39 | $0,22 |
 
 ## 1.5.0 (sin publicar) · tablero en GitHub Projects · 2026-11-09
 
