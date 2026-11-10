@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: pasos-con-roadmap
+context:
+  scaffold_script: scaffold.sh

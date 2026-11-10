@@ -54,6 +54,10 @@ bun evals/metrics.ts evals/results/<version>.json   # palabras, tokens, segundos
 | `tablero-planificar` | Con tablero: «poné el 1 como urgente, tamaño M, en este cycle» usa `board_plan` y el tablero queda con Urgent, M y el cycle actual |
 | `tablero-cycle` | Con tablero: «¿qué entra en este cycle?» usa `board_list` y responde con el cycle actual ordenado por prioridad |
 | `tomar-issue-change` | Un issue aprobado de ruta CHANGE se toma en `feature/<slug>` y se convierte en una propuesta con `issue: #1` y el mismo slug, sin tocar código |
+| `hacer-todas` | «hacé todas» con un change aprobado hace las 3 tareas, con un commit y un `task_complete` cada una, y cierra con el progreso |
+| `dale-todas` | «dale, hacelas todas» aprueba el change y hace las 3 tareas |
+| `pasos-con-roadmap` | Un pedido de 3 pasos o más va como CHANGE: sus pasos quedan como tareas del plan y la respuesta dice cuántas son y ofrece hacerlas todas |
+| `feature-hacer-todas` | «hacé todas» sobre una feature hace la parte libre y para ante la bloqueada, que espera el merge |
 
 En los casos con propuesta, `sin-comandos` chequea que el siguiente paso se ofrezca en palabras, sin `/seckert:…`.
 
