@@ -84,6 +84,7 @@ test('aprobar pasa a approved, crea feature/<slug> desde la base detectada y lo 
   const text = read('csv')
   expect(text).toContain('status: approved')
   expect(text).toContain(`- ${TODAY}: aprobado ("dale"). Rama feature/csv desde develop.`)
+  expect(JSON.parse(result.content[0]!.text)).toMatchObject({ status: 'approved', next: 'T1', done: 0, total: 2 })
 })
 
 test('task_complete exige un commit que exista en la rama', async () => {
@@ -105,7 +106,7 @@ test('task_complete marca la tarea con el hash corto y anota la evidencia', asyn
   expect(text).toContain(`- ${TODAY}: T1 hecha (${hash}). \`bun test\` 3 pass`)
   // El progreso del plan, para el roadmap de la respuesta y la barra.
   const out = JSON.parse(result.content[0]!.text)
-  expect(out).toMatchObject({ done: 1, total: 2, next: 'T2 Segunda' })
+  expect(out).toMatchObject({ status: 'approved', done: 1, total: 2, next: 'T2 Segunda' })
   expect(out.tasks).toEqual([
     { id: 'T1', text: 'Primera', done: true },
     { id: 'T2', text: 'Segunda', done: false },

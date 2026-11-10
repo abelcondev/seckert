@@ -1,6 +1,11 @@
+import { atom, read, update } from 'claude-code'
 import type { Register } from 'claude-code'
 
 import { compact, shouldCompact } from './compact'
+import { barText, roadmapFrom, type Roadmap } from './roadmap'
+
+// El change activo de la barra: lo último que devolvió una herramienta de change.
+const roadmap = atom({ plugin: 'seckert', key: 'roadmap' } as const, null as Roadmap | null)
 
 // Orígenes de un mensaje escrito por el usuario.
 const HUMAN = new Set(['composer', 'bridge', 'sdk'])
@@ -48,7 +53,42 @@ export const register: Register = on => {
 
   on('session.end', async ($, e, next) => {
     lastPrompt = null
+    await update($, roadmap, () => null)
     return next(e)
+  })
+
+  // La barra se arma con los resultados de las herramientas de change del MCP:
+  // sin llamadas a gh. Nunca rompe la llamada.
+  on('tool.call', async ($, e, next) => {
+    const ran = await next(e)
+    try {
+      if (!e.tool.startsWith('mcp__plugin_seckert_seckert__') || ran.deny !== undefined || ran.isError === true) return ran
+      const content = (ran.result as { content?: { type: string; text?: string }[] } | undefined)?.content
+      const text = content?.find(part => part.type === 'text')?.text
+      if (typeof text !== 'string') return ran
+      const map = roadmapFrom(e.tool, e as unknown as Record<string, unknown>, text)
+      if (map !== undefined) await update($, roadmap, () => map)
+    } catch {
+      // la barra queda como estaba
+    }
+    return ran
+  })
+
+  on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
+    const map = await read($, roadmap)
+    if (e.props.hasSurvey || map === null) return next(e)
+    const { Box, Text } = $.ui.resolve(e)
+    const [name, ...rest] = barText(map).split(' · ')
+    return (
+      <Box>
+        <Text wrap="truncate-end">
+          <Text color="cyan">{name}</Text>
+          <Text dimColor> · </Text>
+          <Text bold>{rest[0]}</Text>
+          <Text dimColor>{` · ${rest.slice(1).join(' · ')}`}</Text>
+        </Text>
+      </Box>
+    )
   })
 
   // Tests, builds y linters: Claude recibe los fallos y el resumen, no miles de
