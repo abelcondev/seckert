@@ -1,6 +1,6 @@
 {
   "name": "seckert",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "SDD ligero sobre GitHub issues: rutas FIX/SPEC/CHANGE, el plan de cada cambio grande en su issue, sdd/specs vivas, test-first para lógica y diseño traducido desde artifacts de Claude.",
   "author": {
     "name": "abelcondev"
