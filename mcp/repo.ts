@@ -192,8 +192,18 @@ export function completeTaskInRepo(root: string, input: { slug?: string; task: s
   const hash = git(root, 'rev-parse', '--short=7', input.commit)
   const text = appendLog(completeTask(change.text, input.task, hash), `${today()}: ${input.task} hecha (${hash}). ${input.evidencia.trim()}`)
   save(root, change, text)
-  const next = parseChange(text).tasks.find(task => !task.done)
-  return { slug: change.slug, task: input.task, commit: hash, next: next ? `${next.id} ${next.text}` : null }
+  const tasks = parseChange(text).tasks.map(({ id, text, done }) => ({ id, text, done }))
+  const next = tasks.find(task => !task.done)
+  // done, total y tasks: el roadmap que Claude muestra en la respuesta y el que lee la barra.
+  return {
+    slug: change.slug,
+    task: input.task,
+    commit: hash,
+    next: next ? `${next.id} ${next.text}` : null,
+    done: tasks.filter(task => task.done).length,
+    total: tasks.length,
+    tasks,
+  }
 }
 
 export type VerifyRow = { punto: string; veredicto: Verdict; evidencia?: string; tareas?: string[]; recomendacion?: string }

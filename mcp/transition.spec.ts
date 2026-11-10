@@ -103,6 +103,13 @@ test('task_complete marca la tarea con el hash corto y anota la evidencia', asyn
   const text = read('csv')
   expect(text).toContain(`- [x] T1 Primera <!-- commit: ${hash} -->`)
   expect(text).toContain(`- ${TODAY}: T1 hecha (${hash}). \`bun test\` 3 pass`)
+  // El progreso del plan, para el roadmap de la respuesta y la barra.
+  const out = JSON.parse(result.content[0]!.text)
+  expect(out).toMatchObject({ done: 1, total: 2, next: 'T2 Segunda' })
+  expect(out.tasks).toEqual([
+    { id: 'T1', text: 'Primera', done: true },
+    { id: 'T2', text: 'Segunda', done: false },
+  ])
 })
 
 test('cerrar con tareas pendientes exige confirmarlo y anota lo que quedó fuera', async () => {
