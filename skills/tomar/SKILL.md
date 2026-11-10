@@ -27,6 +27,7 @@ Issue: $ARGUMENTS
    - **CHANGE**: `change_create` with `slug` = the branch name without `feature/` and `issue` = the number; `pedido` is the issue's title and quote, verbatim.
      - The change lives in the issue: Why and What come from Problem, Outcome and the criteria. Write only the plan: tasks, specs, diagram, testing. It is attached as the `Plan` artifact.
      - If the issue has a design (`design` in the `issue_take` result), say so and plan the presentation tasks against it; they are translated with `seckert:design` when implemented. If you can't open the design now, still write the plan and say in one line that the design is read when those tasks start.
+     - Show the plan with its roadmap (how many tasks, short titles) and end offering both ways: "¿las hago todas o una por una?", together with the open question if there is one.
      - Then wait for the user's "dale", as with any proposal: approving it keeps the same branch.
    - A FIX that turns into a CHANGE stays on the linked `fix/` branch: create the change and set its `branch:` to that branch.
 6. When the work is done, offer the next step in words: "¿lo verifico?" for a CHANGE, or "si está bien, abro el PR" for a FIX or SPEC.
