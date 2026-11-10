@@ -1,6 +1,6 @@
 ---
 name: tomar
-description: Takes an approved GitHub issue of seckert and works it through its route (FIX, SPEC or CHANGE) on a branch linked to the issue. Use it when the user names an issue to work on ("tomá el 12", "agarrá el issue #12", "seguí con el #12") or asks which issues are ready ("¿qué issues hay aprobados?").
+description: Takes an approved GitHub issue of seckert and works it through its route (FIX, SPEC or CHANGE) on a branch linked to the issue. Use it when the user names an issue to work on ("tomá el 12", "agarrá el issue #12", "seguí con el #12") or all the parts of a feature ("tomá el 12 y hacé todas") or asks which issues are ready ("¿qué issues hay aprobados?").
 argument-hint: "[issue number]"
 ---
 
@@ -8,7 +8,8 @@ Issue: $ARGUMENTS
 
 1. No number: `issue_list` with `approved` and with `in-progress`. Show them numbered (number, title, route) and ask which one. None: say so in one line.
 2. **A feature split into parts.** First `issue_get`. If the issue is `type:feature`:
-   - **It already has sub-issues:** `issue_take` returns `parts` (with what blocks each), `next` and `done`, without creating a branch. Show the parts in a few lines and offer to take `next`; with "dale", take it as in step 3. If `done`, all parts are closed: offer to close the feature, and on yes `issue_close`.
+   - **It already has sub-issues:** `issue_take` returns `parts` (with what blocks each), `next` and `done`, without creating a branch. Show the parts as the feature's roadmap: closed/total, one line per part with ✓ when closed and what blocks it, and the next free one marked. Offer to take `next`; with "dale", take it as in step 3. If `done`, all parts are closed: offer to close the feature, and on yes `issue_close`.
+   - **"Hacé todas" on a feature:** work each free part in order as in step 3, up to its commit. Don't open PRs unless asked, and never take a blocked part with `force`: it waits for the merge of what blocks it, which the user asks for. Stop when no free part is left and say which parts wait for which merge.
    - **No sub-issues, and it bundles parts that each work and merge on their own** (a data model, a flow on top, a screen): propose the split in one message, one line per part with title, route and what blocks it. Don't create anything yet.
    - **On the user's "dale":** create each part with `issue_create` in order: `parent` = the feature, `blockedBy` = the parts that must merge first, `kind`, and `design` if it touches screens and the feature has one. Approve each with `issue_transition` and the user's words. Then offer to take the first.
    - **One part is enough:** take the feature itself as in step 3.
