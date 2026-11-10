@@ -19,7 +19,7 @@ Issue: $ARGUMENTS
    - Blocked: say which issues block it and that they should merge first. Take it anyway only if the user says so, with `force: true`.
    - If you find that it depends on another open issue that isn't marked, say so and, on the user's yes, mark it with `issue_link` (`blockedBy`).
    - In review, closed or discarded: say so and stop.
-4. Show the issue in a few lines: title, the client's quote, the acceptance criteria and the route. The route is a suggestion: if the work is clearly bigger or smaller, say so in one line and ask.
+4. Show the issue in a few lines: title, the client's quote, the acceptance criteria and the route. The route is a suggestion: if the work is clearly bigger or smaller, say so in one line and ask. A FIX that needs 3 or more steps is a CHANGE (`seckert:workflow`).
 5. Follow the route on the linked branch, with the `seckert:workflow` rules:
    - **FIX**: do it directly. A logic bug gets a failing test first. Check each acceptance criterion and commit (`fix(scope): …`).
    - **SPEC**: change the rule with `spec_write` and the code that follows it, in the same commit.
