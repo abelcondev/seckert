@@ -171,7 +171,7 @@ export function transitionChange(root: string, input: Transition): Record<string
     text = appendLog(text, `${today()}: aprobado ("${words}"). Rama ${branch} ${how}.`)
     if (open.length) text = appendLog(text, `${today()}: pendientes al aprobar: ${change.questions.map(q => q.id ?? q.text).join(', ')}.`)
     save(root, change, text)
-    return { slug: change.slug, status: 'approved', branch, next: change.tasks.find(t => !t.done)?.id ?? null }
+    return { slug: change.slug, branch, next: change.tasks.find(t => !t.done)?.id ?? null, ...progress(text) }
   }
 
   const pending = change.tasks.filter(task => !task.done).map(task => task.id)
@@ -180,6 +180,14 @@ export function transitionChange(root: string, input: Transition): Record<string
   const left = pending.length ? ` Quedó fuera: ${pending.join(', ')}.` : ''
   save(root, change, appendLog(setStatus(change.text, 'done'), `${today()}: cerrado ("${words}").${left}`))
   return { slug: change.slug, status: 'done', branch: change.branch, pendientes: pending }
+}
+
+// El progreso de un plan: lo devuelven las herramientas que cambian un change,
+// para el roadmap que Claude muestra y la barra del módulo.
+export function progress(text: string) {
+  const parsed = parseChange(text)
+  const tasks = parsed.tasks.map(({ id, text, done }) => ({ id, text, done }))
+  return { status: parsed.status, done: tasks.filter(task => task.done).length, total: tasks.length, tasks, questions: parsed.questions.length }
 }
 
 // Marca una tarea solo si el commit existe y está en la rama actual.
@@ -192,8 +200,9 @@ export function completeTaskInRepo(root: string, input: { slug?: string; task: s
   const hash = git(root, 'rev-parse', '--short=7', input.commit)
   const text = appendLog(completeTask(change.text, input.task, hash), `${today()}: ${input.task} hecha (${hash}). ${input.evidencia.trim()}`)
   save(root, change, text)
-  const next = parseChange(text).tasks.find(task => !task.done)
-  return { slug: change.slug, task: input.task, commit: hash, next: next ? `${next.id} ${next.text}` : null }
+  const now = progress(text)
+  const next = now.tasks.find(task => !task.done)
+  return { slug: change.slug, task: input.task, commit: hash, next: next ? `${next.id} ${next.text}` : null, ...now }
 }
 
 export type VerifyRow = { punto: string; veredicto: Verdict; evidencia?: string; tareas?: string[]; recomendacion?: string }
@@ -277,7 +286,7 @@ export function updateChange(
     resync = { changed: result.changed, missing: result.missing }
   }
   save(root, change, text)
-  return { slug: change.slug, file: change.file, ids, ...(resync ? { resync } : {}) }
+  return { slug: change.slug, file: change.file, ids, ...(resync ? { resync } : {}), ...progress(text) }
 }
 
 export const SPECS_DIR = 'sdd/specs'

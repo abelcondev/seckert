@@ -1,6 +1,6 @@
 ---
 name: tomar
-description: Takes an approved GitHub issue of seckert and works it through its route (FIX, SPEC or CHANGE) on a branch linked to the issue. Use it when the user names an issue to work on ("tomá el 12", "agarrá el issue #12", "seguí con el #12") or asks which issues are ready ("¿qué issues hay aprobados?").
+description: Takes an approved GitHub issue of seckert and works it through its route (FIX, SPEC or CHANGE) on a branch linked to the issue. Use it when the user names an issue to work on ("tomá el 12", "agarrá el issue #12", "seguí con el #12") or all the parts of a feature ("tomá el 12 y hacé todas") or asks which issues are ready ("¿qué issues hay aprobados?").
 argument-hint: "[issue number]"
 ---
 
@@ -8,7 +8,8 @@ Issue: $ARGUMENTS
 
 1. No number: `issue_list` with `approved` and with `in-progress`. Show them numbered (number, title, route) and ask which one. None: say so in one line.
 2. **A feature split into parts.** First `issue_get`. If the issue is `type:feature`:
-   - **It already has sub-issues:** `issue_take` returns `parts` (with what blocks each), `next` and `done`, without creating a branch. Show the parts in a few lines and offer to take `next`; with "dale", take it as in step 3. If `done`, all parts are closed: offer to close the feature, and on yes `issue_close`.
+   - **It already has sub-issues:** `issue_take` returns `parts` (with what blocks each), `next` and `done`, without creating a branch. Show the parts as the feature's roadmap: closed/total, one line per part with ✓ when closed and what blocks it, and the next free one marked. Offer to take `next`; with "dale", take it as in step 3. If `done`, all parts are closed: offer to close the feature, and on yes `issue_close`.
+   - **"Hacé todas" on a feature:** work each free part in order as in step 3, up to its commit. Don't open PRs unless asked, and never take a blocked part with `force`: it waits for the merge of what blocks it, which the user asks for. Stop when no free part is left and say which parts wait for which merge.
    - **No sub-issues, and it bundles parts that each work and merge on their own** (a data model, a flow on top, a screen): propose the split in one message, one line per part with title, route and what blocks it. Don't create anything yet.
    - **On the user's "dale":** create each part with `issue_create` in order: `parent` = the feature, `blockedBy` = the parts that must merge first, `kind`, and `design` if it touches screens and the feature has one. Approve each with `issue_transition` and the user's words. Then offer to take the first.
    - **One part is enough:** take the feature itself as in step 3.
@@ -19,13 +20,14 @@ Issue: $ARGUMENTS
    - Blocked: say which issues block it and that they should merge first. Take it anyway only if the user says so, with `force: true`.
    - If you find that it depends on another open issue that isn't marked, say so and, on the user's yes, mark it with `issue_link` (`blockedBy`).
    - In review, closed or discarded: say so and stop.
-4. Show the issue in a few lines: title, the client's quote, the acceptance criteria and the route. The route is a suggestion: if the work is clearly bigger or smaller, say so in one line and ask.
+4. Show the issue in a few lines: title, the client's quote, the acceptance criteria and the route. The route is a suggestion: if the work is clearly bigger or smaller, say so in one line and ask. A FIX that needs 3 or more steps is a CHANGE (`seckert:workflow`).
 5. Follow the route on the linked branch, with the `seckert:workflow` rules:
    - **FIX**: do it directly. A logic bug gets a failing test first. Check each acceptance criterion and commit (`fix(scope): …`).
    - **SPEC**: change the rule with `spec_write` and the code that follows it, in the same commit.
    - **CHANGE**: `change_create` with `slug` = the branch name without `feature/` and `issue` = the number; `pedido` is the issue's title and quote, verbatim.
      - The change lives in the issue: Why and What come from Problem, Outcome and the criteria. Write only the plan: tasks, specs, diagram, testing. It is attached as the `Plan` artifact.
      - If the issue has a design (`design` in the `issue_take` result), say so and plan the presentation tasks against it; they are translated with `seckert:design` when implemented. If you can't open the design now, still write the plan and say in one line that the design is read when those tasks start.
+     - Show the plan with its roadmap (how many tasks, short titles) and end offering both ways: "¿las hago todas o una por una?", together with the open question if there is one.
      - Then wait for the user's "dale", as with any proposal: approving it keeps the same branch.
    - A FIX that turns into a CHANGE stays on the linked `fix/` branch: create the change and set its `branch:` to that branch.
 6. When the work is done, offer the next step in words: "¿lo verifico?" for a CHANGE, or "si está bien, abro el PR" for a FIX or SPEC.

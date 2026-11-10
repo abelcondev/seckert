@@ -34,7 +34,7 @@ bun evals/metrics.ts evals/results/<version>.json   # palabras, tokens, segundos
 | `change-cupones` | Lógica nueva de dinero: issue con ruta CHANGE, plan en `proposed` (o issue en draft con preguntas) y nada de código |
 | `change-grande-partes` | Un pedido con partes que sirven solas se vuelve un issue partido en sub-issues; el layout queda como FIX |
 | `iterar-propuesta` | Los ajustes van al mismo plan con `change_update` (quitar una tarea, sumar un punto), que sigue en `proposed` |
-| `aprobar-con-dale` | "dale" aprueba el plan del issue, lo anota en el Log y crea `feature/<slug>` |
+| `aprobar-con-dale` | "dale" aprueba el plan del issue, lo anota en el Log, crea `feature/<slug>` y, después de T1, muestra el progreso (1/3) |
 | `bug-test-primero` | Con `seckert tests: strict`, el test se escribe antes del fix |
 | `fix-commit-gitflow` | Con `develop`, el pedido se toma como issue y el commit va en su rama `fix/…`, no en la rama protegida |
 | `verify-tercera-ronda` | Al tercer fallo del mismo punto, verify lo deja en Preguntas abiertas en vez de reabrir la tarea |
@@ -54,6 +54,10 @@ bun evals/metrics.ts evals/results/<version>.json   # palabras, tokens, segundos
 | `tablero-planificar` | Con tablero: «poné el 1 como urgente, tamaño M, en este cycle» usa `board_plan` y el tablero queda con Urgent, M y el cycle actual |
 | `tablero-cycle` | Con tablero: «¿qué entra en este cycle?» usa `board_list` y responde con el cycle actual ordenado por prioridad |
 | `tomar-issue-change` | Un issue aprobado de ruta CHANGE se toma en `feature/<slug>` y se convierte en una propuesta con `issue: #1` y el mismo slug, sin tocar código |
+| `hacer-todas` | «hacé todas» con un change aprobado hace las 3 tareas, con un commit y un `task_complete` cada una, y cierra con el progreso |
+| `dale-todas` | «dale, hacelas todas» aprueba el change y hace las 3 tareas |
+| `pasos-con-roadmap` | Un pedido de 3 pasos o más va como CHANGE: sus pasos quedan como tareas del plan y la respuesta dice cuántas son y ofrece hacerlas todas |
+| `feature-hacer-todas` | «hacé todas» sobre una feature hace la parte libre y para ante la bloqueada, que espera el merge |
 
 En los casos con propuesta, `sin-comandos` chequea que el siguiente paso se ofrezca en palabras, sin `/seckert:…`.
 

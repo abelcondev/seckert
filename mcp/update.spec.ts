@@ -67,6 +67,9 @@ test('change_update responde una pregunta y agrega una tarea en una llamada, y d
   })
   expect(result.isError).toBeUndefined()
   expect(body(result).ids).toEqual(['T3'])
+  // El progreso después del cambio, para el roadmap y la barra.
+  expect(body(result)).toMatchObject({ status: 'approved', done: 0, total: 3, questions: 0 })
+  expect(body(result).tasks.map((t: { id: string }) => t.id)).toEqual(['T1', 'T2', 'T3'])
   const text = read()
   expect(text).not.toContain('**P1**')
   expect(text).toContain('- El separador es punto y coma.')

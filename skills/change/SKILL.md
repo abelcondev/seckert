@@ -18,7 +18,7 @@ $ARGUMENTS
    - `pedido`: the request above, or the issue's title and quote, verbatim (goes to `L1`).
    - `diagram`: Mermaid, only when the change touches the schema (`erDiagram` with the tables and relations involved) or a flow of several steps (`flowchart`). If it changes something existing, show before and after. Keep it small: only what the change touches. Without schema or flow, no diagram.
    - Write every field following the writing rules in `seckert:workflow`.
-5. Don't touch code. Show the change in a few lines: what you propose and, if there are open questions, the first one with your recommendation.
+5. Don't touch code. Show the change in a few lines: what you propose, how many tasks it has with their short titles (the roadmap, as in `seckert:next`) and, if there are open questions, the first one with your recommendation. Always end by offering both ways, together with the question if there is one: "¿las hago todas o una por una?" or "respondé la P1 y decime si las hago todas o una por una".
 
 ## Iterating the proposal
 

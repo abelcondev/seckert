@@ -2,6 +2,25 @@
 
 Cómo se corren y qué mide cada caso: [README.md](README.md). Cada celda es **con seckert / sin seckert**: el mismo modelo, los mismos pedidos y el mismo repo de prueba, con el plugin y sin él.
 
+## Sin publicar · roadmap de tareas y «hacé todas» · 2026-11-10
+
+Change `roadmap-de-tareas-visible-y-hace` (#24). Cuatro casos nuevos: `hacer-todas`, `dale-todas`, `pasos-con-roadmap` y `feature-hacer-todas`. `aprobar-con-dale` suma el grader `progreso`. 1 corrida por caso, con seckert. Modelo `claude-opus-5-5`. Costo: $1,22 antes, $2,43 en la primera corrida después y $2,96 en los ajustes.
+
+| Caso | Antes (skills de 2.0.0) | Después |
+|---|---|---|
+| `hacer-todas` | 5/6: sin progreso al final | 6/6 |
+| `dale-todas` | 6/7: sin progreso al final | 7/7 |
+| `pasos-con-roadmap` | 3/6: lo hacía como FIX, con los pasos solo en el chat | 6/6 en 3 de las 4 últimas corridas |
+| `feature-hacer-todas` | 6/6 | 6/6 |
+| `aprobar-con-dale` | — | 5/5 |
+| `fix-texto-boton`, `pedido-natural`, `tomar-issue-fix`, `change-cupones`, `feature-en-partes`, `change-grande-partes` | — | todos pasan: la regla de 3 pasos no vuelve CHANGE un FIX chico |
+
+Notas:
+- «Hacé todas» ya funcionaba con 2.0.0: `next` permite más de una tarea si el usuario lo pide. `hacer-todas` y `feature-hacer-todas` quedan como guarda.
+- `pasos-con-roadmap` necesitó la regla de 3 pasos en el contexto de inicio: Claude no cargaba `workflow`, listaba 3 pasos y lo hacía como un cambio chico. Por la ruta de `tomar`, el plan se arma sin cargar la skill `change`, por eso la oferta «todas o una por una» está también en `tomar` y en el contexto.
+- Al prompt de `pasos-con-roadmap` se le sacaron dos dudas (unidades o productos, confirmar al vaciar) que dejaban el issue en draft sin plan.
+- El fallo que queda (1 de 4) es del grader, no de Claude: la respuesta decía «0 de 5 hechas» y la regex no lo aceptaba. Ya la acepta.
+
 ## 2.0.0 · GitHub issues como único flujo · 2026-11-09
 
 Change `github-issues-como-flujo-por-defecto` (#14): sin `sdd/changes`, sin la línea `seckert issues: github`, sin barra ni copia local. Todos los casos parten de issues en el `gh` falso. Los 25 casos con 1 corrida, con seckert (`--ablation none`). Modelo `claude-opus-5-5`. Costo: $5,12 + $0,70 de repetir los 3 que fallaron.

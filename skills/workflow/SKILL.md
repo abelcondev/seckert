@@ -32,9 +32,10 @@ Explaining, researching or reviewing is read-only: don't write files or create i
 |---|---|---|
 | **FIX** | No rule changes: bug, copy, style, a screen from an artifact without new logic | Code it directly on the issue's branch |
 | **SPEC** | The value of an existing rule changes (a threshold, a price, a limit), even for money or permissions | Code it and update the rule with `spec_write` in the same change |
-| **CHANGE** | Schema or stored data, new money, auth or permissions logic, AI pipeline, large work or unclear approach | Proposal with the `seckert:change` skill; **wait for the "yes"** before touching code |
+| **CHANGE** | Schema or stored data, new money, auth or permissions logic, AI pipeline, 3 or more steps that merge together, large work or unclear approach | Proposal with the `seckert:change` skill; **wait for the "yes"** before touching code |
 
 - When unsure between FIX and CHANGE, FIX; if a FIX or SPEC grows past ~8 code files, stop and propose a CHANGE.
+- If you would list 3 or more steps for the user, it is a CHANGE: the steps become the plan's tasks, so they are tracked in the issue and not only in the chat. Fewer than 3 steps: FIX.
 - A new screen is a CHANGE only if it brings data, permissions or new logic.
 - The user says "no proposal" → FIX. Commit, push, PR or release notes are not classified.
 - Only mention the route when it is a CHANGE. For a SPEC, say at the end which rule you updated.
@@ -42,6 +43,8 @@ Explaining, researching or reviewing is read-only: don't write files or create i
 ## Life of a CHANGE
 
 `proposed` ──(user says yes)──► `approved` ──(user closes it)──► `done`. Only the user approves and closes: `change_transition` with their exact words.
+
+- Every reply on a change ends with its roadmap (`seckert:next`): done/total and the tasks, with the next one marked. "Hacé todas" does all the pending tasks in a row.
 
 - While `proposed`, adjustments go to the same plan and doubts to `## Open questions`, numbered.
 - When the tasks are done: new or changed rules with `spec_write`, a summary of what changed and what you couldn't verify, and offer to verify it; once they're happy, offer to close it and open the PR, in words, not commands.
