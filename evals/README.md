@@ -34,7 +34,7 @@ bun evals/metrics.ts evals/results/<version>.json   # palabras, tokens, segundos
 | `change-cupones` | Lógica nueva de dinero: issue con ruta CHANGE, plan en `proposed` (o issue en draft con preguntas) y nada de código |
 | `change-grande-partes` | Un pedido con partes que sirven solas se vuelve un issue partido en sub-issues; el layout queda como FIX |
 | `iterar-propuesta` | Los ajustes van al mismo plan con `change_update` (quitar una tarea, sumar un punto), que sigue en `proposed` |
-| `aprobar-con-dale` | "dale" aprueba el plan del issue, lo anota en el Log y crea `feature/<slug>` |
+| `aprobar-con-dale` | "dale" aprueba el plan del issue, lo anota en el Log, crea `feature/<slug>` y, después de T1, muestra el progreso (1/3) |
 | `bug-test-primero` | Con `seckert tests: strict`, el test se escribe antes del fix |
 | `fix-commit-gitflow` | Con `develop`, el pedido se toma como issue y el commit va en su rama `fix/…`, no en la rama protegida |
 | `verify-tercera-ronda` | Al tercer fallo del mismo punto, verify lo deja en Preguntas abiertas en vez de reabrir la tarea |
