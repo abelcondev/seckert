@@ -207,6 +207,16 @@ test('issue_list resume los abiertos y filtra por estado', async () => {
   expect((await call('issue_list', { state: 'approved' })).value.map((i: { id: string }) => i.id)).toEqual(['2'])
 })
 
+test('issue_list avisa de un issue de seckert que no puede leer', async () => {
+  await call('issue_create', ISSUE)
+  const data = db()
+  data.issues.push({ ...data.issues[0], number: 2, title: 'Hecho a mano', body: '## Problem\n\nsin la marca' })
+  writeFileSync(state, JSON.stringify(data))
+  const all = (await call('issue_list', {})).value
+  expect(all.map((i: { id: string }) => i.id)).toEqual(['1', '2'])
+  expect(all[1]).toEqual({ id: '2', title: 'Hecho a mano', url: expect.any(String), unreadable: 'el issue no tiene el formato de seckert' })
+})
+
 test('issue_list muestra el tipo y filtra por tipo', async () => {
   await call('issue_create', { ...ISSUE, kind: 'feature' })
   await call('issue_create', { ...ISSUE, title: 'Arreglar typo', route: 'FIX', kind: 'fix' })

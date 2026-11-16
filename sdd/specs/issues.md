@@ -55,3 +55,7 @@ Todo pedido de trabajo se vuelve un issue sin que el usuario diga «creá un iss
 ## Sin GitHub
 
 Si el repo no tiene `origin` o su `origin` no es de GitHub, el contexto de inicio lo avisa en una línea (agregar un origin de GitHub y correr `gh auth login`) y no da las reglas de issues. Las herramientas del MCP fallan con el mismo aviso. seckert no vuelve a otro lugar para guardar el trabajo.
+
+## Issues ilegibles
+
+Un issue con label `seckert:*` cuyo cuerpo no sigue el contrato (por ejemplo, sin la marca `<!-- seckert:issue v2 -->`) no se descarta en silencio. `issue_list` lo devuelve al final de la lista con `id`, `title`, `url` y `unreadable`, que dice el motivo. No tiene estado, ruta ni tipo. Para recuperarlo, se reescribe su cuerpo con el formato del contrato.

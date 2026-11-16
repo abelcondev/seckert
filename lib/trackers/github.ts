@@ -3,7 +3,7 @@
 // de GitHub: rama enlazada, PR enlazado abierto e issue cerrado.
 import { checkTransition, deriveState, kindLabel, kindOf, labelOf, parseBody, renderBody, stateOf, triageOf, type Issue, type IssueBody, type IssueState, type Kind, type Triage } from '../issue'
 import { attachPlan, planInBody } from '../issue-change'
-import type { Artifact, Artifacts, ArtifactType, Related, TrackedIssue, Tracker } from './tracker'
+import type { Artifact, Artifacts, ArtifactType, Related, TrackedIssue, Tracker, Unreadable } from './tracker'
 
 // Corre `gh` con los argumentos y, si hay, `input` por stdin; devuelve stdout.
 // El real vive en el MCP: los tests del módulo no dejan a lib/ correr procesos.
@@ -118,7 +118,7 @@ export function githubTracker(repo: string, gh: Gh): Tracker {
     get,
 
     // Sin estado: los abiertos. Con estado: todos, filtrados por el estado leído.
-    list(state?: IssueState, kind?: Kind) {
+    list(state?: IssueState, kind?: Kind, skipped?: Unreadable[]) {
       const args = ['issue', 'list', '--repo', repo, '--json', FIELDS, '--limit', '200', '--state', state ? 'all' : 'open']
       if (state) args.push('--label', labelOf(triageOf(state)))
       if (kind) args.push('--label', kindLabel(kind))
@@ -128,8 +128,10 @@ export function githubTracker(repo: string, gh: Gh): Tracker {
         try {
           const issue = toTracked(raw)
           return !state || issue.state === state ? [issue] : []
-        } catch {
-          return [] // cuerpo editado a mano: no es un issue de seckert legible
+        } catch (error) {
+          // Cuerpo editado a mano: no es un issue de seckert legible.
+          skipped?.push({ id: String(raw.number), title: raw.title, url: raw.url, reason: (error as Error).message })
+          return []
         }
       })
     },

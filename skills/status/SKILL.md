@@ -11,7 +11,7 @@ With a slug, `change_get`; otherwise `change_list` (open ones).
 
 For each: name, status, tasks done/total, next task, whether it has `design` and the last verification. Flag tasks marked without a commit and `proposed` changes waiting for approval, with their open questions by number.
 
-Then the seckert issues: `issue_list` (open ones), grouped by state in flow order (draft, approved, in-progress, in-review), one line each: `#id title (route)`. Flag `draft` ones as waiting for the user's triage. If `issue_list` fails (no GitHub `origin`, `gh` without login), say so in one line and go on.
+Then the seckert issues: `issue_list` (open ones), grouped by state in flow order (draft, approved, in-progress, in-review), one line each: `#id title (route)`. Flag `draft` ones as waiting for the user's triage. An entry with `unreadable` has a `seckert:*` label but a body seckert cannot read: list it apart with its reason and offer to rewrite the body in the contract format. If `issue_list` fails (no GitHub `origin`, `gh` without login), say so in one line and go on.
 
 End with one line listing the `sdd/specs/` areas and their rule count (`## `).
 

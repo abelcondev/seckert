@@ -3,6 +3,7 @@ import { execFileSync } from 'node:child_process'
 
 import { similarIssues, answerQuestion, branchFor, checkTransition, openQuestionsProblem, takeProblem, type Issue, type IssueState, type Kind } from '../lib/issue'
 import { ArtifactsUnavailable, githubTracker, type Gh } from '../lib/trackers/github'
+import type { Unreadable } from '../lib/trackers/tracker'
 import { issuePlan, syncIssue, type Plan } from './board'
 import { baseBranch } from './repo'
 
@@ -93,10 +94,14 @@ export function issueGet(root: string, id: string) {
   return { ...issue, design: designOf(issues, issue) }
 }
 
+// Los issues con label de seckert que no se pueden leer van al final, con su motivo:
+// así no desaparecen del listado sin aviso.
 export function issueList(root: string, state?: IssueState, kind?: Kind) {
-  return tracker(root)
-    .issues.list(state, kind)
+  const skipped: Unreadable[] = []
+  const issues = tracker(root)
+    .issues.list(state, kind, skipped)
     .map(({ id, title, state, route, kind, url }) => ({ id, title, state, route, kind, url }))
+  return [...issues, ...skipped.map(({ id, title, url, reason }) => ({ id, title, url, unreadable: reason }))]
 }
 
 // Mueve el triage. Aprobar exige las palabras del usuario y las deja como comentario.

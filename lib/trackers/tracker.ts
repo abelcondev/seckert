@@ -26,13 +26,17 @@ export interface Artifacts {
   update(id: string, number: number, body: string): Artifact
 }
 
+// Un issue con label de seckert cuyo cuerpo no sigue el contrato.
+export type Unreadable = { id: string; title: string; url: string; reason: string }
+
 export interface Tracker {
   artifacts: Artifacts
   // Con `parent`, nace como sub-issue; con `blockedBy`, bloqueado por esos issues.
   create(issue: Issue, state: IssueState, links?: { parent?: string; blockedBy?: string[] }): TrackedIssue
   get(id: string): TrackedIssue
-  // Sin estado: todos los issues de seckert abiertos.
-  list(state?: IssueState, kind?: Kind): TrackedIssue[]
+  // Sin estado: todos los issues de seckert abiertos. Los que tienen label de
+  // seckert pero un cuerpo ilegible no van en la lista: se anotan en `skipped`.
+  list(state?: IssueState, kind?: Kind, skipped?: Unreadable[]): TrackedIssue[]
   // Reemplaza el cuerpo del issue (el título y el estado no cambian). Conserva un `## Plan` que haya.
   updateBody(id: string, issue: IssueBody): void
   // Reemplaza el cuerpo tal cual, para el plan en el body.
