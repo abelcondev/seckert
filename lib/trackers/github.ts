@@ -151,6 +151,15 @@ export function githubTracker(repo: string, gh: Gh): Tracker {
       gh(['issue', 'edit', id, '--repo', repo, '--add-label', label])
     },
 
+    removeLabel(id: string, label: string) {
+      try {
+        gh(['issue', 'edit', id, '--repo', repo, '--remove-label', label])
+      } catch (error) {
+        // La label no existe en el repo: el issue no la tiene.
+        if (!/not found/i.test((error as Error).message)) throw error
+      }
+    },
+
     withLabel(label: string) {
       const raws: Raw[] = JSON.parse(gh(['issue', 'list', '--repo', repo, '--json', FIELDS, '--limit', '200', '--state', 'open', '--label', label]) || '[]')
       return raws.flatMap(raw => {

@@ -1,10 +1,11 @@
 // Issues de seckert en GitHub: el repo sale del remoto `origin` y `gh` corre en la raíz.
 import { execFileSync } from 'node:child_process'
 
-import { similarIssues, answerQuestion, branchFor, checkTransition, openQuestionsProblem, takeProblem, type Issue, type IssueState, type Kind } from '../lib/issue'
+import { AWAITING_COLOR, AWAITING_LABEL, awaitingOf, similarIssues, answerQuestion, branchFor, checkTransition, openQuestionsProblem, takeProblem, type Issue, type IssueState, type Kind } from '../lib/issue'
 import { ArtifactsUnavailable, githubTracker, type Gh } from '../lib/trackers/github'
 import type { Unreadable } from '../lib/trackers/tracker'
 import { issuePlan, syncIssue, type Plan } from './board'
+import { syncAwaiting } from './issue-changes'
 import { baseBranch } from './repo'
 
 // owner/repo de una URL de GitHub (ssh o https), o null si no es de GitHub.
@@ -67,6 +68,7 @@ export function issueCreate(root: string, issue: Issue & Plan & { design?: strin
   const rest = { ...given, origin: { ...given.origin, source: given.origin?.source?.trim() || 'chat', date: given.origin?.date?.trim() || new Date().toLocaleDateString('sv-SE') } }
   const similar = similarIssues(rest, issues.list()).map(({ id, title }) => ({ id, title }))
   let { rawBody: _raw, ...created } = issues.create(rest, 'draft', { parent, blockedBy })
+  if (awaitingOf({ state: 'draft', questions: rest.questions })) issues.addLabel(created.id, AWAITING_LABEL, AWAITING_COLOR)
   if (design?.trim()) {
     try {
       issues.artifacts.create(created.id, { type: 'link', name: DESIGN, body: design.trim() })
@@ -112,6 +114,7 @@ export function issueTransition(root: string, input: { id: string; to: 'approved
   const problem = checkTransition(current.state, input.to, input.aprobacion) ?? (input.to === 'approved' ? openQuestionsProblem(current) : null)
   if (problem) throw new Error(`el issue #${input.id} ${problem.startsWith('tiene') ? problem : `no se mueve: ${problem}`}`)
   issues.setState(input.id, current.state, input.to)
+  if (input.to === 'discarded') issues.removeLabel(input.id, AWAITING_LABEL)
   const note =
     input.to === 'approved'
       ? `Aprobado por el usuario: «${input.aprobacion!.trim()}»`
@@ -182,6 +185,7 @@ export function issueAnswer(root: string, input: { id: string; question: string;
   const decision = next.decisions!.at(-1)!
   const who = input.by?.trim() ? ` por ${input.by.trim()}` : ''
   gh(['issue', 'comment', input.id, '--repo', repo, '--body', `${input.question} respondida${who}: «${input.answer.trim()}». Pasa a Decisions: ${decision.text}`])
+  if (!next.questions?.length) syncAwaiting(root, input.id)
   return { id: input.id, question: input.question, decision, pending: (next.questions ?? []).map(q => q.id) }
 }
 

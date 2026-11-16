@@ -153,7 +153,7 @@ test('un issue con preguntas abiertas no se aprueba; responderlas las pasa a Dec
   await call('issue_create', { ...ISSUE, questions: [{ id: 'P1', text: '¿Separador ; o ,?', owner: 'Abel' }, { id: 'P2', text: '¿Incluimos cancelados?' }] })
   const blocked = await call('issue_transition', { id: '1', to: 'approved', aprobacion: 'dale' })
   expect(blocked.error).toContain('P1')
-  expect(db().issues[0]!.labels).toEqual(['seckert:draft'])
+  expect(db().issues[0]!.labels).toEqual(['seckert:draft', 'seckert:awaiting'])
 
   const { value, error } = await call('issue_answer', { id: '1', question: 'P1', answer: 'Con ;', decision: 'Separador ;', by: 'Abel' })
   expect(error).toBeNull()
@@ -167,6 +167,24 @@ test('un issue con preguntas abiertas no se aprueba; responderlas las pasa a Dec
   const ok = await call('issue_transition', { id: '1', to: 'approved', aprobacion: 'dale' })
   expect(ok.error).toBeNull()
   expect((await call('issue_get', { id: '1' })).value.decisions.at(-1)).toMatchObject({ text: '¿Incluimos cancelados? No' })
+})
+
+test('seckert:awaiting marca un draft con preguntas y se va al responder la última', async () => {
+  await call('issue_create', ISSUE)
+  expect(db().issues[0]!.labels).not.toContain('seckert:awaiting')
+
+  await call('issue_create', { ...ISSUE, questions: [{ id: 'P1', text: '¿a?' }, { id: 'P2', text: '¿b?' }] })
+  expect(db().issues[1]!.labels).toContain('seckert:awaiting')
+  await call('issue_answer', { id: '2', question: 'P1', answer: 'sí' })
+  expect(db().issues[1]!.labels).toContain('seckert:awaiting')
+  await call('issue_answer', { id: '2', question: 'P2', answer: 'no' })
+  expect(db().issues[1]!.labels).not.toContain('seckert:awaiting')
+})
+
+test('descartar un issue que espera respuesta le quita seckert:awaiting', async () => {
+  await call('issue_create', { ...ISSUE, questions: [{ id: 'P1', text: '¿a?' }] })
+  await call('issue_transition', { id: '1', to: 'discarded' })
+  expect(db().issues[0]!.labels).toEqual(['seckert:discarded'])
 })
 
 test('responder una pregunta que no existe falla', async () => {

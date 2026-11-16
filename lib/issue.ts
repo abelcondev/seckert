@@ -159,6 +159,18 @@ export function parseBody(body: string): IssueBody {
   }
 }
 
+// La label que dice que seckert espera una respuesta del usuario: un draft con
+// preguntas abiertas o un change con el plan en `proposed`. Un issue cerrado o
+// descartado ya no espera nada.
+export const AWAITING_LABEL = 'seckert:awaiting'
+export const AWAITING_COLOR = 'f9a825'
+
+export function awaitingOf(input: { state: IssueState | null; questions?: Question[]; change?: 'proposed' | 'approved' | 'done' | null }): boolean {
+  if (input.state === 'closed' || input.state === 'discarded') return false
+  if (input.change === 'proposed') return true
+  return input.state === 'draft' && (input.questions ?? []).length > 0
+}
+
 // Solo el triage es label propia; in-progress, in-review y closed los muestra GitHub.
 export const TRIAGE = ['draft', 'approved', 'discarded'] as const
 export type Triage = (typeof TRIAGE)[number]

@@ -47,3 +47,7 @@ Un trabajo de 3 pasos o más que se mergean juntos va como CHANGE: sus pasos son
 ## Barra
 
 El módulo del plugin muestra arriba del prompt el change activo: `seckert · <slug> · hechas/total · sigue: <tarea>`, o `n tareas · esperando tu "sí"` (o las preguntas abiertas) si está en `proposed`. Se arma con los resultados de `change_get`, `change_create`, `change_update`, `change_transition` y `task_complete`: no llama a `gh` ni lee archivos. Empieza vacía en cada sesión, aparece con la primera de esas llamadas y se va cuando el change se cierra. Si un resultado no se puede leer, la barra queda como estaba.
+
+## Plan esperando el «dale»
+
+Mientras un change está en `proposed`, su issue lleva la label `seckert:awaiting`, además de `seckert:change`. `change_create` la pone. `change_transition` a approved la quita. Así se ve desde GitHub, el tablero o un worker sin sesión que el plan espera el «dale». La misma label marca un draft con preguntas abiertas (ver issues.md).

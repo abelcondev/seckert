@@ -1,6 +1,6 @@
 import { expect, test } from 'claude-code/testing'
 
-import { branchFor, checkTransition, similarIssues, deriveState, labelOf, parseBody, renderBody, stateOf, type Issue } from '../lib/issue'
+import { AWAITING_LABEL, awaitingOf, branchFor, checkTransition, similarIssues, deriveState, labelOf, parseBody, renderBody, stateOf, type Issue } from '../lib/issue'
 
 const ISSUE: Issue = {
   title: 'Exportar pedidos a CSV',
@@ -108,4 +108,17 @@ test('dos issues son parecidos si comparten al menos dos palabras con contenido'
   const a = { title: 'totalConDescuento devuelve el descuento en vez del total', problem: 'Con $100 y 10% da $10.' }
   expect(similarIssues({ title: 'Corregir totalConDescuento', problem: 'Devuelve el descuento.' }, [{ id: '1', ...a }]).map(i => i.id)).toEqual(['1'])
   expect(similarIssues({ title: 'Botón de confirmar', problem: 'El checkout dice Enviar.' }, [{ id: '1', ...a }])).toEqual([])
+})
+
+test('seckert espera al usuario con un draft con preguntas o un change propuesto', () => {
+  const q = [{ id: 'P1', text: '¿x?' }]
+  expect(AWAITING_LABEL).toBe('seckert:awaiting')
+  expect(awaitingOf({ state: 'draft', questions: q })).toBe(true)
+  expect(awaitingOf({ state: 'draft', questions: [] })).toBe(false)
+  expect(awaitingOf({ state: 'draft' })).toBe(false)
+  expect(awaitingOf({ state: 'approved', questions: q })).toBe(false)
+  expect(awaitingOf({ state: 'in-progress', change: 'proposed' })).toBe(true)
+  expect(awaitingOf({ state: 'in-progress', change: 'approved' })).toBe(false)
+  expect(awaitingOf({ state: 'discarded', change: 'proposed' })).toBe(false)
+  expect(awaitingOf({ state: 'closed', questions: q })).toBe(false)
 })
