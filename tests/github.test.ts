@@ -2,6 +2,7 @@ import { expect, test } from 'claude-code/testing'
 
 import { renderBody, type Issue } from '../lib/issue'
 import { ArtifactsUnavailable, githubTracker, type Gh } from '../lib/trackers/github'
+import type { Unreadable } from '../lib/trackers/tracker'
 
 const ISSUE: Issue = {
   title: 'Exportar pedidos a CSV',
@@ -107,6 +108,14 @@ test('un issue que no escribió seckert en la lista no rompe: se salta', () => {
   const list = JSON.stringify([JSON.parse(view({ body: 'a mano' })), JSON.parse(view({ number: 14 }))])
   const { gh } = fakeGh({ 'issue list': list })
   expect(githubTracker('o/r', gh).list().map(i => i.id)).toEqual(['14'])
+})
+
+test('un issue con label de seckert que no se puede leer queda anotado con su motivo', () => {
+  const list = JSON.stringify([JSON.parse(view({ number: 27, body: '## Problem\n\nsin la marca' })), JSON.parse(view({ number: 14 }))])
+  const { gh } = fakeGh({ 'issue list': list })
+  const skipped: Unreadable[] = []
+  expect(githubTracker('o/r', gh).list(undefined, undefined, skipped).map(i => i.id)).toEqual(['14'])
+  expect(skipped).toEqual([{ id: '27', title: expect.any(String), url: expect.any(String), reason: 'el issue no tiene el formato de seckert' }])
 })
 
 test('mover el triage cambia la label', () => {
