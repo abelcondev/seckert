@@ -124,6 +124,20 @@ test('mover el triage cambia la label', () => {
   expect(calls.at(-1)!.args).toEqual(['issue', 'edit', '12', '--repo', 'o/r', '--remove-label', 'seckert:draft', '--add-label', 'seckert:approved'])
 })
 
+test('quitar una label la saca del issue; si no la tiene, no falla', () => {
+  const { gh, calls } = fakeGh()
+  githubTracker('o/r', gh).removeLabel('12', 'seckert:awaiting')
+  expect(calls.at(-1)!.args).toEqual(['issue', 'edit', '12', '--repo', 'o/r', '--remove-label', 'seckert:awaiting'])
+  const missing: Gh = () => {
+    throw new Error("'seckert:awaiting' not found")
+  }
+  expect(() => githubTracker('o/r', missing).removeLabel('12', 'seckert:awaiting')).not.toThrow()
+  const other: Gh = () => {
+    throw new Error('HTTP 500')
+  }
+  expect(() => githubTracker('o/r', other).removeLabel('12', 'seckert:awaiting')).toThrow('HTTP 500')
+})
+
 test('descartar además cierra el issue como no planeado', () => {
   const { gh, calls } = fakeGh()
   githubTracker('o/r', gh).setState('13', 'in-progress', 'discarded')

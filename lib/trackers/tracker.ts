@@ -42,6 +42,8 @@ export interface Tracker {
   // Reemplaza el cuerpo tal cual, para el plan en el body.
   updateRawBody(id: string, markdown: string): void
   addLabel(id: string, label: string, color: string): void
+  // Quita la label; si el issue no la tiene, no hace nada.
+  removeLabel(id: string, label: string): void
   // Los issues de seckert abiertos con una label dada.
   withLabel(label: string): TrackedIssue[]
   // Los issues cerrados como completados con una label dada, desde una fecha (YYYY-MM-DD) si se da.
