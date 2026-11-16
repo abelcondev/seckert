@@ -26,7 +26,7 @@ import {
   verifyLine,
 } from '../lib/change'
 import { removeRule, writeRule } from '../lib/spec'
-import { createIssueChange, readIssueChanges, saveIssueChange, type IssueSource } from './issue-changes'
+import { createIssueChange, readIssueChanges, saveIssueChange, syncAwaiting, type IssueSource } from './issue-changes'
 
 // Un change vive en su issue: `file` es «issue #n» y `source`, de dónde salió.
 export type ChangeFile = ParsedChange & { slug: string; file: string; text: string; source: IssueSource }
@@ -171,6 +171,7 @@ export function transitionChange(root: string, input: Transition): Record<string
     text = appendLog(text, `${today()}: aprobado ("${words}"). Rama ${branch} ${how}.`)
     if (open.length) text = appendLog(text, `${today()}: pendientes al aprobar: ${change.questions.map(q => q.id ?? q.text).join(', ')}.`)
     save(root, change, text)
+    syncAwaiting(root, change.source.number)
     return { slug: change.slug, branch, next: change.tasks.find(t => !t.done)?.id ?? null, ...progress(text) }
   }
 

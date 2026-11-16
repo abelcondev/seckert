@@ -59,6 +59,7 @@ export function createIssueChange(root: string, change: NewChange & { issue: str
   if (artifacts) issues.artifacts.create(id, { type: 'plan', name: PLAN_NAME, body: plan })
   else issues.updateRawBody(id, attachPlan(issue.rawBody, plan))
   issues.addLabel(id, CHANGE_LABEL, 'fbca04')
+  issues.addLabel(id, AWAITING_LABEL, AWAITING_COLOR)
   gh(['issue', 'comment', id, '--repo', repo, '--body', `Plan propuesto${artifacts ? ' (artifact Plan)' : ' (sección Plan)'}: espera el «dale».`])
   return { slug: change.slug, file: `issue #${id}`, status: 'proposed' }
 }

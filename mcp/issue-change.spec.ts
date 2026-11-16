@@ -88,6 +88,14 @@ test('change_create con issue escribe el plan como artifact, sin archivo en sdd/
   expect(db().issues[0]!.labels).toContain('seckert:change')
 })
 
+test('un plan propuesto pone seckert:awaiting en el issue; aprobarlo la quita', async () => {
+  await takenChange()
+  expect(db().issues[0]!.labels).toContain('seckert:awaiting')
+  expect((await call('change_transition', { slug: 'exportar-pedidos-a-csv', to: 'approved', aprobacion: 'dale' })).error).toBeNull()
+  expect(db().issues[0]!.labels).not.toContain('seckert:awaiting')
+  expect(db().issues[0]!.labels).toContain('seckert:change')
+})
+
 test('change_get arma el change desde el issue: el What son los criterios', async () => {
   await takenChange()
   const { value } = await call('change_get', { slug: 'exportar-pedidos-a-csv' })
