@@ -3,6 +3,7 @@
 // guardar, el plan vuelve al artifact (o al body, sin artifacts), los criterios
 // editados vuelven al body y lo nuevo del Log queda como comentario.
 import { parseChange, renderChange, SLUG, type NewChange } from '../lib/change'
+import { AWAITING_COLOR, AWAITING_LABEL, awaitingOf } from '../lib/issue'
 import { attachPlan, changeFromIssue, criteriaOf, logComment, newLogLines, PLAN_NAME, planFromChange, planInBody } from '../lib/issue-change'
 import { ArtifactsUnavailable } from '../lib/trackers/github'
 import type { Artifact, TrackedIssue } from '../lib/trackers/tracker'
@@ -79,4 +80,14 @@ export function saveIssueChange(root: string, change: ChangeFile & { source: Iss
   }
   const added = newLogLines(change.source.plan, plan)
   if (added.length) gh(['issue', 'comment', id, '--repo', repo, '--body', logComment(added)])
+}
+
+// Pone o quita seckert:awaiting según lo que el issue espera hoy del usuario:
+// preguntas abiertas en draft o un plan en `proposed`.
+export function syncAwaiting(root: string, id: string): void {
+  const { issues } = tracker(root)
+  const issue = issues.get(id)
+  const change = fromIssue(issue, artifactsOf(id, issues))
+  if (awaitingOf({ state: issue.state, questions: issue.questions, change: change?.status ?? null })) issues.addLabel(id, AWAITING_LABEL, AWAITING_COLOR)
+  else issues.removeLabel(id, AWAITING_LABEL)
 }
