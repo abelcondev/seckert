@@ -59,3 +59,13 @@ Si el repo no tiene `origin` o su `origin` no es de GitHub, el contexto de inici
 ## Issues ilegibles
 
 Un issue con label `seckert:*` cuyo cuerpo no sigue el contrato (por ejemplo, sin la marca `<!-- seckert:issue v2 -->`) no se descarta en silencio. `issue_list` lo devuelve al final de la lista con `id`, `title`, `url` y `unreadable`, que dice el motivo. No tiene estado, ruta ni tipo. Para recuperarlo, se reescribe su cuerpo con el formato del contrato.
+
+## Esperando al usuario
+
+La label `seckert:awaiting` dice que seckert espera una respuesta del usuario. Se puede filtrar en GitHub y en el tablero sin leer el plan. La llevan dos casos: un issue en draft con preguntas abiertas, y un issue cuyo change está en `proposed` (ver changes.md).
+
+- `issue_create` la pone si el issue nace con preguntas.
+- `issue_answer` la quita al responder la última pregunta, salvo que el change siga en `proposed`.
+- `issue_transition` a discarded la quita.
+
+No es un estado: convive con la label de triage. Un issue cerrado o descartado nunca espera nada.
