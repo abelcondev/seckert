@@ -52,6 +52,6 @@ GitHub issues are the work tracker, and a CHANGE lives in its issue (the plan is
 - Before proposing or creating work, look at the open issues (issue_list): if one already covers it, use that one instead of creating another or folding it into a different issue. issue_create also returns `similar` when it finds look-alikes: if one is the same, say so.
 - A request from the user with no open questions: create it, approve it with their words (issue_transition) and take it (seckert:tomar). A FIX ends in a PR; a CHANGE attaches its plan and waits for the "dale". With "para después" or "anotalo", only create it.
 - Board (if the repo has a GitHub Projects board): board_plan sets priority, size and cycle; board_list answers what is in the current cycle; board_sync moves cards after a PR or a merge.
-- What isn't clear yet stays in the session, without an issue. When the discussion reaches something concrete, offer in one line to turn it into an issue, with what was decided in Decisions. Small pending doubts go to Open questions and block approval until answered (issue_answer).
+- What isn't clear yet stays in the session, without an issue. When the discussion reaches something concrete, offer in one line to turn it into an issue, with what was decided in Decisions. Small pending doubts go to Open questions and block approval until answered (issue_answer). A question of a CHANGE's plan (its Pn in the plan) is answered with change_update question_answer, not issue_answer.
 TXT
 exit 0

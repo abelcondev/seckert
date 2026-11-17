@@ -489,7 +489,7 @@ server.registerTool(
   'issue_answer',
   {
     description:
-      'Answers an open question of a seckert issue: removes it from Open questions and adds it to Decisions with who and today\'s date, and leaves the answer as a comment. An issue with open questions cannot be approved. Write `decision` in the issue\'s language, as the decision itself (e.g. "Separator ;").',
+      'Answers an open question of a seckert issue: removes it from Open questions and adds it to Decisions with who and today\'s date, and leaves the answer as a comment. An issue with open questions cannot be approved. A question of the change plan (a Pn in the Plan) is not here: answer it with change_update question_answer. Write `decision` in the issue\'s language, as the decision itself (e.g. "Separator ;").',
     inputSchema: {
       id: z.string().describe('The issue number'),
       question: z.string().regex(/^P\d+$/).describe('P1, P2…'),

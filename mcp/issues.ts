@@ -5,7 +5,7 @@ import { AWAITING_COLOR, AWAITING_LABEL, awaitingOf, similarIssues, answerQuesti
 import { ArtifactsUnavailable, githubTracker, type Gh } from '../lib/trackers/github'
 import type { Unreadable } from '../lib/trackers/tracker'
 import { issuePlan, syncIssue, type Plan } from './board'
-import { syncAwaiting } from './issue-changes'
+import { planQuestionSlug, syncAwaiting } from './issue-changes'
 import { baseBranch } from './repo'
 
 // owner/repo de una URL de GitHub (ssh o https), o null si no es de GitHub.
@@ -180,6 +180,11 @@ export function issueAnswer(root: string, input: { id: string; question: string;
   const current = issues.get(input.id)
   const { id: _id, url: _url, title: _title, state: _state, kind: _kind, rawBody: _raw, ...body } = current
   const date = new Date().toLocaleDateString('sv-SE')
+  // Una Pn del plan (change en el issue) no está en Open questions: se responde con change_update.
+  if (!(body.questions ?? []).some(q => q.id === input.question)) {
+    const slug = planQuestionSlug(root, input.id, input.question)
+    if (slug) throw new Error(`${input.question} es del plan del change ${slug}, no de Open questions: respondela con change_update (op question_answer, id ${input.question}) más what_add o task_add con lo que decide.`)
+  }
   const next = answerQuestion(body, { ...input, date })
   issues.updateBody(input.id, next)
   const decision = next.decisions!.at(-1)!

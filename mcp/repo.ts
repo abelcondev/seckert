@@ -161,9 +161,9 @@ export function transitionChange(root: string, input: Transition): Record<string
   if (from !== expected) throw new Error(`${change.slug} está ${from}; solo se pasa a ${input.to} desde ${expected}.`)
 
   if (input.to === 'approved') {
-    const open = change.questions.map(q => (q.id ? `${q.id} ${q.text}` : q.text))
+    const open = change.questions.map(q => (q.id ? `${q.id} ${q.text}` : q.text).replace(/[.\s]+$/, ''))
     if (open.length && !input.pendientes)
-      throw new Error(`Quedan preguntas abiertas: ${open.join(' | ')}. Nombralas y preguntá si sigue igual; si dice que sí, llamá de nuevo con pendientes: true.`)
+      throw new Error(`Quedan preguntas abiertas: ${open.join(' | ')}. Si el usuario ya las respondió, registrá cada respuesta con change_update (op question_answer) y aprobá de nuevo. Si no, nombralas y preguntá si sigue igual; si dice que sí, llamá de nuevo con pendientes: true.`)
 
     const branch = change.branch ?? `feature/${change.slug}`
     const how = checkoutBranch(root, branch)
