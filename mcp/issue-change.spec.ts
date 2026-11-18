@@ -225,3 +225,18 @@ test('issue_take devuelve el diseño del issue', async () => {
   await call('issue_transition', { id: '1', to: 'approved', aprobacion: 'dale' })
   expect((await call('issue_take', { id: '1' })).value.design).toBe('https://claude.ai/artifact/abc123')
 })
+
+test('una pregunta del plan respondida con issue_answer lleva a question_answer, y aprobar con ella abierta también', async () => {
+  await call('issue_create', ISSUE)
+  await call('issue_transition', { id: '1', to: 'approved', aprobacion: 'dale' })
+  await call('issue_take', { id: '1' })
+  await call('change_create', { slug: 'exportar-pedidos-a-csv', title: ISSUE.title, tasks: ['x'], pedido: 'x', issue: '1', questions: ['¿Separador ; o ,? Recomiendo ;.'] })
+
+  const answer = await call('issue_answer', { id: '1', question: 'P1', answer: 'sí' })
+  expect(answer.error).toContain('es del plan')
+  expect(answer.error).toContain('question_answer')
+
+  const approve = await call('change_transition', { slug: 'exportar-pedidos-a-csv', to: 'approved', aprobacion: 'sí' })
+  expect(approve.error).toContain('question_answer')
+  expect(approve.error).not.toContain('..')
+})

@@ -83,6 +83,13 @@ export function saveIssueChange(root: string, change: ChangeFile & { source: Iss
   if (added.length) gh(['issue', 'comment', id, '--repo', repo, '--body', logComment(added)])
 }
 
+// Si la pregunta Pn es del plan del change del issue, devuelve su slug; si no, null.
+export function planQuestionSlug(root: string, id: string, question: string): string | null {
+  const { issues } = tracker(root)
+  const change = fromIssue(issues.get(id), artifactsOf(id, issues))
+  return change?.questions.some(q => q.id === question) ? change.slug : null
+}
+
 // Pone o quita seckert:awaiting según lo que el issue espera hoy del usuario:
 // preguntas abiertas en draft o un plan en `proposed`.
 export function syncAwaiting(root: string, id: string): void {
