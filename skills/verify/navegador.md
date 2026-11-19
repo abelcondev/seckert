@@ -37,7 +37,7 @@ Only when the session-start context or the environment has `SECKERT_EVIDENCIAS=<
 2. Start recording with `screencast_start`, saving to `<folder>/<slug>-flujo.webm`. Stop it with `screencast_stop` when the flow ends, before the three widths.
 3. For each What point checked in the app, once you see it working (or failing), `take_screenshot` with `filePath` = `<folder>/<slug>-<n>-<point>.png`: `<slug>` is the change's, `<n>` the point's number in the What, `<point>` its first words in kebab-case (40 characters at most).
 4. Use absolute paths. Overwrite files from a previous round of the same change.
-5. If the folder can't be created or a file can't be written, or the MCP lacks screencast tools, keep verifying. Say it in one line at the end of the verdict, with the reason.
+5. If the folder can't be created or a file can't be written, or the MCP lacks screencast tools, keep verifying. Say it in one line at the end of the verdict, with the reason. Without the MCP nothing is saved: that line says so, and no row links a file that doesn't exist.
 
 Each point's row links its screenshot in the Evidence column, and a line after the table links the video.
 
