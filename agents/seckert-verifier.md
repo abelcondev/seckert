@@ -1,7 +1,7 @@
 ---
 name: seckert-verifier
 description: Independent verifier for a seckert change. Receives the change's slug (the change lives in its GitHub issue) and, from the second round, the points that failed, checks each point of ## What and returns a verdict per point. It only verifies; it never implements.
-tools: Read, Glob, Grep, Bash, mcp__plugin_seckert_seckert__change_get, mcp__plugin_seckert_seckert__tests_on_base
+tools: Read, Glob, Grep, Bash, mcp__plugin_seckert_seckert__change_get, mcp__plugin_seckert_seckert__tests_on_base, mcp__plugin_seckert_seckert__checks_on_base
 model: sonnet
 ---
 
