@@ -22,6 +22,7 @@ import {
   slugOf,
   type NewChange,
   type ParsedChange,
+  type CheckVerdict,
   type Verdict,
   verifyLine,
 } from '../lib/change'
@@ -207,7 +208,8 @@ export function completeTaskInRepo(root: string, input: { slug?: string; task: s
 }
 
 export type VerifyRow = { punto: string; veredicto: Verdict; evidencia?: string; tareas?: string[]; recomendacion?: string }
-export type VerifyInput = { slug?: string; filas: VerifyRow[]; preexistentes?: string[]; comandos?: string[] }
+export type VerifyCheckInput = { nombre: 'lint' | 'typecheck'; veredicto: CheckVerdict; comando?: string; evidencia?: string; tareas?: string[] }
+export type VerifyInput = { slug?: string; filas: VerifyRow[]; chequeos?: VerifyCheckInput[]; preexistentes?: string[]; comandos?: string[] }
 
 // Lo visual contra el artifact, cuando no es un punto del What.
 const DESIGN = 'Diseño'
@@ -233,6 +235,12 @@ export function recordVerify(root: string, input: VerifyInput) {
     else if (!row.tareas?.length) throw new Error(`"${row.punto}" falla: indicá en \`tareas\` qué tareas reabrir (p.ej. ["T1"]).`)
     else row.tareas.forEach(task => reopen.add(task))
   }
+  // Un error nuevo de lint o typecheck reabre las tareas que lo trajeron; uno
+  // que ya estaba en la base (PREEXISTENTE) no reabre nada.
+  for (const check of (input.chequeos ?? []).filter(c => c.veredicto === 'FALLA')) {
+    if (!check.tareas?.length) throw new Error(`${check.nombre} falla: indicá en \`tareas\` qué tareas trajeron los errores nuevos (p.ej. ["T1"]).`)
+    check.tareas.forEach(task => reopen.add(task))
+  }
 
   let text = change.text
   for (const task of reopen) text = reopenTask(text, task)
@@ -246,6 +254,7 @@ export function recordVerify(root: string, input: VerifyInput) {
 
   const line = verifyLine(today(), {
     rows: input.filas.map(row => ({ point: row.punto, verdict: row.veredicto, evidence: row.evidencia })),
+    checks: input.chequeos?.map(check => ({ name: check.nombre, verdict: check.veredicto, command: check.comando, evidence: check.evidencia })),
     preexisting: input.preexistentes,
     commands: input.comandos,
   })

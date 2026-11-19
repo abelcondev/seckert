@@ -126,3 +126,46 @@ test('un FALLA sin tareas que reabrir se rechaza', async () => {
   expect(bad.isError).toBe(true)
   expect(bad.content[0]!.text).toContain('tareas')
 })
+
+test('lint y typecheck van en la línea verify; un error nuevo reabre sus tareas y uno preexistente no', async () => {
+  write('chequeos', '')
+  const result = json(
+    await record({
+      slug: 'chequeos',
+      filas: [{ punto: CODIGO, veredicto: 'PASA' }],
+      chequeos: [
+        { nombre: 'lint', veredicto: 'FALLA', comando: 'bun run lint', evidencia: 'noUnusedVariables en src/a.ts', tareas: ['T2'] },
+        { nombre: 'typecheck', veredicto: 'PREEXISTENTE', comando: 'tsc', evidencia: 'TS2322 en src/b.ts' },
+      ],
+    }),
+  )
+  expect(result).toMatchObject({ reabiertas: ['T2'] })
+  expect(read('chequeos')).toContain(
+    `- ${TODAY} verify: PASA "${CODIGO}". Chequeos: lint FALLA (\`bun run lint\`: noUnusedVariables en src/a.ts); typecheck PREEXISTENTE (\`tsc\`: TS2322 en src/b.ts). T2 reabierta.`,
+  )
+  expect(read('chequeos')).toContain('- [x] T1 Descuento')
+})
+
+test('sin lint ni typecheck definidos queda SIN DEFINIR y no reabre nada', async () => {
+  write('sin-chequeos', '')
+  const result = json(
+    await record({
+      slug: 'sin-chequeos',
+      filas: [{ punto: CODIGO, veredicto: 'PASA' }],
+      chequeos: [{ nombre: 'lint', veredicto: 'SIN DEFINIR' }, { nombre: 'typecheck', veredicto: 'SIN DEFINIR' }],
+    }),
+  )
+  expect(result).toMatchObject({ reabiertas: [] })
+  expect(read('sin-chequeos')).toContain(`verify: PASA "${CODIGO}". Chequeos: lint SIN DEFINIR; typecheck SIN DEFINIR.`)
+})
+
+test('un chequeo que falla sin tareas a reabrir es un error', async () => {
+  write('chequeo-sin-tareas', '')
+  const result = await record({
+    slug: 'chequeo-sin-tareas',
+    filas: [{ punto: CODIGO, veredicto: 'PASA' }],
+    chequeos: [{ nombre: 'lint', veredicto: 'FALLA' }],
+  })
+  expect(result.isError).toBe(true)
+  expect(result.content[0]!.text).toContain('tareas')
+})
