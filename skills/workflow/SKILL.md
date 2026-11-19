@@ -71,6 +71,7 @@ The project sets the level with `seckert tests: light | risk | strict` in its `C
 | **Presentation** | no test | no test, checked against the artifact | no test, checked against the artifact |
 
 - "Test first": write it, run it and **see it fail** before implementing.
+- Money, dates or permissions: suggest property-based tests (fast-check, Hypothesis) for the rule that must hold for any input, e.g. "the total is never negative". A suggestion, not a requirement: example tests are enough.
 - Logic trapped in a component: extract it to a module and test that. A test that reads source code as text doesn't cover behavior.
 - In the change's `## Testing`, what was tested or why it doesn't apply.
 - Reuse helpers, components and tokens; don't duplicate. With a design artifact, follow `seckert:design`.
