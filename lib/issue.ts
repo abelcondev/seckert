@@ -207,6 +207,81 @@ export function answerQuestion(issue: IssueBody, input: { question: string; answ
   return { ...rest, decisions: [...(issue.decisions ?? []), decision], ...(questions.length ? { questions } : {}) }
 }
 
+// Las secciones de lista que issue_update edita, con su título en el cuerpo.
+export const LIST_SECTIONS = {
+  criteria: 'Acceptance criteria',
+  decisions: 'Decisions',
+  outOfScope: 'Out of scope',
+  constraints: 'Constraints',
+  references: 'References',
+  questions: 'Open questions',
+} as const
+export type ListSection = keyof typeof LIST_SECTIONS
+export const TEXT_SECTIONS = { problem: 'Problem', outcome: 'Outcome', quote: 'Problem (cita)' } as const
+export type TextSection = keyof typeof TEXT_SECTIONS
+
+export type IssueOp =
+  | { op: 'set'; section: TextSection; text: string }
+  | { op: 'add'; section: ListSection; text: string; by?: string; owner?: string }
+  | { op: 'edit'; section: ListSection; item: string; text: string }
+  | { op: 'remove'; section: ListSection; item: string }
+
+const itemText = (item: string | Decision | Question) => (typeof item === 'string' ? item : item.text)
+
+// Aplica ops a las secciones del cuerpo, en orden y todo o nada. Un ítem se
+// nombra por su texto exacto (o por Pn en Open questions). Problem, Outcome y
+// los criterios no pueden quedar vacíos. Una Pn nueva sigue a la mayor abierta o
+// ya usada (`taken`: las respondidas). Devuelve el cuerpo y las Pn agregadas.
+export function updateIssue(issue: IssueBody, ops: IssueOp[], ctx: { date: string; by?: string; taken?: string[] }): { body: IssueBody; added: string[] } {
+  if (!ops.length) throw new Error('no hay cambios para aplicar')
+  const next: IssueBody = structuredClone(issue)
+  const added: string[] = []
+  for (const op of ops) {
+    if (op.op === 'set') {
+      const text = op.text.trim()
+      if (op.section === 'quote') {
+        if (text) next.quote = text
+        else delete next.quote
+        continue
+      }
+      if (!text) throw new Error(`${TEXT_SECTIONS[op.section]} no puede quedar vacía`)
+      next[op.section] = text
+      continue
+    }
+    const title = LIST_SECTIONS[op.section]
+    const list = [...((next[op.section] as (string | Decision | Question)[] | undefined) ?? [])]
+    if (op.op === 'add') {
+      const text = op.text.trim()
+      if (!text) throw new Error(`el ítem nuevo de ${title} está vacío`)
+      if (list.some(item => itemText(item) === text)) throw new Error(`${title} ya tiene «${text}»`)
+      if (op.section === 'decisions') {
+        const by = op.by?.trim() || ctx.by?.trim()
+        list.push({ text, ...(by ? { by } : {}), date: ctx.date })
+      } else if (op.section === 'questions') {
+        const ids = [...list.map(q => (q as Question).id), ...(ctx.taken ?? [])]
+        const max = Math.max(0, ...ids.map(id => Number(id.match(/^P(\d+)$/)?.[1] ?? 0)))
+        const id = `P${max + 1}`
+        list.push({ id, text, ...(op.owner?.trim() ? { owner: op.owner.trim() } : {}) })
+        added.push(id)
+      } else list.push(text)
+    } else {
+      const key = op.item.trim()
+      const at = list.findIndex(item => itemText(item) === key || (op.section === 'questions' && (item as Question).id === key))
+      if (at === -1) throw new Error(`${title} no tiene «${key}»`)
+      if (op.op === 'edit') {
+        const text = op.text.trim()
+        if (!text) throw new Error(`para sacar «${key}» de ${title}, usá remove`)
+        const item = list[at]!
+        list[at] = typeof item === 'string' ? text : { ...item, text }
+      } else list.splice(at, 1)
+    }
+    if (op.section === 'criteria' && !list.length) throw new Error(`${title} no puede quedar vacía: hace falta al menos un criterio`)
+    if (list.length) (next as Record<string, unknown>)[op.section] = list
+    else delete next[op.section]
+  }
+  return { body: next, added }
+}
+
 // El tipo vive en una label `type:<tipo>`; sin ella es null, con dos es un error.
 export function kindLabel(kind: Kind): string {
   return `type:${kind}`
