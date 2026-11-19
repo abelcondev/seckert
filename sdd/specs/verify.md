@@ -19,3 +19,18 @@ Cuando algo falla, el verificador nombra el tipo de error y todos los lugares de
 ## Fallos preexistentes
 
 Un test que falla en la rama y también en la base (`git merge-base` con `develop`/`dev` o `main`) es `PREEXISTENTE`: no reabre tareas y va al PR. Lo comprueba la herramienta `tests_on_base` en un worktree temporal fuera del proyecto, con el `node_modules` del proyecto enlazado, y lo borra siempre. Si el change tocó un `package.json` o un lockfile, si el test no existe en la base, si pasa ahí o si no se pudo correr, el veredicto es `FALLA`.
+
+## Lint y typecheck
+
+El verificador toma los comandos de lint y typecheck de `## Commands` en el `AGENTS.md` o `CLAUDE.md` del proyecto. seckert no instala ni impone un linter. Cada comando pasa por la herramienta `checks_on_base`. Esa herramienta lo corre en la rama y, si falla, también en la base, en un worktree temporal como el de `tests_on_base`. Compara las líneas de salida sin colores ni números, porque editar un archivo corre las líneas.
+
+- `PASA`: sin errores en la rama.
+- `PREEXISTENTE`: los mismos errores ya estaban en la base. No reabre tareas y va al PR.
+- `FALLA`: hay líneas de error nuevas, pasa en la base, no se pudo correr o el change tocó un `package.json` o un lockfile. Reabre las tareas que trajeron los errores.
+- `SIN DEFINIR`: el proyecto no define el comando. Se informa y no falla.
+
+`verify_record` los escribe en la línea verify como `Chequeos: lint <VEREDICTO> (<comando>: <errores>); typecheck …`. `done` no abre el PR con un `FALLA` de lint o typecheck.
+
+## Casos límite
+
+Por cada punto del What, el verificador prueba primero el caso que describe el punto. Después prueba entre 3 y 5 casos límite en el mismo estado aislado, por ejemplo: entrada vacía, bordes, formatos inválidos, llamadas repetidas, fechas y zonas horarias, y permisos. Un caso que rompe el punto es `FALLA`, con el caso en la evidencia y su tipo de fallo.
