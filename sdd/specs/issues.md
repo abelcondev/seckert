@@ -69,3 +69,7 @@ La label `seckert:awaiting` dice que seckert espera una respuesta del usuario. S
 - `issue_transition` a discarded la quita.
 
 No es un estado: convive con la label de triage. Un issue cerrado o descartado nunca espera nada.
+
+## Editar un issue
+
+`issue_update` edita las secciones de un issue en `draft`, `approved` o `in-progress`; uno en revisión, cerrado o descartado falla sin tocarlo. Las ops van en orden y todo o nada: `set` reemplaza Problem, Outcome o la cita (vacía la saca); `add`, `edit` y `remove` trabajan sobre los criterios, Decisions, Out of scope, Constraints, References y Open questions, nombrando el ítem por su texto exacto o por su Pn. Una decisión nueva lleva quién y la fecha de hoy; editarla los conserva. Una pregunta nueva toma la Pn siguiente a la mayor abierta o ya respondida, y no cambia el estado: en un draft bloquea la aprobación y pone `seckert:awaiting`; en un aprobado o en curso queda anotada. Problem, Outcome y los criterios no pueden quedar vacíos: falla nombrando la sección. El cuerpo se reescribe en v2 y conserva un `## Plan` que haya. Claude no edita el cuerpo de un issue a mano con `gh`.

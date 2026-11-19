@@ -18,6 +18,7 @@ An issue carries decisions, not open discussions.
 - Research and comparisons (for example, "Stripe or Mercado Pago") happen before the issue exists. With Claude Code, they happen in the session.
 - What was decided goes to `## Decisions`, with who decided and when.
 - Small pending doubts go to `## Open questions`. An issue with open questions stays in `draft` and cannot be approved. Answering one moves it to `## Decisions`.
+- seckert edits the sections of an issue in `draft`, approved or in progress with `issue_update`, keeping this contract. A new open question on an approved issue does not move it back to `draft`. An issue in review, closed or discarded no longer changes.
 
 ## Body
 

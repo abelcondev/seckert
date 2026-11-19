@@ -1,7 +1,7 @@
 // Issues de seckert en GitHub: el repo sale del remoto `origin` y `gh` corre en la raíz.
 import { execFileSync } from 'node:child_process'
 
-import { AWAITING_COLOR, AWAITING_LABEL, awaitingOf, similarIssues, answerQuestion, branchFor, checkTransition, openQuestionsProblem, takeProblem, type Issue, type IssueState, type Kind } from '../lib/issue'
+import { AWAITING_COLOR, AWAITING_LABEL, awaitingOf, similarIssues, answerQuestion, updateIssue, type IssueOp, branchFor, checkTransition, openQuestionsProblem, takeProblem, type Issue, type IssueState, type Kind } from '../lib/issue'
 import { ArtifactsUnavailable, githubTracker, type Gh } from '../lib/trackers/github'
 import type { Unreadable } from '../lib/trackers/tracker'
 import { issuePlan, syncIssue, type Plan } from './board'
@@ -192,6 +192,24 @@ export function issueAnswer(root: string, input: { id: string; question: string;
   gh(['issue', 'comment', input.id, '--repo', repo, '--body', `${input.question} respondida${who}: «${input.answer.trim()}». Pasa a Decisions: ${decision.text}`])
   if (!next.questions?.length) syncAwaiting(root, input.id)
   return { id: input.id, question: input.question, decision, pending: (next.questions ?? []).map(q => q.id) }
+}
+
+// Edita las secciones de un issue abierto que todavía no está en revisión.
+// Una Pn nueva no reusa la de una pregunta ya respondida (su comentario la nombra).
+const EDITABLE: IssueState[] = ['draft', 'approved', 'in-progress']
+
+export function issueUpdate(root: string, input: { id: string; ops: IssueOp[]; by?: string }) {
+  const { gh, repo, issues } = tracker(root)
+  const current = issues.get(input.id)
+  if (!current.state || !EDITABLE.includes(current.state)) throw new Error(`el issue #${input.id} está ${current.state ?? 'sin estado de seckert'}: solo se editan issues en draft, aprobados o en curso`)
+  const { id: _id, url: _url, title: _title, state: _state, kind: _kind, rawBody: _raw, ...body } = current
+  const comments: { body: string }[] = JSON.parse(gh(['issue', 'view', input.id, '--repo', repo, '--json', 'comments']) || '{}').comments ?? []
+  const taken = comments.flatMap(c => c.body.match(/^(P\d+) respondida/)?.[1] ?? [])
+  const date = new Date().toLocaleDateString('sv-SE')
+  const { body: next, added } = updateIssue(body, input.ops, { date, by: input.by, taken })
+  issues.updateBody(input.id, next)
+  if (input.ops.some(op => op.op !== 'set' && op.section === 'questions')) syncAwaiting(root, input.id)
+  return { id: input.id, state: current.state, added, questions: (next.questions ?? []).map(q => q.id), url: current.url }
 }
 
 // Cierra una feature cuando todas sus partes (sub-issues) están cerradas.

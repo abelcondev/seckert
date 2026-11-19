@@ -411,3 +411,59 @@ test('sin origen, el issue dice Source: chat y la fecha de hoy; con origen, lo r
   await call('issue_create', { ...ISSUE, origin: { source: 'Reunión con Acme', date: '2026-11-06' } })
   expect((await call('issue_get', { id: '2' })).value.origin).toEqual({ source: 'Reunión con Acme', date: '2026-11-06' })
 })
+
+test('issue_update edita las secciones y el cuerpo sigue siendo v2', async () => {
+  await call('issue_create', ISSUE)
+  const { value, error } = await call('issue_update', {
+    id: '1',
+    by: 'Abel',
+    ops: [
+      { op: 'add', section: 'outOfScope', text: 'Exportar a PDF' },
+      { op: 'add', section: 'decisions', text: 'Separador ;' },
+      { op: 'set', section: 'outcome', text: 'Los pedidos del mes se bajan en CSV.' },
+    ],
+  })
+  expect(error).toBeNull()
+  expect(value).toMatchObject({ id: '1', state: 'draft', added: [] })
+  const after = (await call('issue_get', { id: '1' })).value
+  expect(after.outOfScope).toContain('Exportar a PDF')
+  expect(after.outcome).toBe('Los pedidos del mes se bajan en CSV.')
+  expect(after.decisions.at(-1)).toEqual({ text: 'Separador ;', by: 'Abel', date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) })
+  expect(db().issues[0]!.body.startsWith('<!-- seckert:issue v2 -->')).toBe(true)
+})
+
+test('issue_update: una pregunta nueva no reusa la Pn de una respondida y bloquea aprobar un draft', async () => {
+  await call('issue_create', { ...ISSUE, questions: [{ id: 'P1', text: '¿a?' }] })
+  await call('issue_answer', { id: '1', question: 'P1', answer: 'sí' })
+  expect(db().issues[0]!.labels).not.toContain('seckert:awaiting')
+  const { value } = await call('issue_update', { id: '1', ops: [{ op: 'add', section: 'questions', text: '¿b?', owner: 'Abel' }] })
+  expect(value.added).toEqual(['P2'])
+  expect(db().issues[0]!.labels).toContain('seckert:awaiting')
+  expect((await call('issue_transition', { id: '1', to: 'approved', aprobacion: 'dale' })).error).toContain('P2')
+})
+
+test('issue_update: una pregunta en un issue aprobado queda anotada sin cambiar el estado', async () => {
+  await call('issue_create', ISSUE)
+  await call('issue_transition', { id: '1', to: 'approved', aprobacion: 'dale' })
+  const { value } = await call('issue_update', { id: '1', ops: [{ op: 'add', section: 'questions', text: '¿c?' }] })
+  expect(value).toMatchObject({ state: 'approved', added: ['P1'] })
+  expect(db().issues[0]!.labels).toEqual(['seckert:approved'])
+})
+
+test('issue_update falla sin tocar el issue si vacía una sección obligatoria o el issue ya no se edita', async () => {
+  await call('issue_create', ISSUE)
+  const before = db().issues[0]!.body
+  expect((await call('issue_update', { id: '1', ops: [{ op: 'set', section: 'problem', text: '' }] })).error).toContain('Problem')
+  expect((await call('issue_update', { id: '1', ops: [{ op: 'remove', section: 'constraints', item: 'nada' }] })).error).toContain('Constraints')
+  expect(db().issues[0]!.body).toBe(before)
+
+  await call('issue_transition', { id: '1', to: 'discarded' })
+  expect((await call('issue_update', { id: '1', ops: [{ op: 'add', section: 'references', text: 'x' }] })).error).toContain('discarded')
+
+  await call('issue_create', ISSUE)
+  await call('issue_transition', { id: '2', to: 'approved', aprobacion: 'dale' })
+  const issues = db().issues
+  issues[1]!.prs = [{ number: 9 }]
+  reset(issues)
+  expect((await call('issue_update', { id: '2', ops: [{ op: 'add', section: 'references', text: 'x' }] })).error).toContain('in-review')
+})
