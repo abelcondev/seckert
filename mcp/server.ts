@@ -18,7 +18,7 @@ import {
   summary,
   transitionChange,
 } from './repo'
-import { testsOnBase } from './base'
+import { checksOnBase, testsOnBase } from './base'
 import { prDraft, releaseDraft } from './pr'
 import { boardList, boardSetup, boardSync, issuePlan } from './board'
 import { issueAnswer, issueClose, issueUpdate, issueLink, issueCreate, issueGet, issueList, issueTake, issueTransition } from './issues'
@@ -245,6 +245,24 @@ server.registerTool(
   async args => {
     try {
       return json(testsOnBase(projectRoot(), args))
+    } catch (error) {
+      return failure(error)
+    }
+  },
+)
+
+server.registerTool(
+  'checks_on_base',
+  {
+    description:
+      'Checks whether a lint or typecheck command fails because of the change: runs it on the branch and, if it fails, on the base (merge-base with develop/dev or main) in a temporary worktree outside the project, with the project\'s node_modules linked, removed afterwards. Compares output lines ignoring colors and numbers. Returns PASA (no errors on the branch), PREEXISTENTE (the same errors were already on the base) or FALLA with the new lines (new errors, passes on the base, couldn\'t run, or the change touched package.json or a lockfile).',
+    inputSchema: {
+      comando: z.string().describe('The project\'s lint or typecheck command, from its AGENTS.md or CLAUDE.md (e.g. "bun run lint")'),
+    },
+  },
+  async args => {
+    try {
+      return json(checksOnBase(projectRoot(), args))
     } catch (error) {
       return failure(error)
     }
