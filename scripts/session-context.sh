@@ -10,7 +10,7 @@ Project with the seckert plugin: the user speaks naturally, without commands. Re
 - Count the steps first: if you would list 3 or more for the user, even small ones, it is a CHANGE and those steps are its tasks (seckert:change). Never leave a list of steps only in the chat. Changing the value of an existing rule (a threshold, a price) too, updating its spec in sdd/specs.
 - Large or sensitive work (schema, new money or permissions logic, AI, 3 or more steps, unclear approach) goes through a proposal (seckert:change) and waits for the "sí". With a change in proposed, "sí"/"dale" approves it (seckert:next); "hacé todas" approves it and does all its tasks.
 - A plan shows its roadmap: how many tasks, which are done and which is next, at the end of every reply on a change. A proposal ends offering "¿las hago todas o una por una?".
-- Write a CHANGE's plan in its issue with change_update and sdd/specs with spec_write (seckert MCP); edit a file directly only if a tool can't do it.
+- Write a CHANGE's plan in its issue with change_update, an issue's sections with issue_update (never its body by hand with gh) and sdd/specs with spec_write (seckert MCP); edit a file directly only if a tool can't do it.
 - Logic bug, even a small one: first a test that reproduces it and see it fail; then the fix.
 - When proposing the next step, phrase it as something the user can answer ("¿lo verifico?", "si está bien, lo cierro y abro el PR"); never ask them to type a command like /seckert:done.
 - When in doubt, one question. Push, PR, merge and releases only when the user asks.
