@@ -18,7 +18,7 @@ import {
   summary,
   transitionChange,
 } from './repo'
-import { testsOnBase } from './base'
+import { checksOnBase, testsOnBase } from './base'
 import { prDraft, releaseDraft } from './pr'
 import { boardList, boardSetup, boardSync, issuePlan } from './board'
 import { issueAnswer, issueClose, issueUpdate, issueLink, issueCreate, issueGet, issueList, issueTake, issueTransition } from './issues'
@@ -205,7 +205,7 @@ server.registerTool(
   'verify_record',
   {
     description:
-      'Records a change verification in its Log with a fixed format, reopens the tasks of failing points and, when a point fails for the third time, doesn\'t reopen it: it becomes an open question. Each row names a What point exactly (visual vs design as "Diseño"). Returns the reopened tasks and the points that reached the third time.',
+      'Records a change verification in its Log with a fixed format, with lint and typecheck as `chequeos`, reopens the tasks of failing points and of new lint or typecheck errors and, when a point fails for the third time, doesn\'t reopen it: it becomes an open question. Each row names a What point exactly (visual vs design as "Diseño"). Returns the reopened tasks and the points that reached the third time.',
     inputSchema: {
       slug: z.string().optional().describe('No slug: the only approved one'),
       filas: z
@@ -219,6 +219,18 @@ server.registerTool(
           }),
         )
         .min(1),
+      chequeos: z
+        .array(
+          z.object({
+            nombre: z.enum(['lint', 'typecheck']),
+            veredicto: z.enum(['PASA', 'FALLA', 'PREEXISTENTE', 'SIN DEFINIR']).describe('From checks_on_base; SIN DEFINIR when the project defines no such command'),
+            comando: z.string().optional().describe('The command run'),
+            evidencia: z.string().optional().describe('The new errors, or why it fails'),
+            tareas: z.array(z.string()).optional().describe('If FALLA: the tasks that brought the new errors, to reopen'),
+          }),
+        )
+        .optional()
+        .describe('Lint and typecheck results'),
       preexistentes: z.array(z.string()).optional().describe('Tests already failing on the base'),
       comandos: z.array(z.string()).optional().describe('Commands run'),
     },
@@ -245,6 +257,24 @@ server.registerTool(
   async args => {
     try {
       return json(testsOnBase(projectRoot(), args))
+    } catch (error) {
+      return failure(error)
+    }
+  },
+)
+
+server.registerTool(
+  'checks_on_base',
+  {
+    description:
+      'Checks whether a lint or typecheck command fails because of the change: runs it on the branch and, if it fails, on the base (merge-base with develop/dev or main) in a temporary worktree outside the project, with the project\'s node_modules linked, removed afterwards. Compares output lines ignoring colors and numbers. Returns PASA (no errors on the branch), PREEXISTENTE (the same errors were already on the base) or FALLA with the new lines (new errors, passes on the base, couldn\'t run, or the change touched package.json or a lockfile).',
+    inputSchema: {
+      comando: z.string().describe('The project\'s lint or typecheck command, from its AGENTS.md or CLAUDE.md (e.g. "bun run lint")'),
+    },
+  },
+  async args => {
+    try {
+      return json(checksOnBase(projectRoot(), args))
     } catch (error) {
       return failure(error)
     }

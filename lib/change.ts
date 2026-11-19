@@ -23,8 +23,12 @@ export type ParsedChange = {
   lastVerify: string | null
 }
 
+export type CheckVerdict = 'PASA' | 'FALLA' | 'PREEXISTENTE' | 'SIN DEFINIR'
+export type VerifyCheck = { name: 'lint' | 'typecheck'; verdict: CheckVerdict; command?: string; evidence?: string }
+
 export type VerifyRecord = {
   rows: { point: string; verdict: Verdict; evidence?: string }[]
+  checks?: VerifyCheck[]
   preexisting?: string[]
   commands?: string[]
 }
@@ -376,9 +380,17 @@ export function verifyLine(date: string, record: VerifyRecord): string {
       return `${row.verdict} "${pointKey(row.point)}"${detail}`
     })
     .join('; ')
+  const checks = record.checks?.length
+    ? ` Chequeos: ${record.checks
+        .map(check => {
+          const detail = [check.command ? `\`${check.command}\`` : '', check.evidence?.trim() ?? ''].filter(Boolean).join(': ')
+          return `${check.name} ${check.verdict}${detail ? ` (${detail})` : ''}`
+        })
+        .join('; ')}.`
+    : ''
   const preexisting = record.preexisting?.length ? ` PREEXISTENTE: ${record.preexisting.join(', ')}.` : ''
   const commands = record.commands?.length ? ` Comandos: ${record.commands.map(c => `\`${c}\``).join(', ')}.` : ''
-  return `${date} verify: ${rows}.${preexisting}${commands}`
+  return `${date} verify: ${rows}.${checks}${preexisting}${commands}`
 }
 
 export type NewChange = {
