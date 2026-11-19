@@ -1,6 +1,6 @@
 import { expect, test } from 'claude-code/testing'
 
-import { AWAITING_LABEL, awaitingOf, branchFor, checkTransition, similarIssues, deriveState, labelOf, parseBody, renderBody, stateOf, type Issue } from '../lib/issue'
+import { AWAITING_LABEL, awaitingOf, branchFor, checkTransition, similarIssues, deriveState, labelOf, parseBody, renderBody, stateOf, updateIssue, type Issue } from '../lib/issue'
 
 const ISSUE: Issue = {
   title: 'Exportar pedidos a CSV',
@@ -121,4 +121,75 @@ test('seckert espera al usuario con un draft con preguntas o un change propuesto
   expect(awaitingOf({ state: 'in-progress', change: 'approved' })).toBe(false)
   expect(awaitingOf({ state: 'discarded', change: 'proposed' })).toBe(false)
   expect(awaitingOf({ state: 'closed', questions: q })).toBe(false)
+})
+
+const BASE = (() => {
+  const { title: _t, ...rest } = ISSUE
+  return rest
+})()
+const CTX = { date: '2026-11-19', by: 'Abel' }
+
+test('updateIssue agrega, edita y saca ítems de las listas', () => {
+  const { body } = updateIssue(BASE, [
+    { op: 'add', section: 'outOfScope', text: 'Exportar a PDF' },
+    { op: 'edit', section: 'constraints', item: 'No cambiar la API de pedidos', text: 'No cambiar la API pública de pedidos' },
+    { op: 'remove', section: 'references', item: 'src/Pedidos.tsx' },
+    { op: 'add', section: 'criteria', text: 'El CSV usa UTF-8' },
+  ], CTX)
+  expect(body.outOfScope).toEqual(['Exportar a Excel nativo', 'Exportar a PDF'])
+  expect(body.constraints).toEqual(['No cambiar la API pública de pedidos'])
+  expect(body.references).toBeUndefined()
+  expect(body.criteria.at(-1)).toBe('El CSV usa UTF-8')
+  const text = renderBody(body)
+  expect(text).not.toContain('## References')
+  expect(parseBody(text)).toEqual(body)
+})
+
+test('updateIssue: una decisión nueva lleva quién y la fecha; editarla los conserva', () => {
+  const { body } = updateIssue(BASE, [
+    { op: 'add', section: 'decisions', text: 'Fechas en ISO' },
+    { op: 'add', section: 'decisions', text: 'Sin totales', by: 'Juan' },
+    { op: 'edit', section: 'decisions', item: 'Separador ;', text: 'Separador ; siempre' },
+  ], CTX)
+  expect(body.decisions).toEqual([
+    { text: 'Separador ; siempre', by: 'Abel', date: '2026-11-09' },
+    { text: 'Fechas en ISO', by: 'Abel', date: '2026-11-19' },
+    { text: 'Sin totales', by: 'Juan', date: '2026-11-19' },
+  ])
+})
+
+test('updateIssue: una pregunta nueva toma la Pn siguiente, también tras las ya respondidas', () => {
+  const first = updateIssue(BASE, [{ op: 'add', section: 'questions', text: '¿Y los reembolsos?', owner: 'Juan' }], CTX)
+  expect(first.added).toEqual(['P2'])
+  expect(first.body.questions!.at(-1)).toEqual({ id: 'P2', text: '¿Y los reembolsos?', owner: 'Juan' })
+  const { questions: _q, ...sin } = BASE
+  const after = updateIssue(sin, [{ op: 'add', section: 'questions', text: '¿Otra?' }], { ...CTX, taken: ['P1', 'P3'] })
+  expect(after.added).toEqual(['P4'])
+  const edited = updateIssue(BASE, [{ op: 'edit', section: 'questions', item: 'P1', text: '¿Y los anulados?' }], CTX)
+  expect(edited.body.questions).toEqual([{ id: 'P1', text: '¿Y los anulados?', owner: 'Abel' }])
+  expect(updateIssue(BASE, [{ op: 'remove', section: 'questions', item: 'P1' }], CTX).body.questions).toBeUndefined()
+})
+
+test('updateIssue reemplaza Problem, Outcome y la cita', () => {
+  const { body } = updateIssue(BASE, [
+    { op: 'set', section: 'problem', text: 'Nuevo problema.' },
+    { op: 'set', section: 'outcome', text: 'Nuevo resultado.' },
+    { op: 'set', section: 'quote', text: '' },
+  ], CTX)
+  expect(body.problem).toBe('Nuevo problema.')
+  expect(body.outcome).toBe('Nuevo resultado.')
+  expect(body.quote).toBeUndefined()
+})
+
+test('updateIssue falla sin tocar nada al vaciar una sección obligatoria o nombrar un ítem que no está', () => {
+  const one = { ...BASE, criteria: ['Único'] }
+  expect(() => updateIssue(one, [{ op: 'remove', section: 'criteria', item: 'Único' }], CTX)).toThrow('Acceptance criteria')
+  expect(() => updateIssue(BASE, [{ op: 'set', section: 'problem', text: ' ' }], CTX)).toThrow('Problem')
+  expect(() => updateIssue(BASE, [{ op: 'set', section: 'outcome', text: '' }], CTX)).toThrow('Outcome')
+  expect(() => updateIssue(BASE, [{ op: 'remove', section: 'constraints', item: 'No existe' }], CTX)).toThrow('Constraints no tiene «No existe»')
+  expect(() => updateIssue(BASE, [{ op: 'add', section: 'outOfScope', text: 'Exportar a Excel nativo' }], CTX)).toThrow('ya tiene')
+  expect(() => updateIssue(BASE, [], CTX)).toThrow()
+  const before = structuredClone(BASE)
+  expect(() => updateIssue(BASE, [{ op: 'add', section: 'outOfScope', text: 'X' }, { op: 'set', section: 'problem', text: '' }], CTX)).toThrow()
+  expect(BASE).toEqual(before)
 })

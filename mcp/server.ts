@@ -21,7 +21,7 @@ import {
 import { testsOnBase } from './base'
 import { prDraft, releaseDraft } from './pr'
 import { boardList, boardSetup, boardSync, issuePlan } from './board'
-import { issueAnswer, issueClose, issueLink, issueCreate, issueGet, issueList, issueTake, issueTransition } from './issues'
+import { issueAnswer, issueClose, issueUpdate, issueLink, issueCreate, issueGet, issueList, issueTake, issueTransition } from './issues'
 import { checkTransition } from '../lib/issue'
 
 const server = new McpServer({ name: 'seckert', version: '1.0.0' })
@@ -502,6 +502,38 @@ server.registerTool(
   async args => {
     try {
       return json(issueAnswer(projectRoot(), args))
+    } catch (error) {
+      return failure(error)
+    }
+  },
+)
+
+const LIST_SECTION = z.enum(['criteria', 'decisions', 'outOfScope', 'constraints', 'references', 'questions'])
+
+server.registerTool(
+  'issue_update',
+  {
+    description:
+      'Edits the sections of a seckert issue in draft, approved or in progress, keeping the v2 contract: never edit an issue body by hand with gh. Ops apply in order, all or nothing: `set` replaces problem, outcome or quote (empty quote removes it); `add`, `edit` and `remove` work on a list section, naming an item by its exact text (or Pn in questions). A new decision gets who and today\'s date; a new question gets the next Pn and does not change the state (a draft with questions cannot be approved). Problem, Outcome and the criteria cannot end up empty. Fails on an issue in review, closed or discarded. Not for the plan of a CHANGE (change_update) or the state (issue_transition). Write in the issue\'s language.',
+    inputSchema: {
+      id: z.string().describe('The issue number'),
+      ops: z
+        .array(
+          z.discriminatedUnion('op', [
+            z.object({ op: z.literal('set'), section: z.enum(['problem', 'outcome', 'quote']), text: z.string() }),
+            z.object({ op: z.literal('add'), section: LIST_SECTION, text: z.string(), by: z.string().optional().describe('decisions: who decided'), owner: z.string().optional().describe('questions: who decides') }),
+            z.object({ op: z.literal('edit'), section: LIST_SECTION, item: z.string().describe('The item\'s exact text, or Pn'), text: z.string() }),
+            z.object({ op: z.literal('remove'), section: LIST_SECTION, item: z.string().describe('The item\'s exact text, or Pn') }),
+          ]),
+        )
+        .min(1),
+      by: z.string().optional().describe('Who decided, for new decisions without their own `by`'),
+    },
+    annotations: { destructiveHint: false },
+  },
+  async args => {
+    try {
+      return json(issueUpdate(projectRoot(), args))
     } catch (error) {
       return failure(error)
     }
