@@ -21,13 +21,25 @@ Used by `seckert:verify` and `seckert:design` when the running app must be seen.
 With the MCP loaded:
 
 1. **Start the app** with the command and URL from the `## QA` section of `AGENTS.md`; if it's running, use it. Data only against the isolated database that section names: never real data or production. If the section is missing or incomplete, infer it from the repo (`dev` script, `supabase/`, `docker-compose`) and at the end propose the missing lines using `${CLAUDE_PLUGIN_ROOT}/skills/workflow/agents-template.md`. Without a clear isolated database, don't touch data: what needs it is `NO VERIFICABLE`.
-2. **Walk the What**: each point visible in the app, doing the flow as a user (`navigate_page`, `take_snapshot` to read the page, `click`, `fill`/`fill_form`, `wait_for`). With `design:`, compare against the artifact; `take_screenshot` is for you to look at, not saved or shown to the user.
+2. **Walk the What**: each point visible in the app, doing the flow as a user (`navigate_page`, `take_snapshot` to read the page, `click`, `fill`/`fill_form`, `wait_for`). With `design:`, compare against the artifact. Without `SECKERT_EVIDENCIAS`, `take_screenshot` is for you to look at, not saved or shown to the user; with it, see [Evidence](#evidence).
 3. **Console and network** during the flow: zero errors in `list_console_messages` and zero failed requests (4xx, 5xx or no response) in `list_network_requests`. Both reset on navigation: check them before changing page.
 4. **Three widths**: 375, 768 and 1280 px with `resize_page`. Look for clipped content, horizontal scroll, overlapping elements.
 5. **States** the artifact shows or the code handles: empty, loading and error. Trigger them if you can (empty isolated database, slow network with `emulate`, a backend error); otherwise `NO VERIFICABLE` with the reason.
 6. **Accessibility** with `lighthouse_audit`: report the problems found, not the score.
 
 Results go as text: one row per point in the verdict table (what you did and saw), plus one row per failing check. What you couldn't check is `NO VERIFICABLE`, with the reason.
+
+## Evidence
+
+Only when the session-start context or the environment has `SECKERT_EVIDENCIAS=<folder>`. Without it, nothing is saved, as above.
+
+1. Before the flow, create the folder with `mkdir -p "<folder>"`.
+2. Start recording with `screencast_start`, saving to `<folder>/<slug>-flujo.webm`. Stop it with `screencast_stop` when the flow ends, before the three widths.
+3. For each What point checked in the app, once you see it working (or failing), `take_screenshot` with `filePath` = `<folder>/<slug>-<n>-<point>.png`: `<slug>` is the change's, `<n>` the point's number in the What, `<point>` its first words in kebab-case (40 characters at most).
+4. Use absolute paths. Overwrite files from a previous round of the same change.
+5. If the folder can't be created or a file can't be written, or the MCP lacks screencast tools, keep verifying. Say it in one line at the end of the verdict, with the reason. Without the MCP nothing is saved: that line says so, and no row links a file that doesn't exist.
+
+Each point's row links its screenshot in the Evidence column, and a line after the table links the video.
 
 ## Expo
 

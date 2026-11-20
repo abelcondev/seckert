@@ -32,5 +32,12 @@ check "no lista changes abiertos" 0 "$(has 'Open changes')"
 check "no corre el servidor MCP" 0 "$(grep -c 'server.mjs' "$script")"
 check "no depende de una línea en AGENTS.md" 0 "$(has 'seckert issues:')"
 
+check "sin SECKERT_EVIDENCIAS no habla de evidencias" 0 "$(has 'SECKERT_EVIDENCIAS')"
+check "con SECKERT_EVIDENCIAS en el env la muestra" 1 "$(SECKERT_EVIDENCIAS=/tmp/qa-ev has 'SECKERT_EVIDENCIAS=/tmp/qa-ev')"
+mkdir -p .claude && printf '{ "env": { "SECKERT_EVIDENCIAS": "/tmp/qa-archivo" } }\n' > .claude/settings.local.json
+check "con SECKERT_EVIDENCIAS en settings.local.json la muestra" 1 "$(has 'SECKERT_EVIDENCIAS=/tmp/qa-archivo')"
+check "el env gana sobre el archivo" 1 "$(SECKERT_EVIDENCIAS=/tmp/qa-env has 'SECKERT_EVIDENCIAS=/tmp/qa-env')"
+rm -rf .claude
+
 rm -rf "$t"
 [ "$fails" -eq 0 ] && echo " 0 fail" || { echo " $fails fail"; exit 1; }

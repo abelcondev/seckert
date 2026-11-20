@@ -38,6 +38,12 @@ if [ "$SECKERT_QA" = "sin-navegador" ] || grep -Eqs '"SECKERT_QA"[[:space:]]*:[[
   echo "QA: SECKERT_QA=sin-navegador (this user's local preference). Don't offer to install Chrome DevTools or a browser; what's only visible in the app is NO VERIFICABLE (sin navegador)."
 fi
 
+# Carpeta de evidencias de la QA en el navegador: del env o, si no llegó, del mismo archivo.
+evidencias=${SECKERT_EVIDENCIAS:-$(sed -n 's/.*"SECKERT_EVIDENCIAS"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' .claude/settings.local.json 2>/dev/null | head -n 1)}
+if [ -n "$evidencias" ]; then
+  echo "QA: SECKERT_EVIDENCIAS=$evidencias. When verifying in the browser, save a screenshot per What point and a video of the flow there, and link them in the verdict (skills/verify/navegador.md)."
+fi
+
 # seckert trabaja sobre los issues del repo de GitHub de origin: sin él, solo avisa.
 case "$(git remote get-url origin 2>/dev/null)" in
   *github.com[:/]*) ;;
