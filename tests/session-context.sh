@@ -38,6 +38,8 @@ mkdir -p .claude && printf '{ "env": { "SECKERT_EVIDENCIAS": "/tmp/qa-archivo" }
 check "con SECKERT_EVIDENCIAS en settings.local.json la muestra" 1 "$(has 'SECKERT_EVIDENCIAS=/tmp/qa-archivo')"
 check "el env gana sobre el archivo" 1 "$(SECKERT_EVIDENCIAS=/tmp/qa-env has 'SECKERT_EVIDENCIAS=/tmp/qa-env')"
 rm -rf .claude
+check "con SECKERT_EVIDENCIAS=1 usa .seckert/evidencias" 1 "$(SECKERT_EVIDENCIAS=1 has 'SECKERT_EVIDENCIAS=.seckert/evidencias')"
+check "con SECKERT_EVIDENCIAS=true usa .seckert/evidencias" 1 "$(SECKERT_EVIDENCIAS=true has 'SECKERT_EVIDENCIAS=.seckert/evidencias')"
 
 rm -rf "$t"
 [ "$fails" -eq 0 ] && echo " 0 fail" || { echo " $fails fail"; exit 1; }
