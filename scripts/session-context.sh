@@ -40,6 +40,8 @@ fi
 
 # Carpeta de evidencias de la QA en el navegador: del env o, si no llegó, del mismo archivo.
 evidencias=${SECKERT_EVIDENCIAS:-$(sed -n 's/.*"SECKERT_EVIDENCIAS"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' .claude/settings.local.json 2>/dev/null | head -n 1)}
+# 1 o true: la carpeta por defecto, dentro del proyecto (verify la excluye de git).
+case "$evidencias" in 1|true) evidencias=.seckert/evidencias ;; esac
 if [ -n "$evidencias" ]; then
   echo "QA: SECKERT_EVIDENCIAS=$evidencias. When verifying in the browser, save a screenshot per What point and a video of the flow there, and link them in the verdict (skills/verify/navegador.md)."
 fi
