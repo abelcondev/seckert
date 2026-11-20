@@ -13,6 +13,7 @@ Used by `seckert:verify` and `seckert:design` when the running app must be seen.
    - Without it, download Chrome for Testing to a cache folder (not installed system-wide, default browser unchanged; reused if present):
      `npx -y @puppeteer/browsers install chrome@stable --path "$HOME/.cache/seckert/chrome-for-testing" --format '{{path}}'`
      and with the printed path: `claude mcp add --scope local chrome-devtools -- npx -y chrome-devtools-mcp@latest --executablePath "<path>"`
+   - With `SECKERT_EVIDENCIAS` set, add `--workspace "<folder>"` at the end, with the folder as an absolute path: the MCP only writes inside its workspace roots.
    - Always `--scope local` (this project, this user, nothing written to the repo). Never `--headless`: the window opens so the user sees the QA.
 5. Say in one line what you installed and where, and that Claude Code must restart for the MCP to load; until then, what's only visible in the app is `NO VERIFICABLE`. To remove it: `claude mcp remove chrome-devtools -s local` and delete `~/.cache/seckert/chrome-for-testing`.
 
@@ -34,10 +35,12 @@ Results go as text: one row per point in the verdict table (what you did and saw
 Only when the session-start context or the environment has `SECKERT_EVIDENCIAS=<folder>`. Without it, nothing is saved, as above.
 
 1. Before the flow, create the folder with `mkdir -p "<folder>"`.
-2. Start recording with `screencast_start`, saving to `<folder>/<slug>-flujo.webm`. Stop it with `screencast_stop` when the flow ends, before the three widths.
-3. For each What point checked in the app, once you see it working (or failing), `take_screenshot` with `filePath` = `<folder>/<slug>-<n>-<point>.png`: `<slug>` is the change's, `<n>` the point's number in the What, `<point>` its first words in kebab-case (40 characters at most).
+2. Start recording with `screencast_start`, saving to `<folder>/<slug>-flujo.mp4`. Chrome records MP4 only: another extension gets changed to `.mp4`. Stop it with `screencast_stop` when the flow ends, before the three widths.
+3. For each What point checked in the app, once you see it working (or failing), `take_screenshot` with `format: "webp"`, `quality: 80` and `filePath` = `<folder>/<slug>-<n>-<point>.webp`: `<slug>` is the change's, `<n>` the point's number in the What, `<point>` its first words in kebab-case (40 characters at most).
 4. Use absolute paths. Overwrite files from a previous round of the same change.
-5. If the folder can't be created or a file can't be written, or the MCP lacks screencast tools, keep verifying. Say it in one line at the end of the verdict, with the reason. Without the MCP nothing is saved: that line says so, and no row links a file that doesn't exist.
+5. If `take_screenshot` rejects `format`, use png (`.png`, no `format` or `quality`) for the rest and say it in one line at the end of the verdict.
+6. If a write fails with "not within any of the configured workspace roots", the MCP was registered without the folder. Say in one line at the end of the verdict: `claude mcp remove chrome-devtools -s local` and add it again as in [If the MCP isn't there](#if-the-mcp-isnt-there) with `--workspace "<folder>"`, then restart Claude Code.
+7. If the folder can't be created or a file can't be written for another reason, or the MCP lacks screencast tools, keep verifying. Say it in one line at the end of the verdict, with the reason. Without the MCP nothing is saved: that line says so, and no row links a file that doesn't exist.
 
 Each point's row links its screenshot in the Evidence column, and a line after the table links the video.
 
