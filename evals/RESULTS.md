@@ -2,6 +2,27 @@
 
 Cómo se corren y qué mide cada caso: [README.md](README.md). Cada celda es **con seckert / sin seckert**: el mismo modelo, los mismos pedidos y el mismo repo de prueba, con el plugin y sin él.
 
+## 2.3.0 · evidencias de QA, lint y typecheck en verify, issue_update · 2026-11-19
+
+Changes #35, #36 y #39. Solo los casos de lo que se tocó: `--tag verify --tag pr`, 8 casos, 1 corrida, con seckert. Modelo `claude-opus-5-5`. Costo: $2,04.
+
+Resultado: 8/8.
+
+| Caso | Con seckert |
+|---|---|
+| `devtools-ausente` | 4/4 |
+| `qa-sin-navegador` | 4/4 |
+| `qa-evidencias` (nuevo) | 3/3 |
+| `verify-preexistente` | 6/6 |
+| `verify-segunda-ronda` | 4/4 |
+| `verify-tercera-ronda` | 6/6 |
+| `pr-riesgo` | 5/5 |
+| `tomar-issue-fix` | 7/7 |
+
+Notas:
+- Las capturas y el video reales no se pueden probar: los evals corren sin Chrome DevTools MCP. `qa-evidencias` cubre el camino sin navegador.
+- La tanda completa no se corrió. Las pruebas después de publicar quedan a cargo de abel, que abrirá issues si encuentra errores.
+
 ## Sin publicar · roadmap de tareas y «hacé todas» · 2026-11-10
 
 Change `roadmap-de-tareas-visible-y-hace` (#24). Cuatro casos nuevos: `hacer-todas`, `dale-todas`, `pasos-con-roadmap` y `feature-hacer-todas`. `aprobar-con-dale` suma el grader `progreso`. 1 corrida por caso, con seckert. Modelo `claude-opus-5-5`. Costo: $1,22 antes, $2,43 en la primera corrida después y $2,96 en los ajustes.
