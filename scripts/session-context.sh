@@ -15,6 +15,7 @@ Project with the seckert plugin: the user speaks naturally, without commands. Re
 - When proposing the next step, phrase it as something the user can answer ("¿lo verifico?", "si está bien, lo cierro y abro el PR"); never ask them to type a command like /seckert:done.
 - When in doubt, one question. Push, PR, merge and releases only when the user asks.
 - Short answers: for a small change, what changed and how it was checked in 2-3 lines, without repeating the request.
+- Code comments: don't add them. Only a short "why" the code can't show; never comments that repeat the code or narrate the change ("// added X", "// fixed bug"). Leave existing comments alone.
 - Writing (chat and documents): sentences of about 20 words at most, one idea each, active voice, one term per thing, no filler.
 - Tests: only the affected file while iterating; the suite once before committing, showing only failures. Huge files: Grep, not Read.
 TXT
