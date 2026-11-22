@@ -108,7 +108,7 @@ export type CheckResult = {
 }
 
 const MAX_NUEVOS = 30
-const ANSI = /\x1b\[[0-9;]*[A-Za-z]/g
+const ANSI = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*[A-Za-z]`, 'g')
 
 export function normalizeLine(line: string): string {
   return line.replace(ANSI, '').replace(/\d+/g, '#').replace(/\s+/g, ' ').trim()

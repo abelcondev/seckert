@@ -17,7 +17,7 @@ export function rules(text: string): Rule[] {
 }
 
 function render(head: string, list: Rule[]): string {
-  return [head.trimEnd(), ...list.map(rule => `## ${rule.title}\n\n${rule.body}`)].join('\n\n') + '\n'
+  return `${[head.trimEnd(), ...list.map(rule => `## ${rule.title}\n\n${rule.body}`)].join('\n\n')}\n`
 }
 
 function head(text: string): string {

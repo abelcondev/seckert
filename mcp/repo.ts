@@ -14,12 +14,10 @@ import {
   failuresByPoint,
   parseChange,
   pointKey,
-  renderChange,
   reopenTask,
   setBranch,
   setStatus,
   SLUG,
-  slugOf,
   type NewChange,
   type ParsedChange,
   type CheckVerdict,
@@ -233,13 +231,13 @@ export function recordVerify(root: string, input: VerifyInput) {
     const key = pointKey(row.punto)
     if ((before.get(key) ?? 0) + 1 >= 3) third.push({ punto: key, row })
     else if (!row.tareas?.length) throw new Error(`"${row.punto}" falla: indicá en \`tareas\` qué tareas reabrir (p.ej. ["T1"]).`)
-    else row.tareas.forEach(task => reopen.add(task))
+    else for (const task of row.tareas) reopen.add(task)
   }
   // Un error nuevo de lint o typecheck reabre las tareas que lo trajeron; uno
   // que ya estaba en la base (PREEXISTENTE) no reabre nada.
   for (const check of (input.chequeos ?? []).filter(c => c.veredicto === 'FALLA')) {
     if (!check.tareas?.length) throw new Error(`${check.nombre} falla: indicá en \`tareas\` qué tareas trajeron los errores nuevos (p.ej. ["T1"]).`)
-    check.tareas.forEach(task => reopen.add(task))
+    for (const task of check.tareas) reopen.add(task)
   }
 
   let text = change.text

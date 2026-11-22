@@ -1,9 +1,8 @@
 // Prueba el servidor ya compilado, como lo arranca Claude Code: `node mcp/dist/server.mjs`
 // por stdio, parado en una subcarpeta de un repo temporal. Los changes viven en su issue (gh falso).
 import { afterAll, beforeAll, expect, test } from 'bun:test'
-import { execFileSync } from 'node:child_process'
 import { mkdirSync, writeFileSync } from 'node:fs'
-import { join, resolve } from 'node:path'
+import { join } from 'node:path'
 
 import { fixture, type Fixture } from './fixture'
 
@@ -38,7 +37,6 @@ ${tasks}
 ${log}`
 
 let fx: Fixture
-let repo: string
 let client: Fixture['client']
 
 function text(result: unknown): unknown {
@@ -52,7 +50,6 @@ beforeAll(async () => {
     mkdirSync(join(r, 'src'))
     writeFileSync(join(r, 'src/.keep'), '')
   }, 'src')
-  repo = fx.repo
   client = fx.client
   fx.seedChange(
     change(

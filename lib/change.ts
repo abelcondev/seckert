@@ -281,7 +281,7 @@ export type ChangeOp =
 export function applyOps(text: string, ops: ChangeOp[]): { text: string; ids: string[] } {
   const ids: string[] = []
   for (const op of ops) {
-    let lines = text.split('\n')
+    const lines = text.split('\n')
     switch (op.op) {
       case 'question_answer':
         text = addLog(removeQuestion(text, op.id), `${op.id}: ${op.log}`)
