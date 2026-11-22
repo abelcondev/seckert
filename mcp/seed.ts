@@ -11,7 +11,23 @@ function whyOf(text: string): string {
 
 // El issue número `number`, aprobado, con label seckert:change, el plan como
 // artifact Plan y, si el change tiene diseño, el artifact Design.
-export function changeIssue(text: string, number: number): Record<string, unknown> {
+export type FakeIssue = {
+  number: number
+  title: string
+  body: string
+  state?: string
+  stateReason?: string
+  closedAt?: string
+  labels: string[]
+  comments: string[]
+  parent?: number
+  blockedBy?: number[]
+  branches?: string[]
+  prs?: { number: number }[]
+  artifacts?: { number: number; type: string; name: string; body: string; versions: string[] }[]
+}
+
+export function changeIssue(text: string, number: number): FakeIssue {
   const parsed = parseChange(text)
   const title = parsed.title ?? `change ${number}`
   const body = renderBody({

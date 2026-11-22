@@ -37,14 +37,14 @@ export const register: Register = on => {
   // El último mensaje que escribió el usuario: contra él se comprueba una aprobación.
   let lastPrompt: string | null = null
 
-  on('prompt.submit', async ($, e, next) => {
+  on('prompt.submit', async (_, e, next) => {
     // Solo lo que escribe una persona: terminal, Remote Control o `claude -p`.
     // Los avisos de tareas en segundo plano y otros orígenes no cuentan.
     if (!e.isMeta && HUMAN.has(e.origin?.kind ?? '')) lastPrompt = e.text
     return next(e)
   })
 
-  on('tool.call', { tool: TRANSITION }, async ($, e, next) => {
+  on('tool.call', { tool: TRANSITION }, async (_, e, next) => {
     const problem = approvalProblem(e.aprobacion, lastPrompt)
     return problem === null
       ? next(e)
@@ -93,7 +93,7 @@ export const register: Register = on => {
 
   // Tests, builds y linters: Claude recibe los fallos y el resumen, no miles de
   // líneas en verde que se pagarían en cada turno siguiente.
-  on('tool.call', { tool: 'Bash' }, async ($, e, next) => {
+  on('tool.call', { tool: 'Bash' }, async (_, e, next) => {
     const ran = await next(e)
     try {
       if (ran.deny !== undefined) return ran

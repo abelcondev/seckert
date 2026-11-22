@@ -9,6 +9,7 @@ import { join, resolve } from 'node:path'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 
+import type { FakeIssue } from './seed'
 import { serverEnv } from './test-env'
 
 import { branchFor } from '../lib/issue'
@@ -22,7 +23,7 @@ let repo: string
 let state: string
 let client: Client
 
-type Db = { issues: Record<string, any>[]; calls: string[][] }
+type Db = { issues: FakeIssue[]; calls: string[][] }
 const db = (): Db => JSON.parse(readFileSync(state, 'utf8'))
 const reset = (issues: Db['issues'] = []) => writeFileSync(state, JSON.stringify({ issues, calls: [] }))
 
@@ -228,7 +229,7 @@ test('issue_list resume los abiertos y filtra por estado', async () => {
 test('issue_list avisa de un issue de seckert que no puede leer', async () => {
   await call('issue_create', ISSUE)
   const data = db()
-  data.issues.push({ ...data.issues[0], number: 2, title: 'Hecho a mano', body: '## Problem\n\nsin la marca' })
+  data.issues.push({ ...data.issues[0]!, number: 2, title: 'Hecho a mano', body: '## Problem\n\nsin la marca' })
   writeFileSync(state, JSON.stringify(data))
   const all = (await call('issue_list', {})).value
   expect(all.map((i: { id: string }) => i.id)).toEqual(['1', '2'])
