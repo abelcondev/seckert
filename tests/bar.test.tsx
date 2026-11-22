@@ -1,4 +1,4 @@
-import { expect, test } from 'claude-code/testing'
+import { expect, test, type Engine } from 'claude-code/testing'
 import type { On } from 'claude-code'
 
 import { barText, roadmapFrom } from '../hooks/roadmap'
@@ -10,6 +10,7 @@ const BAND = {
   component: 'AbovePrompt',
   props: {
     hasSurvey: false,
+    isCollapsed: false,
     isWorking: false,
     maxRows: 10,
     bodyColumns: 100,
@@ -33,7 +34,11 @@ function engine(on: On, results: Record<string, unknown>) {
   on('tool.call', (_, e) => ({ result: { content: [{ type: 'text', text: JSON.stringify(results[e.tool] ?? {}) }] } }))
 }
 
-async function bar($: Parameters<Parameters<typeof test>[1]>[0]): Promise<string | null> {
+function callMcp($: Engine, tool: string, args: Record<string, unknown>) {
+  return $.tool.call({ tool: `${MCP}${tool}`, ...args } as Parameters<Engine['tool']['call']>[0])
+}
+
+async function bar($: Engine): Promise<string | null> {
   const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
   const line = (await ui.find({ type: 'Text', text: /seckert/ }))?.text ?? null
   await ui.unmount()
@@ -80,13 +85,13 @@ test('la barra aparece con change_get y avanza con task_complete', async ($, on)
   })
   await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
 
-  await $.tool.call({ tool: `${MCP}change_get`, slug: 'csv' })
+  await callMcp($, 'change_get', { slug: 'csv' })
   expect(await bar($)).toContain('csv · 1/3 · sigue: T2')
 
-  await $.tool.call({ tool: `${MCP}task_complete`, slug: 'csv', task: 'T2', commit: 'abc1234', evidencia: 'ok' })
+  await callMcp($, 'task_complete', { slug: 'csv', task: 'T2', commit: 'abc1234', evidencia: 'ok' })
   expect(await bar($)).toContain('csv · 2/3 · sigue: T3 Botón Exportar')
 
   await $.prompt.submit({ text: 'cerralo', wait: false, origin: { kind: 'composer' } })
-  await $.tool.call({ tool: `${MCP}change_transition`, slug: 'csv', to: 'done', aprobacion: 'cerralo' })
+  await callMcp($, 'change_transition', { slug: 'csv', to: 'done', aprobacion: 'cerralo' })
   expect(await bar($)).toBeNull()
 })

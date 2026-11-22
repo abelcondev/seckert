@@ -5,7 +5,7 @@
   "scripts": {
     "build:mcp": "bun build mcp/server.ts --target node --format esm --minify --outfile mcp/dist/server.mjs",
     "lint": "biome lint",
-    "typecheck": "tsc -p mcp",
+    "typecheck": "tsc -p mcp && sh -c 'if [ -d .claude-plugin/types/claude-code ]; then tsc -p .; else echo \"typecheck: salteo hooks/ y tests/: faltan los tipos de Claude Code en .claude-plugin/types (los escribe claude --plugin-dir .)\" >&2; fi'",
     "test:mcp": "bun run build:mcp && bun run typecheck && bun test mcp/",
     "test": "bun run test:mcp && claude plugin test . && sh tests/find-chrome.sh && sh tests/guard-branch.sh && sh tests/session-context.sh"
   },

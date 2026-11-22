@@ -89,9 +89,7 @@ export function resolveCycle(iterations: Iteration[], value: string, today: stri
   return found
 }
 
-const defaultToday = () => process.env.SECKERT_TODAY || new Date().toISOString().slice(0, 10)
-
-export function githubBoard(repo: string, gh: Gh, today: () => string = defaultToday) {
+export function githubBoard(repo: string, gh: Gh, today: () => string) {
   const [owner, name] = repo.split('/') as [string, string]
   const graphql = (query: string, variables: Record<string, unknown>) => JSON.parse(gh(['api', 'graphql', '--input', '-'], JSON.stringify({ query, variables })) || '{}')
 
