@@ -12,13 +12,13 @@ import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 
 import { parseBody } from '../lib/issue'
 import { changeFromIssue, PLAN_NAME } from '../lib/issue-change'
-import { changeIssue } from './seed'
+import { changeIssue, type FakeIssue } from './seed'
 import { serverEnv } from './test-env'
 
 const SERVER = resolve(import.meta.dir, 'dist/server.mjs')
 const FAKE = resolve(import.meta.dir, 'fake-gh.mjs')
 
-export type Db = { issues: Record<string, any>[]; calls: string[][]; artifactsUnavailable?: boolean; board?: unknown }
+export type Db = { issues: FakeIssue[]; calls: string[][]; artifactsUnavailable?: boolean; board?: unknown }
 export type Result = { isError?: boolean; content: { text: string }[] }
 
 export type Fixture = {
@@ -74,7 +74,7 @@ export async function fixture(prefix: string, setup?: (repo: string, git: (...ar
   // El change como lo arma el servidor: el body del issue más su plan.
   const changeText = (slug: string) => {
     for (const issue of db().issues) {
-      const plan = issue.artifacts?.find((a: { name: string }) => a.name === PLAN_NAME)?.body
+      const plan = issue.artifacts?.find(a => a.name === PLAN_NAME)?.body
       if (!plan || !new RegExp(`^branch: \\S+/${slug}$`, 'm').test(plan)) continue
       const body = parseBody(issue.body)
       return changeFromIssue({ title: issue.title, body, plan, design: null })

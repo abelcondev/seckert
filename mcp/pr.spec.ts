@@ -67,7 +67,7 @@ ${log}`
 // El plan de un change en el gh falso, para cambiarle la rama.
 const setBranch = (id: string, branch: string) => {
   const data = fx.db()
-  const plan = data.issues.find(i => String(i.number) === id)!.artifacts[0]
+  const plan = data.issues.find(i => String(i.number) === id)!.artifacts![0]!
   plan.body = plan.body.replace(/^branch: .*$/m, `branch: ${branch}`)
   fx.saveDb(data)
 }

@@ -9,6 +9,7 @@ import { join, resolve } from 'node:path'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 
+import type { FakeIssue } from './seed'
 import { serverEnv } from './test-env'
 
 const SERVER = resolve(import.meta.dir, 'dist/server.mjs')
@@ -19,7 +20,7 @@ let repo: string
 let state: string
 let client: Client
 
-type Db = { issues: Record<string, any>[]; calls: string[][]; artifactsUnavailable?: boolean }
+type Db = { issues: FakeIssue[]; calls: string[][]; artifactsUnavailable?: boolean }
 const db = (): Db => JSON.parse(readFileSync(state, 'utf8'))
 const git = (...args: string[]) => execFileSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', ...args], { cwd: repo, encoding: 'utf8' }).trim()
 
@@ -75,7 +76,12 @@ async function takenChange() {
   return call('change_create', { slug: 'exportar-pedidos-a-csv', title: ISSUE.title, tasks: ['Armar el CSV', 'Botón en la lista'], pedido: 'exportar pedidos', issue: '1' })
 }
 
-const plan = () => db().issues[0]!.artifacts.find((a: { name: string }) => a.name === 'Plan')
+const artifact = (name: string) => {
+  const found = db().issues[0]?.artifacts?.find(a => a.name === name)
+  if (!found) throw new Error(`el issue no tiene el artifact ${name}`)
+  return found
+}
+const plan = () => artifact('Plan')
 
 test('change_create con issue escribe el plan como artifact, sin archivo en sdd/changes', async () => {
   const { value, error } = await takenChange()
@@ -159,7 +165,7 @@ test('verify_record deja la verificación como tabla en un comentario y reabre l
   expect(error).toBeNull()
   expect(value.reabiertas).toEqual(['T1'])
   expect(plan().body).toContain('- [ ] T1 Armar el CSV <!-- commit: ')
-  const comment: string = db().issues[0]!.comments.at(-1)
+  const comment = db().issues[0]!.comments.at(-1)!
   expect(comment).toContain('**Verificación**')
   expect(comment).toContain('| Hay un botón "Exportar" | PASA |  |')
   expect(comment).toContain('| El CSV trae fecha y total | FALLA | falta el total |')
@@ -169,7 +175,7 @@ test('verify_record deja la verificación como tabla en un comentario y reabre l
 test('issue_create con diseño lo adjunta como artifact link Design, y el change lo lee', async () => {
   const url = 'https://claude.ai/artifact/abc123'
   expect((await call('issue_create', { ...ISSUE, design: url })).error).toBeNull()
-  const link = db().issues[0]!.artifacts.find((a: { name: string }) => a.name === 'Design')
+  const link = db().issues[0]!.artifacts!.find(a => a.name === 'Design')
   expect(link).toMatchObject({ type: 'link', body: url })
   expect((await call('issue_get', { id: '1' })).value.design).toBe(url)
   await call('issue_transition', { id: '1', to: 'approved', aprobacion: 'dale' })
