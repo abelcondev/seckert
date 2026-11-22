@@ -1,5 +1,6 @@
 // Las specs de sdd/specs/<area>.md: cómo se comporta el sistema hoy, una regla
 // por `## `, sin historia. Solo se escriben con spec_write (MCP).
+import { must } from './must'
 
 export type Rule = { title: string; body: string }
 
@@ -11,8 +12,8 @@ export function rules(text: string): Rule[] {
     .split(/^(?=## )/m)
     .slice(1)
     .map(block => {
-      const [first, ...rest] = block.split('\n')
-      return { title: first!.match(HEADING)![1]!, body: rest.join('\n').trim() }
+      const [first = '', ...rest] = block.split('\n')
+      return { title: must(first.match(HEADING)?.[1], `el título de la regla «${first}»`), body: rest.join('\n').trim() }
     })
 }
 
@@ -21,7 +22,7 @@ function render(head: string, list: Rule[]): string {
 }
 
 function head(text: string): string {
-  return text.split(/^## /m)[0]!
+  return text.split(/^## /m)[0] ?? ''
 }
 
 // Escribe una regla nueva o reemplaza el cuerpo de una existente. `text` null:

@@ -80,7 +80,7 @@ if (group === 'label' && cmd === 'create') {
   if (args.includes('--checkout')) execFileSync('git', ['switch', '-q', '-c', flag('--name')])
 } else if (group === 'api' && cmd === 'graphql') {
   // Projects: el Project enlazado (db.board) y las mutaciones de campos.
-  const { query, variables } = JSON.parse(readFileSync(0, 'utf8'))
+  const { query } = JSON.parse(readFileSync(0, 'utf8'))
   const b = db.board
   if (query.includes('items(first')) {
     const nameOf = (field, value) => field.options?.find(o => o.id === value)?.name

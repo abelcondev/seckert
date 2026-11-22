@@ -57,7 +57,8 @@ export function findChange(root: string, slug?: string): ChangeFile {
     return found
   }
   const approved = open.filter(change => change.status === 'approved')
-  if (approved.length === 1) return approved[0]!
+  const [only] = approved
+  if (approved.length === 1 && only) return only
   throw new Error(
     approved.length === 0
       ? `No hay ningún change approved. Abiertos: ${names}.`

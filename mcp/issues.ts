@@ -2,6 +2,7 @@
 import { execFileSync } from 'node:child_process'
 
 import { AWAITING_COLOR, AWAITING_LABEL, awaitingOf, similarIssues, answerQuestion, updateIssue, type IssueOp, branchFor, checkTransition, openQuestionsProblem, takeProblem, type Issue, type IssueState, type Kind } from '../lib/issue'
+import { must } from '../lib/must'
 import { ArtifactsUnavailable, githubTracker, type Gh } from '../lib/trackers/github'
 import type { Unreadable } from '../lib/trackers/tracker'
 import { issuePlan, syncIssue, type Plan } from './board'
@@ -117,7 +118,7 @@ export function issueTransition(root: string, input: { id: string; to: 'approved
   if (input.to === 'discarded') issues.removeLabel(input.id, AWAITING_LABEL)
   const note =
     input.to === 'approved'
-      ? `Aprobado por el usuario: «${input.aprobacion!.trim()}»`
+      ? `Aprobado por el usuario: «${must(input.aprobacion, 'las palabras del usuario').trim()}»`
       : `Descartado${input.motivo?.trim() ? `: ${input.motivo.trim()}` : ''}`
   gh(['issue', 'comment', input.id, '--repo', repo, '--body', note])
   const board = syncIssue(root, input.id)
@@ -154,7 +155,9 @@ export function issueTake(root: string, id: string, force = false) {
   let branch: string
   let how: 'creada' | 'ya existía'
   if (issue.state === 'in-progress') {
-    branch = gh(['issue', 'develop', '--list', id, '--repo', repo]).trim().split('\n')[0]!.split('\t')[0]!
+    const linked = gh(['issue', 'develop', '--list', id, '--repo', repo]).split('\n')[0]?.split('\t')[0]?.trim()
+    if (!linked) throw new Error(`el issue #${id} figura en curso pero gh issue develop --list no devuelve el nombre de su rama`)
+    branch = linked
     let local = true
     try {
       git(root, 'show-ref', '--verify', '--quiet', `refs/heads/${branch}`)
@@ -187,7 +190,7 @@ export function issueAnswer(root: string, input: { id: string; question: string;
   }
   const next = answerQuestion(body, { ...input, date })
   issues.updateBody(input.id, next)
-  const decision = next.decisions!.at(-1)!
+  const decision = must(next.decisions?.at(-1), `la decisión de ${input.question}`)
   const who = input.by?.trim() ? ` por ${input.by.trim()}` : ''
   gh(['issue', 'comment', input.id, '--repo', repo, '--body', `${input.question} respondida${who}: «${input.answer.trim()}». Pasa a Decisions: ${decision.text}`])
   if (!next.questions?.length) syncAwaiting(root, input.id)

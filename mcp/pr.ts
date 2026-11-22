@@ -5,6 +5,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 import { section, verifyRows } from '../lib/change'
+import { must } from '../lib/must'
 import { issueGet } from './issues'
 import { CHANGE_LABEL } from './issue-changes'
 import { tracker } from './issues'
@@ -26,8 +27,9 @@ function gitOk(root: string, ...args: string[]): boolean {
 const ref = (root: string, branch: string) => (gitOk(root, 'rev-parse', '--verify', '--quiet', `origin/${branch}`) ? `origin/${branch}` : branch)
 
 // Archivos delicados del diff: dónde tiene que mirar quien revisa.
+const MIGRATION = /(^|\/)(migrations?|migrate)\/|\.sql$|schema\.prisma$/i
 const DELICATE: [RegExp, string][] = [
-  [/(^|\/)(migrations?|migrate)\/|\.sql$|schema\.prisma$/i, 'migración'],
+  [MIGRATION, 'migración'],
   [/(^|\/)\.github\/workflows\//, 'CI'],
   [/auth|permission|(^|[/_.-])roles?([/_.-]|$)|polic(y|ies)/i, 'auth o permisos'],
   [/pay|billing|stripe|checkout|invoice|price|precio|cobro/i, 'pagos'],
@@ -93,7 +95,7 @@ export function prDraft(root: string, input: { slug?: string; issue?: string }) 
       evidence: evidence(change.lastVerify),
     }
   } else {
-    const found = issueGet(root, issueId!)
+    const found = issueGet(root, must(issueId, 'el issue del PR'))
     title = `${type}: ${lower(found.title)}`
     draft = {
       why: [found.problem, ...(found.quote ? ['', `> ${found.quote}`] : []), ...(found.outcome ? ['', found.outcome] : [])].join('\n').trim(),
@@ -138,7 +140,7 @@ export function prDraft(root: string, input: { slug?: string; issue?: string }) 
     '',
   ].join('\n')
 
-  return { base, branch, title, body, issue, has_migration: files.some(file => DELICATE[0]![0].test(file)), files: files.length }
+  return { base, branch, title, body, issue, has_migration: files.some(file => MIGRATION.test(file)), files: files.length }
 }
 
 const lower = (text: string) => `${text.charAt(0).toLowerCase()}${text.slice(1)}`
@@ -153,8 +155,9 @@ export function releaseDraft(root: string, input: { version?: string }) {
   const range = lastTag ? `${lastTag}..HEAD` : 'HEAD'
   const subjects = git(root, 'log', range, '--no-merges', '--format=%s').split('\n').filter(Boolean)
   const parsed = subjects.map(subject => subject.match(CONVENTIONAL)).filter(m => m !== null)
-  const features = parsed.filter(m => m[1] === 'feat').map(m => m[3]!)
-  const fixes = parsed.filter(m => m[1] === 'fix').map(m => m[3]!)
+  const subjectsOf = (type: string) => parsed.flatMap(m => (m[1] === type && m[3] ? [m[3]] : []))
+  const features = subjectsOf('feat')
+  const fixes = subjectsOf('fix')
   const breaking = parsed.some(m => m[2] === '!') || subjects.some(s => s.includes('BREAKING'))
 
   const [major, minor, patch] = (lastTag?.replace(/^v/, '') ?? '0.0.0').split('.').map(Number) as [number, number, number]

@@ -193,15 +193,15 @@ export function githubBoard(repo: string, gh: Gh, today: () => string) {
       type Value = { name?: string; title?: string; iterationId?: string; field?: { name?: string } }
       type Node = { id: string; isArchived: boolean; content?: { number?: number; title?: string; url?: string }; fieldValues?: { nodes: Value[] } }
       const nodes: Node[] = graphql(ITEMS_QUERY, { id: board.id }).data?.node?.items?.nodes ?? []
-      return nodes
-        .filter(n => !n.isArchived && n.content?.url)
-        .map(n => {
+      return nodes.flatMap(n => {
+          const url = n.content?.url
+          if (n.isArchived || !url) return []
           const values = n.fieldValues?.nodes ?? []
           const select = (f: string) => values.find(v => v.field?.name === f)?.name ?? null
           const cycle = values.find(v => v.field?.name === CYCLE)
-          return {
+          return [{
             id: n.id,
-            url: n.content!.url!,
+            url,
             number: n.content?.number !== undefined ? String(n.content.number) : null,
             title: n.content?.title ?? '',
             status: select('Status'),
@@ -209,7 +209,7 @@ export function githubBoard(repo: string, gh: Gh, today: () => string) {
             size: select('Size'),
             cycle: cycle?.title ?? null,
             cycleId: cycle?.iterationId ?? null,
-          }
+          }]
         })
     },
 

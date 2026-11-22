@@ -1,6 +1,7 @@
 // El issue canónico de seckert: un pedido que termina en un PR.
 // Vive en un tracker (GitHub Issues, Linear…); el cuerpo tiene secciones fijas
 // para poder leerlo de vuelta, y el estado va aparte (en GitHub, una label).
+import { must } from './must'
 
 export const STATES = ['draft', 'approved', 'in-progress', 'in-review', 'closed', 'discarded'] as const
 export type IssueState = (typeof STATES)[number]
@@ -68,7 +69,10 @@ export function renderBody(issue: IssueBody): string {
   if (!issue.outcome?.trim()) throw new Error('falta Outcome: el resultado esperado')
   if (!clean(issue.criteria).length) throw new Error('falta al menos un criterio de aceptación')
   const problem = [issue.problem.trim(), ...(issue.quote?.trim() ? ['', `> ${issue.quote.trim()}`] : [])]
-  const origin = ORIGIN_KEYS.filter(([key]) => issue.origin[key]?.trim()).map(([key, label]) => `- ${label}: ${issue.origin[key]!.trim()}`)
+  const origin = ORIGIN_KEYS.flatMap(([key, label]) => {
+    const value = issue.origin[key]?.trim()
+    return value ? [`- ${label}: ${value}`] : []
+  })
   return [
     MARK,
     '',
@@ -88,8 +92,8 @@ export function renderBody(issue: IssueBody): string {
 function sections(body: string): Map<string, string> {
   const map = new Map<string, string>()
   for (const block of body.split(/^(?=## )/m).slice(1)) {
-    const [head, ...rest] = block.split('\n')
-    map.set(head!.slice(3).trim(), rest.join('\n').trim())
+    const [head = '', ...rest] = block.split('\n')
+    map.set(head.slice(3).trim(), rest.join('\n').trim())
   }
   return map
 }
@@ -110,7 +114,7 @@ function parseDecision(line: string): Decision {
 function parseQuestion(line: string): Question | null {
   const match = line.match(/^\*\*(P\d+)\*\* (.+?)(?: — decide: (.+))?$/)
   if (!match) return null
-  return { id: match[1]!, text: match[2]!.trim(), ...(match[3] ? { owner: match[3].trim() } : {}) }
+  return { id: must(match[1], 'el id de la pregunta'), text: must(match[2], 'el texto de la pregunta').trim(), ...(match[3] ? { owner: match[3].trim() } : {}) }
 }
 
 // Lee un cuerpo v2, o uno v1 (Context en lugar de Problem, sin Outcome, Meeting en el origen).
@@ -271,7 +275,7 @@ export function updateIssue(issue: IssueBody, ops: IssueOp[], ctx: { date: strin
       if (op.op === 'edit') {
         const text = op.text.trim()
         if (!text) throw new Error(`para sacar «${key}» de ${title}, usá remove`)
-        const item = list[at]!
+        const item = must(list[at], `«${key}» en ${title}`)
         list[at] = typeof item === 'string' ? text : { ...item, text }
       } else list.splice(at, 1)
     }
