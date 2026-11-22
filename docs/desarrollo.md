@@ -10,10 +10,14 @@ claude plugin validate .
 bun run test                  # la suite completa: MCP, módulo y scripts de shell
 bun run test:mcp              # solo el MCP (compila mcp/dist)
 claude plugin test .          # solo el módulo: tests/*.test.ts (no bun test)
+bun run lint                  # Biome
+bun run typecheck             # mcp/ y lib/; hooks/ y tests/ si están los tipos de Claude Code
 sh tests/find-chrome.sh       # solo scripts/find-chrome.sh
 sh tests/guard-branch.sh      # solo el hook de ramas protegidas
 claude plugin eval . …        # evals de comportamiento: ver evals/README.md
 ```
+
+Los tipos de `claude-code` y `claude-code/testing` los escribe Claude Code en `.claude-plugin/types/` al cargar el plugin con `claude --plugin-dir .`. No hay comando para generarlos y no se versionan. Sin ellos, `bun run typecheck` saltea `hooks/` y `tests/` con un aviso.
 
 ## Dónde está cada cosa
 

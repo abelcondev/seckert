@@ -4,9 +4,11 @@
 import { githubBoard, resolveCycle, statusFor, type Board } from '../lib/trackers/github-board'
 import { tracker } from './issues'
 
+const today = () => process.env.SECKERT_TODAY || new Date().toISOString().slice(0, 10)
+
 function boardOf(root: string) {
   const { gh, repo, issues } = tracker(root)
-  return { issues, board: githubBoard(repo, gh) }
+  return { issues, board: githubBoard(repo, gh, today) }
 }
 
 // Crea o completa el Project del repo con los campos de seckert.
