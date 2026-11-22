@@ -34,7 +34,7 @@ test('deja el fallo con su contexto y el resumen, sin las líneas que pasaron', 
 })
 
 test('una salida exitosa larga llega recortada al modelo', async ($, on) => {
-  const stdout = passing.join('\n') + '\n 300 pass\n 0 fail'
+  const stdout = `${passing.join('\n')}\n 300 pass\n 0 fail`
   on('tool.call', () => ({ result: { stdout, stderr: '', interrupted: false } }))
 
   const ran = await $.tool.call({ tool: 'Bash', command: 'bun test ./tests' })

@@ -99,8 +99,8 @@ export function prDraft(root: string, input: { slug?: string; issue?: string }) 
       why: [found.problem, ...(found.quote ? ['', `> ${found.quote}`] : []), ...(found.outcome ? ['', found.outcome] : [])].join('\n').trim(),
       what: [
         found.criteria.map(c => `- ${c}`).join('\n'),
-        ...(found.decisions?.length ? ['Decisions:\n' + found.decisions.map(d => `- ${d.text}${d.by || d.date ? ` — ${[d.by, d.date].filter(Boolean).join(', ')}` : ''}`).join('\n')] : []),
-        ...(found.outOfScope?.length ? ['Out of scope:\n' + found.outOfScope.map(o => `- ${o}`).join('\n')] : []),
+        ...(found.decisions?.length ? [`Decisions:\n${found.decisions.map(d => `- ${d.text}${d.by || d.date ? ` — ${[d.by, d.date].filter(Boolean).join(', ')}` : ''}`).join('\n')}`] : []),
+        ...(found.outOfScope?.length ? [`Out of scope:\n${found.outOfScope.map(o => `- ${o}`).join('\n')}`] : []),
       ].join('\n\n'),
       extra: [],
       testing: 'Sin change: los criterios de aceptación del issue son la prueba.',
