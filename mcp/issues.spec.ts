@@ -290,6 +290,16 @@ test('issue_take retoma un issue en curso en su rama enlazada, sin crear otra', 
   expect(branch()).toBe('fix/exportar')
 })
 
+test('issue_take en curso falla con un error claro si gh no devuelve el nombre de su rama', async () => {
+  await call('issue_create', { ...ISSUE, route: 'FIX' })
+  await call('issue_transition', { id: '1', to: 'approved', aprobacion: 'dale' })
+  const data = db()
+  data.issues[0]!.branches = ['']
+  writeFileSync(state, JSON.stringify(data))
+  const { error } = await call('issue_take', { id: '1' })
+  expect(error).toContain('no devuelve el nombre de su rama')
+})
+
 test('issue_take no toma un issue sin aprobar ni uno ya en revisión', async () => {
   await call('issue_create', ISSUE)
   expect((await call('issue_take', { id: '1' })).error).toContain('aprob')

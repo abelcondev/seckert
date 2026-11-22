@@ -1,22 +1,48 @@
 {
 	"$schema": "https://biomejs.dev/schemas/2.6.8/schema.json",
-	"vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
-	"files": {
-		"includes": ["mcp/**", "lib/**", "hooks/**", "tests/**", "!mcp/dist"]
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"useIgnoreFile": true
 	},
-	"formatter": { "enabled": false },
-	"assist": { "enabled": false },
+	"files": {
+		"includes": [
+			"mcp/**",
+			"lib/**",
+			"hooks/**",
+			"tests/**",
+			"!mcp/dist"
+		]
+	},
+	"formatter": {
+		"enabled": false
+	},
+	"assist": {
+		"enabled": false
+	},
 	"linter": {
 		"enabled": true,
 		"rules": {
 			"preset": "recommended",
-			"style": { "noNonNullAssertion": "warn" }
+			"style": {
+				"noNonNullAssertion": "error"
+			}
 		}
 	},
 	"overrides": [
 		{
-			"includes": ["**/*.spec.ts", "**/*.test.ts", "**/*.test.tsx"],
-			"linter": { "rules": { "style": { "noNonNullAssertion": "off" } } }
+			"includes": [
+				"**/*.spec.ts",
+				"**/*.test.ts",
+				"**/*.test.tsx"
+			],
+			"linter": {
+				"rules": {
+					"style": {
+						"noNonNullAssertion": "off"
+					}
+				}
+			}
 		}
 	]
 }

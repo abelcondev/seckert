@@ -181,7 +181,7 @@ export function githubTracker(repo: string, gh: Gh): Tracker {
     },
 
     setState(id: string, from: IssueState | null, to: IssueState) {
-      if (to !== 'draft' && to !== 'approved' && to !== 'discarded') throw new Error(checkTransition(from ?? 'draft', to)!)
+      if (to !== 'draft' && to !== 'approved' && to !== 'discarded') throw new Error(checkTransition(from ?? 'draft', to) ?? `${to} no se marca a mano`)
       ensureLabel(to)
       const args = ['issue', 'edit', id, '--repo', repo]
       if (from) args.push('--remove-label', labelOf(triageOf(from)))

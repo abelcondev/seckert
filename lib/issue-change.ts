@@ -6,6 +6,7 @@
 // testing y log. Solo funciones puras.
 import { section, verifyRows } from './change'
 import type { IssueBody } from './issue'
+import { must } from './must'
 
 export const PLAN_NAME = 'Plan'
 const META_FIELDS = ['status', 'specs', 'branch', 'issue'] as const
@@ -39,7 +40,7 @@ export function changeFromIssue({ title, body, plan, design }: IssueChangeInput)
   const why = [body.problem.trim(), ...(body.quote?.trim() ? ['', `> ${body.quote.trim()}`] : []), ...(body.outcome.trim() ? ['', body.outcome.trim()] : [])]
   return [
     '---',
-    meta[1]!.trim(),
+    must(meta[1], 'los metadatos del plan').trim(),
     `design: ${design ?? 'none'}`,
     '---',
     '',
@@ -63,11 +64,11 @@ export function planFromChange(text: string): string {
   const front = text.match(/^---\n([\s\S]*?)\n---\n/)
   if (!front) throw new Error('el change no tiene frontmatter')
   const fields = new Map(
-    front[1]!
+    must(front[1], 'el frontmatter del change')
       .split('\n')
       .map(line => line.match(/^([a-z]+):[ \t]*(.*)$/))
       .filter((m): m is RegExpMatchArray => m !== null)
-      .map(m => [m[1]!, m[2]!.trim()] as const),
+      .map(m => [must(m[1], 'el nombre del campo'), must(m[2], 'el valor del campo').trim()] as const),
   )
   const meta = META_FIELDS.filter(name => fields.has(name)).map(name => `${name}: ${fields.get(name)}`)
   const body = text.slice(front[0].length)
@@ -108,7 +109,7 @@ export function attachPlan(body: string, plan: string): string {
 export function planInBody(body: string): string | null {
   const match = body.match(/\n## Plan\n\n([\s\S]*?)(?=\n## (?!#)|$)/)
   if (!match) return null
-  return `${match[1]!.replace(/^### /gm, '## ').replace(/\s*$/, '')}\n`
+  return `${must(match[1], 'el plan del body').replace(/^### /gm, '## ').replace(/\s*$/, '')}\n`
 }
 
 const VERIFY_LINE = /^\d{4}-\d{2}-\d{2} verify\b/

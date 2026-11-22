@@ -605,7 +605,7 @@ server.registerTool(
   },
   async ({ id, to, aprobacion, motivo }) => {
     try {
-      if (to !== 'approved' && to !== 'discarded') throw new Error(checkTransition('approved', to)!)
+      if (to !== 'approved' && to !== 'discarded') throw new Error(checkTransition('approved', to) ?? `${to} no se marca a mano`)
       return json(issueTransition(projectRoot(), { id, to, aprobacion, motivo }))
     } catch (error) {
       return failure(error)

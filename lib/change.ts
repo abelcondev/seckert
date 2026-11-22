@@ -2,6 +2,7 @@
 // formato: lo usan el servidor MCP, el módulo (la barra) y el contexto de inicio.
 // Solo funciones puras sobre el texto del archivo; leer y escribir el disco es
 // de quien llama.
+import { must } from './must'
 
 export type Status = 'proposed' | 'approved' | 'done'
 export type Verdict = 'PASA' | 'FALLA' | 'VISUAL' | 'NO VERIFICABLE'
@@ -73,13 +74,13 @@ function parseTask(line: string): Task | null {
   const match = line.match(TASK)
   if (!match) return null
   const [, mark, id, text, commit] = match
-  return { id: id!, text: text!.trim(), done: mark === 'x', commit: commit || null }
+  return { id: must(id, 'el id de la tarea'), text: must(text, 'el texto de la tarea').trim(), done: mark === 'x', commit: commit || null }
 }
 
 function parseQuestion(line: string): Question | null {
   if (isPlaceholder(line)) return null
   const match = line.match(/^\*\*(P\d+)\*\*\s+(.*)$/)
-  return match ? { id: match[1]!, text: match[2]!.trim() } : { id: null, text: line }
+  return match ? { id: must(match[1], 'el id de la pregunta'), text: must(match[2], 'el texto de la pregunta').trim() } : { id: null, text: line }
 }
 
 function verifyLines(text: string): string[] {
@@ -123,7 +124,7 @@ export function verifyRows(line: string): VerifyRow[] {
   // ". " que cierra las filas, así que se corta ahí y no en la primera comilla.
   return [...line.matchAll(/(PASA|FALLA|VISUAL|NO VERIFICABLE) "(.+?)"(?: \((.*?)\))?(?=; (?:PASA|FALLA|VISUAL|NO VERIFICABLE) "|\.(?: |$))/g)].map(([, verdict, point, detail]) => ({
     verdict: verdict as Verdict,
-    point: point!,
+    point: must(point, 'el punto de la fila de verify'),
     detail: detail ?? null,
   }))
 }
@@ -217,7 +218,7 @@ function sectionRange(lines: string[], name: string): [number, number] {
   if (start === -1) throw new Error(`el change no tiene \`## ${name}\``)
   let end = lines.findIndex((line, index) => index > start && /^## /.test(line))
   if (end === -1) end = lines.length
-  while (end > start + 1 && lines[end - 1]!.trim() === '') end--
+  while (end > start + 1 && lines[end - 1]?.trim() === '') end--
   return [start + 1, end]
 }
 
@@ -232,16 +233,17 @@ function findPoint(lines: string[], point: string): number {
   return index
 }
 
-function editableTask(lines: string[], id: string): number {
+function editableTask(lines: string[], id: string): { index: number; task: Task } {
   const index = lines.findIndex(line => parseTask(line)?.id === id)
-  if (index === -1) throw new Error(`no existe la tarea ${id}`)
-  if (parseTask(lines[index]!)!.done) throw new Error(`${id} está hecha: reabrila antes de cambiarla`)
-  return index
+  const task = parseTask(lines[index] ?? '')
+  if (!task) throw new Error(`no existe la tarea ${id}`)
+  if (task.done) throw new Error(`${id} está hecha: reabrila antes de cambiarla`)
+  return { index, task }
 }
 
 // El número sigue al más alto usado, también en el Log: una tarea quitada no deja su número libre.
 function nextTask(text: string): number {
-  const tasks = text.split('\n').map(parseTask).filter(t => t !== null).map(t => Number(t!.id.slice(1)))
+  const tasks = text.split('\n').map(parseTask).flatMap(t => (t ? [Number(t.id.slice(1))] : []))
   const logged = [...section(text, 'Log').matchAll(/\bT(\d+)\b/g)].map(match => Number(match[1]))
   return Math.max(0, ...tasks, ...logged) + 1
 }
@@ -311,24 +313,24 @@ export function applyOps(text: string, ops: ChangeOp[]): { text: string; ids: st
         break
       }
       case 'task_edit': {
-        const index = editableTask(lines, op.id)
+        const { index } = editableTask(lines, op.id)
         lines[index] = pending(op.id, op.text)
         text = lines.join('\n')
         break
       }
       case 'task_split': {
-        const index = editableTask(lines, op.id)
-        if (op.into.length < 2) throw new Error(`partir ${op.id} necesita al menos dos tareas`)
+        const { index } = editableTask(lines, op.id)
+        const [head, ...tail] = op.into
+        if (head === undefined || tail.length === 0) throw new Error(`partir ${op.id} necesita al menos dos tareas`)
         const first = nextTask(text)
-        const rest = op.into.slice(1).map((part, i) => pending(`T${first + i}`, part))
-        lines[index] = pending(op.id, op.into[0]!)
+        const rest = tail.map((part, i) => pending(`T${first + i}`, part))
+        lines[index] = pending(op.id, head)
         text = insertAt(lines, index + 1, ...rest).join('\n')
         ids.push(...rest.map((_, i) => `T${first + i}`))
         break
       }
       case 'task_remove': {
-        const index = editableTask(lines, op.id)
-        const removed = parseTask(lines[index]!)!
+        const { index, task: removed } = editableTask(lines, op.id)
         text = addLog([...lines.slice(0, index), ...lines.slice(index + 1)].join('\n'), `${op.id} quitada (${removed.text}): ${op.log}`)
         break
       }
@@ -356,8 +358,9 @@ export function resyncCommits(
   const changed: string[] = []
   const missing: string[] = []
   const moves: string[] = []
-  for (const task of parseChange(text).tasks.filter(t => t.done && t.commit)) {
-    const next = lookup(task.commit!)
+  for (const task of parseChange(text).tasks) {
+    if (!task.done || !task.commit) continue
+    const next = lookup(task.commit)
     if (next === null) missing.push(task.id)
     else if (next !== task.commit) {
       text = updateTask(text, task.id, t => ({ ...t, commit: next }))
