@@ -31,6 +31,7 @@ check "no manda a escribir sdd/changes" 0 "$(has 'sdd/changes')"
 check "no lista changes abiertos" 0 "$(has 'Open changes')"
 check "no corre el servidor MCP" 0 "$(grep -c 'server.mjs' "$script")"
 check "no depende de una línea en AGENTS.md" 0 "$(has 'seckert issues:')"
+check "el modelo no deja comentarios en el código" 1 "$(has 'Code comments: don'"'"'t add them')"
 
 check "sin SECKERT_EVIDENCIAS no habla de evidencias" 0 "$(has 'SECKERT_EVIDENCIAS')"
 check "con SECKERT_EVIDENCIAS en el env la muestra" 1 "$(SECKERT_EVIDENCIAS=/tmp/qa-ev has 'SECKERT_EVIDENCIAS=/tmp/qa-ev')"
