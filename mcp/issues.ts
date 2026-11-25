@@ -5,7 +5,6 @@ import { AWAITING_COLOR, AWAITING_LABEL, awaitingOf, similarIssues, answerQuesti
 import { must } from '../lib/must'
 import { ArtifactsUnavailable, githubTracker, type Gh } from '../lib/trackers/github'
 import type { Unreadable } from '../lib/trackers/tracker'
-import { issuePlan, syncIssue, type Plan } from './board'
 import { planQuestionSlug, syncAwaiting } from './issue-changes'
 import { baseBranch } from './repo'
 
@@ -62,9 +61,9 @@ export function designOf(issues: ReturnType<typeof tracker>['issues'], issue: { 
 
 // Crea el issue en draft. Con diseño, lo adjunta como artifact link «Design»; sin
 // artifacts, lo agrega a References.
-export function issueCreate(root: string, issue: Issue & Plan & { design?: string; parent?: string; blockedBy?: string[] }) {
+export function issueCreate(root: string, issue: Issue & { design?: string; parent?: string; blockedBy?: string[] }) {
   const { issues } = tracker(root)
-  const { design, parent, blockedBy, priority, size, cycle, ...given } = issue
+  const { design, parent, blockedBy, ...given } = issue
   // Sin origen, el pedido salió del chat: queda dicho, con la fecha de hoy.
   const rest = { ...given, origin: { ...given.origin, source: given.origin?.source?.trim() || 'chat', date: given.origin?.date?.trim() || new Date().toLocaleDateString('sv-SE') } }
   const similar = similarIssues(rest, issues.list()).map(({ id, title }) => ({ id, title }))
@@ -80,15 +79,7 @@ export function issueCreate(root: string, issue: Issue & Plan & { design?: strin
       ;({ rawBody: _raw, ...created } = issues.get(created.id))
     }
   }
-  let board = syncIssue(root, created.id)
-  if (!board && (priority || size || cycle)) {
-    try {
-      issuePlan(root, { id: created.id, priority, size, cycle })
-    } catch (error) {
-      board = `no se pudo planificar en el tablero: ${(error as Error).message}`
-    }
-  }
-  return { ...created, design: design?.trim() || null, ...(board ? { board } : {}), ...(similar.length ? { similar } : {}) }
+  return { ...created, design: design?.trim() || null, ...(similar.length ? { similar } : {}) }
 }
 
 export function issueGet(root: string, id: string) {
@@ -121,8 +112,7 @@ export function issueTransition(root: string, input: { id: string; to: 'approved
       ? `Aprobado por el usuario: «${must(input.aprobacion, 'las palabras del usuario').trim()}»`
       : `Descartado${input.motivo?.trim() ? `: ${input.motivo.trim()}` : ''}`
   gh(['issue', 'comment', input.id, '--repo', repo, '--body', note])
-  const board = syncIssue(root, input.id)
-  return { id: input.id, from: current.state, to: input.to, url: current.url, ...(board ? { board } : {}) }
+  return { id: input.id, from: current.state, to: input.to, url: current.url }
 }
 
 function git(root: string, ...args: string[]): string {
@@ -173,8 +163,7 @@ export function issueTake(root: string, id: string, force = false) {
     how = 'creada'
   }
   const { state: _state, rawBody: _raw, ...rest } = issue
-  const board = syncIssue(root, id)
-  return { ...rest, design: designOf(issues, issue), branch, how, ...(board ? { board } : {}) }
+  return { ...rest, design: designOf(issues, issue), branch, how }
 }
 
 // Responde una pregunta abierta: la pasa a Decisions en el cuerpo y lo deja como comentario.

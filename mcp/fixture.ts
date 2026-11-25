@@ -18,7 +18,7 @@ import { serverEnv } from './test-env'
 const SERVER = resolve(import.meta.dir, 'dist/server.mjs')
 const FAKE = resolve(import.meta.dir, 'fake-gh.mjs')
 
-export type Db = { issues: FakeIssue[]; calls: string[][]; artifactsUnavailable?: boolean; board?: unknown }
+export type Db = { issues: FakeIssue[]; calls: string[][]; artifactsUnavailable?: boolean }
 export type Result = { isError?: boolean; content: { text: string }[] }
 
 export type Fixture = {
