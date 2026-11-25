@@ -27,5 +27,5 @@ Los tipos de `claude-code` y `claude-code/testing` los escribe Claude Code en `.
 | `agents/` | El verificador independiente (`seckert-verifier`) |
 | `hooks/` | `hooks.json` y el módulo que corre dentro de Claude Code: guarda de aprobación y salidas recortadas |
 | `scripts/` | Guardia de ramas protegidas, contexto de sesión, detección del flujo de ramas y búsqueda de Chrome |
-| `mcp/` | Servidor MCP con las herramientas de issues, changes, tablero, verificación, PR y release |
+| `mcp/` | Servidor MCP con las herramientas de issues, changes, verificación, PR y release |
 | `evals/` | Evals de comportamiento: solo con seckert entre versiones, con y sin seckert en una release mayor |

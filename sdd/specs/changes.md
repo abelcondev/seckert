@@ -50,4 +50,4 @@ El módulo del plugin muestra arriba del prompt el change activo: `seckert · <s
 
 ## Plan esperando el «dale»
 
-Mientras un change está en `proposed`, su issue lleva la label `seckert:awaiting`, además de `seckert:change`. `change_create` la pone. `change_transition` a approved la quita. Así se ve desde GitHub, el tablero o un worker sin sesión que el plan espera el «dale». La misma label marca un draft con preguntas abiertas (ver issues.md).
+Mientras un change está en `proposed`, su issue lleva la label `seckert:awaiting`, además de `seckert:change`. `change_create` la pone. `change_transition` a approved la quita. Así se ve desde GitHub o un worker sin sesión que el plan espera el «dale». La misma label marca un draft con preguntas abiertas (ver issues.md).
