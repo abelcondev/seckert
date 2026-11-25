@@ -62,13 +62,10 @@ Un issue con label `seckert:*` cuyo cuerpo no sigue el contrato (por ejemplo, si
 
 ## Esperando al usuario
 
-La label `seckert:awaiting` dice que seckert espera una respuesta del usuario. Se puede filtrar en GitHub y en el tablero sin leer el plan. La llevan dos casos: un issue en draft con preguntas abiertas, y un issue cuyo change está en `proposed` (ver changes.md).
+La label `seckert:awaiting` dice que seckert espera una respuesta del usuario. Se puede filtrar en GitHub sin leer el plan. La llevan dos casos: un issue en draft con preguntas abiertas, y un issue cuyo change está en `proposed` (ver changes.md).
 
 - `issue_create` la pone si el issue nace con preguntas.
 - `issue_answer` la quita al responder la última pregunta, salvo que el change siga en `proposed`.
-- `issue_transition` a discarded la quita.
-
-No es un estado: convive con la label de triage. Un issue cerrado o descartado nunca espera nada.
 
 ## Editar un issue
 
