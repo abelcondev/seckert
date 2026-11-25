@@ -15,7 +15,7 @@ Arguments: $ARGUMENTS
    - Full suite green.
    - Lint and typecheck without new errors: run `checks_on_base` with each command from `## Commands` in the project's `AGENTS.md` or `CLAUDE.md`. A `FALLA` stops the PR: show the new errors and offer to fix them. `PREEXISTENTE` goes to the PR's Risk. A command the project doesn't define is skipped, said in one line.
    - `pr_draft`: base, title and body (Why, What, Testing, Risk, Evidence). Review the title, write the body following the writing rules in `seckert:workflow` and replace the `How to revert` placeholder: short, no commands. Code only: "Revertir el merge". With a migration (`has_migration`): whether the previous code still works with the new schema and what data would be lost undoing it; undoing it is a separate migration decided by the team. With a flag: which one to turn off. Never SQL or destructive commands.
-   - The body starts with `Fixes #n`: leave it, it links the PR to the issue and the merge closes it. After `gh pr create`, `board_sync` with that number moves the card on the repo board, if there is one.
+   - The body starts with `Fixes #n`: leave it, it links the PR to the issue and the merge closes it.
    - `git push -u origin <branch>` and `gh pr create --base <base> --title <title> --body-file <body>`. Section titles stay in English; content in the change's language.
    - Hotfix in gitflow: remind the back-merge PRs `main → develop` (and `main → staging` if any), with a merge commit.
 5. Reply in one line: change closed, specs updated and the PR URL if opened.
