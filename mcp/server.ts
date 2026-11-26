@@ -55,13 +55,16 @@ server.registerTool(
   'change_get',
   {
     description:
-      'A change, structured: What as a list of points, tasks with their commit, open questions (P1, P2…), last verification, how many times each What point failed, and `text`: the whole change with its Log (what the verifier reads). No slug: the only approved one.',
-    inputSchema: { slug: z.string().optional().describe('The change slug, without the date') },
+      'A change, structured: What as a list of points, tasks with their commit, open questions (P1, P2…), last verification and how many times each What point failed. With full: also `text`, the whole change with its Log (what the verifier reads). No slug: the only approved one.',
+    inputSchema: {
+      slug: z.string().optional().describe('The change slug, without the date'),
+      full: z.boolean().optional().describe('Also return `text`: the whole change with its Log'),
+    },
     annotations: { readOnlyHint: true },
   },
-  async ({ slug }) => {
+  async ({ slug, full }) => {
     try {
-      return json(detail(findChange(projectRoot(), slug)))
+      return json(detail(findChange(projectRoot(), slug), full))
     } catch (error) {
       return failure(error)
     }
