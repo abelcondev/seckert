@@ -84,9 +84,9 @@ export function summary(change: ChangeFile) {
 }
 
 // El change estructurado y su texto entero (con el Log): lo lee el verificador.
-export function detail(change: ChangeFile) {
+export function detail(change: ChangeFile, full = false) {
   const { text, source: _source, ...parsed } = change
-  return { ...parsed, text, failures: Object.fromEntries(failuresByPoint(text)) }
+  return { ...parsed, ...(full ? { text } : {}), failures: Object.fromEntries(failuresByPoint(text)) }
 }
 
 export function today(): string {

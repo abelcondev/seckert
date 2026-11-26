@@ -213,9 +213,16 @@ test('pr_draft de un change en su issue: Why y What del issue y Fixes #n; cerrar
   expect(existsSync(join(repo, 'sdd/changes'))).toBe(false)
 })
 
-test('change_get da el texto entero del change, con el Log, para el verificador; no deja copia local', async () => {
+test('change_get sin full no trae el texto entero', async () => {
   await takenChange()
   const { value } = await call('change_get', { slug: 'exportar-pedidos-a-csv' })
+  expect(value.text).toBeUndefined()
+  expect(value.what.length).toBeGreaterThan(0)
+})
+
+test('change_get con full da el texto entero del change, con el Log, para el verificador; no deja copia local', async () => {
+  await takenChange()
+  const { value } = await call('change_get', { slug: 'exportar-pedidos-a-csv', full: true })
   expect(value.path).toBeUndefined()
   expect(value.text).toContain('## What\n\n- Hay un botón "Exportar"')
   expect(value.text).toContain('- **L1** (pedido original, verbatim): exportar pedidos')

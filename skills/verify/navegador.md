@@ -1,6 +1,6 @@
 # Checking in the browser
 
-Used by `seckert:verify` and `seckert:design` when the running app must be seen. The tool is Chrome DevTools MCP (`mcp__chrome-devtools__*`). In an Expo project, visuals go in the simulator: see [Expo](#expo).
+Used by the `seckert-navegador` agent (launched by `seckert:verify` and `seckert:design`) and by `seckert-implementer` when the running app must be seen. The tool is Chrome DevTools MCP (`mcp__chrome-devtools__*`). In an Expo project, visuals go in the simulator: see [Expo](#expo).
 
 ## If the MCP isn't there
 

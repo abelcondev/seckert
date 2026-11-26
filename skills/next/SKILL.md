@@ -11,27 +11,20 @@ Arguments: $ARGUMENTS
    - `approved` and the task depends on an open question: ask it first.
    - A part (`Parte N de M: después de \`<slug>\``) whose previous part isn't `done`: say so and ask whether to start anyway. A part born short gets its What and Tasks completed before asking for approval.
 3. Be on the change's `branch`.
-4. Reconcile with reality (`git log`, `git diff`, tests): a task done but unmarked → `task_complete`; one marked without evidence → `change_update` with `task_reopen` and why. If the branch was rebased (task commits no longer on it) → `change_update` with `resync_commits`.
-5. Take the given task or the first pending one and implement it following `seckert:workflow` (tests by risk, only the affected test file while iterating; presentation checked against the `design` artifact with `seckert:design`).
-6. Run the full suite once before committing.
-7. Commit the task on the change's branch (Conventional Commits by default). No push unless asked.
-8. `task_complete` with the task, the commit hash and the observed evidence in one line. It returns `done`, `total` and `tasks`: the roadmap.
-9. If it was the last task: write new or changed rules with `spec_write`, summarize what changed and what you couldn't verify, and offer the next step in words, never command names ("¿lo verifico contra el What y el diseño?"; once it's good, close it and open the PR if they want).
+4. Reconcile with `git log` against the marked tasks, without running tests: a task done but unmarked → `task_complete`; one marked without evidence → `change_update` with `task_reopen` and why. If the branch was rebased (task commits no longer on it) → `change_update` with `resync_commits`.
+5. Take the given task or the first pending one and delegate it to the `seckert-implementer` agent, passing only the slug and the task id. It implements, checks presentation in the browser, runs the suite, commits and calls `task_complete`. Don't repeat that work here.
+6. It returns `HECHA` with the commit, the evidence and the roadmap, or `PARADA` with the reason. On `PARADA`, stop and tell the user at which task and why: an open question goes as its number, a proposed `change_update` waits for their yes. If it says `NO VERIFICABLE (sin navegador)`, offer Chrome DevTools MCP in one line as `${CLAUDE_PLUGIN_ROOT}/skills/verify/navegador.md` says.
+7. If it was the last task: write new or changed rules with `spec_write`, summarize what changed and what you couldn't verify, and offer the next step in words, never command names ("¿lo verifico contra el What y el diseño?"; once it's good, close it and open the PR if they want).
 
 One task per invocation unless the user asks for more.
 
 ## All of them
 
-With "hacé todas" (or "dale, todas" on a `proposed` change, which approves it first), repeat steps 4-8 for each pending task, in order, without asking between tasks. Stop and say at which task, and why, when:
-
-- the task depends on an open question;
-- a test stays red after trying to fix it;
-- a presentation task needs a `design` you can't open;
-- the work turns out bigger than the plan (a new task, a schema change): propose the `change_update` first.
+With "hacé todas" (or "dale, todas" on a `proposed` change, which approves it first), call `seckert-implementer` for each pending task, in order, one at a time, without asking between tasks. Stop at the first `PARADA` and say at which task and why. The agent stops when the task depends on an open question, a test stays red, the `design` can't be opened or the work is bigger than the plan.
 
 ## Roadmap
 
-End every reply on a change with its roadmap, from the last `change_get` or `task_complete` (no extra calls):
+End every reply on a change with its roadmap, from the last `change_get`, `task_complete` or the agent's reply (no extra calls):
 
 ```
 **Roadmap:** 2/4

@@ -2,7 +2,7 @@
 
 ## Verificar en el navegador
 
-Lo que solo se ve en la app se verifica con Chrome DevTools MCP, con ventana visible: el What recorrido como usuario, cero errores de consola y de red, 375/768/1280 px, estados vacío/cargando/error y Lighthouse de accesibilidad (problemas, no puntaje). El resultado es texto en la tabla de veredictos. Sin `SECKERT_EVIDENCIAS`, no se guardan ni se pasan capturas. Los datos, solo contra la base aislada de la sección QA.
+Lo que solo se ve en la app se verifica con Chrome DevTools MCP, con ventana visible: el What recorrido como usuario, cero errores de consola y de red, 375/768/1280 px, estados vacío/cargando/error y Lighthouse de accesibilidad (problemas, no puntaje). Lo hace el agente `seckert-navegador` (Sonnet) en su propio contexto, lanzado por verify y design, y devuelve solo las filas de veredicto y las rutas de las evidencias. Sin el MCP cargado no se lanza: la sesión marca esos puntos `NO VERIFICABLE (sin navegador)`. Lee la página con `take_snapshot` y usa capturas solo para comparar con el artifact o guardar evidencia. Dentro de `seckert-implementer`, que no puede lanzar otro agente, la revisión la hace el propio implementer. El resultado es texto en la tabla de veredictos. Sin `SECKERT_EVIDENCIAS`, no se guardan ni se pasan capturas. Los datos, solo contra la base aislada de la sección QA.
 
 ## Instalar el MCP
 

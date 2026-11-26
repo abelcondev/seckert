@@ -24,7 +24,7 @@ Los tipos de `claude-code` y `claude-code/testing` los escribe Claude Code en `.
 | Carpeta | Qué hay |
 |---|---|
 | `skills/` | Una skill por paso: `change`, `next`, `verify`, `done`, `design`, `hotfix`, `tomar`, `release`, `status` y las reglas en `workflow` |
-| `agents/` | El verificador independiente (`seckert-verifier`) |
+| `agents/` | El verificador independiente (`seckert-verifier`), el que implementa cada tarea (`seckert-implementer`) y el que revisa en el navegador (`seckert-navegador`) |
 | `hooks/` | `hooks.json` y el módulo que corre dentro de Claude Code: guarda de aprobación y salidas recortadas |
 | `scripts/` | Guardia de ramas protegidas, contexto de sesión, detección del flujo de ramas y búsqueda de Chrome |
 | `mcp/` | Servidor MCP con las herramientas de issues, changes, verificación, PR y release |
