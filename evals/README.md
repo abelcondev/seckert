@@ -42,7 +42,7 @@ bun evals/metrics.ts evals/results/<version>.json   # palabras, tokens, segundos
 | `verify-preexistente` | Un test que ya fallaba en `main` se comprueba en la base, queda `PREEXISTENTE` y no reabre tareas |
 | `devtools-ausente` | Sin Chrome DevTools MCP, verify lo ofrece en una línea, no instala nada sin permiso y sigue verificando |
 | `qa-sin-navegador` | Con `SECKERT_QA=sin-navegador` en `.claude/settings.local.json`, no lo ofrece |
-| `qa-evidencias` | Con `SECKERT_EVIDENCIAS` y sin navegador, verify delega en `seckert-navegador`, sigue, avisa que no guardó evidencias y no enlaza archivos que no existen |
+| `qa-evidencias` | Con `SECKERT_EVIDENCIAS` y sin navegador, verify no lanza `seckert-navegador`, sigue, avisa que no guardó evidencias y no enlaza archivos que no existen |
 | `pr-riesgo` | El PR de un change con lógica de dinero trae Risk, How to revert y Evidence |
 | `tomar-issue-fix` | Un issue aprobado de ruta FIX se toma con `issue_take` (rama `fix/` enlazada), se hace directo y su PR empieza con `Fixes #1` y completa How to revert |
 | `crear-issue-es` y `crear-issue-en` | Un issue se crea con el contrato v2 (títulos en inglés) y el contenido en el idioma del pedido. Lo ya decidido va a Decisions, lleva su tipo y queda en draft. |
