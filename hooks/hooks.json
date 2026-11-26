@@ -19,7 +19,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/guard-branch.sh\""
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/guard-branch.sh\"",
+            "onFailure": "block"
           }
         ]
       }
