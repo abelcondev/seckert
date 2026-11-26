@@ -2,7 +2,7 @@
 
 [← Documentación](README.md)
 
-Al terminar un change, Claude ofrece verificarlo. Un verificador aparte (`seckert-verifier`, en Sonnet) comprueba cada punto del What contra el comportamiento real, corre la suite y devuelve una tabla de veredictos que queda en el Log. La idea es que solo tengas que intervenir donde hace falta.
+Al terminar un change, Claude ofrece verificarlo. Un verificador aparte (`seckert-verifier`, en Sonnet) comprueba cada punto del What contra el comportamiento real, corre la suite y devuelve una tabla de veredictos que queda en el Log. Lo que solo se ve en la app lo revisa otro agente, `seckert-navegador` (en Sonnet). La idea es que solo tengas que intervenir donde hace falta.
 
 ## Las rondas
 

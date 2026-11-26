@@ -42,7 +42,7 @@ bun evals/metrics.ts evals/results/<version>.json   # palabras, tokens, segundos
 | `verify-preexistente` | Un test que ya fallaba en `main` se comprueba en la base, queda `PREEXISTENTE` y no reabre tareas |
 | `devtools-ausente` | Sin Chrome DevTools MCP, verify lo ofrece en una línea, no instala nada sin permiso y sigue verificando |
 | `qa-sin-navegador` | Con `SECKERT_QA=sin-navegador` en `.claude/settings.local.json`, no lo ofrece |
-| `qa-evidencias` | Con `SECKERT_EVIDENCIAS` y sin navegador, verify sigue, avisa que no guardó evidencias y no enlaza archivos que no existen |
+| `qa-evidencias` | Con `SECKERT_EVIDENCIAS` y sin navegador, verify delega en `seckert-navegador`, sigue, avisa que no guardó evidencias y no enlaza archivos que no existen |
 | `pr-riesgo` | El PR de un change con lógica de dinero trae Risk, How to revert y Evidence |
 | `tomar-issue-fix` | Un issue aprobado de ruta FIX se toma con `issue_take` (rama `fix/` enlazada), se hace directo y su PR empieza con `Fixes #1` y completa How to revert |
 | `crear-issue-es` y `crear-issue-en` | Un issue se crea con el contrato v2 (títulos en inglés) y el contenido en el idioma del pedido. Lo ya decidido va a Decisions, lleva su tipo y queda en draft. |
@@ -53,7 +53,7 @@ bun evals/metrics.ts evals/results/<version>.json   # palabras, tokens, segundos
 | `feature-en-partes` | Una feature grande se divide en sub-issues nativos con dependencias, aprobados con el «dale», sin rama para el padre ni código |
 | `parte-bloqueada` | Tomar un sub-issue bloqueado avisa qué lo bloquea y pregunta, sin forzar |
 | `tomar-issue-change` | Un issue aprobado de ruta CHANGE se toma en `feature/<slug>` y se convierte en una propuesta con `issue: #1` y el mismo slug, sin tocar código |
-| `hacer-todas` | «hacé todas» con un change aprobado hace las 3 tareas, con un commit y un `task_complete` cada una, y cierra con el progreso |
+| `hacer-todas` | «hacé todas» con un change aprobado hace las 3 tareas con un `seckert-implementer` por tarea, un commit distinto y un `task_complete` cada una, y cierra con el progreso |
 | `dale-todas` | «dale, hacelas todas» aprueba el change y hace las 3 tareas |
 | `pasos-con-roadmap` | Un pedido de 3 pasos o más va como CHANGE: sus pasos quedan como tareas del plan y la respuesta dice cuántas son y ofrece hacerlas todas |
 | `feature-hacer-todas` | «hacé todas» sobre una feature hace la parte libre y para ante la bloqueada, que espera el merge |
