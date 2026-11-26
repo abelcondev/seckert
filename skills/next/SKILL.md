@@ -11,7 +11,7 @@ Arguments: $ARGUMENTS
    - `approved` and the task depends on an open question: ask it first.
    - A part (`Parte N de M: después de \`<slug>\``) whose previous part isn't `done`: say so and ask whether to start anyway. A part born short gets its What and Tasks completed before asking for approval.
 3. Be on the change's `branch`.
-4. Reconcile with reality (`git log`, `git diff`, tests): a task done but unmarked → `task_complete`; one marked without evidence → `change_update` with `task_reopen` and why. If the branch was rebased (task commits no longer on it) → `change_update` with `resync_commits`.
+4. Reconcile with `git log` against the marked tasks, without running tests: a task done but unmarked → `task_complete`; one marked without evidence → `change_update` with `task_reopen` and why. If the branch was rebased (task commits no longer on it) → `change_update` with `resync_commits`.
 5. Take the given task or the first pending one and implement it following `seckert:workflow` (tests by risk, only the affected test file while iterating; presentation checked against the `design` artifact with `seckert:design`).
 6. Run the full suite once before committing.
 7. Commit the task on the change's branch (Conventional Commits by default). No push unless asked.
